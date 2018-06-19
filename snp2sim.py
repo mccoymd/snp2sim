@@ -22,12 +22,12 @@ def _parseCommandLine():
                         type=str,
                         )
     parser.add_argument("--protein",
-                        help="name of protein system"
+                        help="name of protein system",
                         action="store",
                         type=str,
                         )
     parser.add_argument("--variant",
-                        help="name of protein system"
+                        help="variant as \"wt\" or \"x###x\"",
                         action="store",
                         type=str,
                         )
@@ -43,18 +43,70 @@ def _parseCommandLine():
 
     return parameters
 
+def genNAMDstructFiles(parameters):
+    parameters.templatePDB = "./variantSimulations/%s/structures/%s.template.pdb" \
+                             % (parameters.protein,parameters.protein)
+    if os.path.isfile(parameters.templatePDB):
+        print "generating solvated/ionized PDB and PSF from %s" \
+            % parameters.templatePDB
+        #TODO generate tcl to create variant structure pdb and psf
+        #TODO generate solvated/ionized PDB and PSF using vmd
+    else:
+        print "no template exists "
+        sys.exit()
+
+    return parameters
+
+def genNAMDconfig(parameters):
+    #todo generate NAMD config file
+    return(parameters)
 
 parameters = _parseCommandLine()
 
-##future work - define workflow from config
-
+#todo: revamp to define workflow from config
 if parameters.mode == "varTraj":
-    #check for mode parameters
+    print "Performing varTraj"
+    if parameters.protein:
+        print "simulating %s" % parameters.protein
+        if parameters.variant:
+            #todo - check that variant format is correct "wt" or "x###x"
+            #check if variant stucture files have already been generated
+            parameters.variantPDB
+            = "./variantSimulations/%s/structures/%s.%s.pdb" \
+                                    % (parameters.protein,parameters.protein,parameters.variant)
+            parameters.variantPSF = "./variantSimulations/%s/structures/%s.%s.psf" \
+                                    % (parameters.protein,parameters.protein,parameters.variant)
+            if os.path.isfile(parameters.variantPDB):
+                if os.path.isfile(parameters.variantPSF):
+                    print "using %s %s as initial structure" \
+                        % (parameters.protein, parameters.variant)
+
+                #if no variant structure exists, use clean template to create
+                else:
+                    print "%s does not exist" % parameters.variantPSF
+                    parameters = genNAMDstructFiles(parameters)
+            else:
+                print "%s does not exist" % parameters.variantPDB
+                parameters = genNAMDstructFiles(parameters)
+        else:
+            print "no variant specified... using wildtype"
+            parameters.variant = "wt"
+            #todo add wildtype simulation
+            print "WARNING: auto wildtype simulation in development"
+            sys.exit()
+    else:
+        print "no protein specified"
+        sys.exit()
+    
+
+    
     if parameters.simLength:
         print "Performing Variant %ins Simulation" % parameters.simLength
+        parameters = genNAMDconfig(parameters)
+        #todo run NAMD simulation
     else:
         print "simulation length not specified"
-        exit
+        sys.exit()
 
     #check for required files
 
