@@ -31,6 +31,11 @@ def _parseCommandLine():
                         action="store",
                         type=str,
                         )
+    parser.add_argument("--newStruct",
+                        help="path to cleaned PDB file (protein structure w/ cannonical aa)",
+                        action="store",
+                        type=str,
+                        )
     
     parser.add_argument("--simLength",
                         help="varTraj simulation length in ns",
@@ -52,7 +57,9 @@ def genNAMDstructFiles(parameters):
         #TODO generate tcl to create variant structure pdb and psf
         #TODO generate solvated/ionized PDB and PSF using vmd
     else:
-        print "no template exists "
+        print "no template exists"
+        print "remove ./variantSimulations/%s directory" % parameters.protein
+        print "use --new to specify clean PDB (only cannonical aa) "
         sys.exit()
 
     return parameters
@@ -67,12 +74,19 @@ parameters = _parseCommandLine()
 if parameters.mode == "varTraj":
     print "Performing varTraj"
     if parameters.protein:
-        print "simulating %s" % parameters.protein
+
+        if parameters.newStruct:
+            if os.path.isdir("./variantSimulations/%s" % parameters.protein):
+                print "ERROR - %s is already created - use another name"
+                sys.exit()
+            os.makedirs("./variantSimulations/%s/structures" % parameters.protein)
+            os.system("cp %s ./variantSimulations/%s/structures/%s.template.pdb" \
+                      % (parameters.newStruct, parameters.protein, parameters.protein)) 
+
         if parameters.variant:
             #todo - check that variant format is correct "wt" or "x###x"
             #check if variant stucture files have already been generated
-            parameters.variantPDB
-            = "./variantSimulations/%s/structures/%s.%s.pdb" \
+            parameters.variantPDB = "./variantSimulations/%s/structures/%s.%s.pdb" \
                                     % (parameters.protein,parameters.protein,parameters.variant)
             parameters.variantPSF = "./variantSimulations/%s/structures/%s.%s.psf" \
                                     % (parameters.protein,parameters.protein,parameters.variant)
