@@ -3,18 +3,18 @@ Molecular Simulation of Somatic Variation
 
 Usage:
 
-Required:
-*--mode
-  *varTraj - build variant specific trajectory
-  *mdScaffold - cluster trajectorys into representative scaffold
-  *drugSearch - bind drug library to variant scaffolds
-  *varAnalysis - analyze drugSearch results for multiple variants
+Command Line Options:
+* mode
+varTraj - build variant specific trajectory
+mdScaffold - cluster trajectorys into representative scaffold
+drugSearch - bind drug library to variant scaffolds
+varAnalysis - analyze drugSearch results for multiple variants
 
---protein
-  name used to refer to group of variants
+* protein
+name used to refer to group of variants
 
---variant
-  variant to simulate
+*variant
+variant to simulate
 
 Mode specific options:
 varTraj
