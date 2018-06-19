@@ -77,7 +77,7 @@ if parameters.mode == "varTraj":
 
         if parameters.newStruct:
             if os.path.isdir("./variantSimulations/%s" % parameters.protein):
-                print "ERROR - %s is already created - use another name"
+                print "ERROR - %s is already created"
                 sys.exit()
             os.makedirs("./variantSimulations/%s/structures" % parameters.protein)
             os.system("cp %s ./variantSimulations/%s/structures/%s.template.pdb" \
@@ -105,9 +105,23 @@ if parameters.mode == "varTraj":
         else:
             print "no variant specified... using wildtype"
             parameters.variant = "wt"
-            #todo add wildtype simulation
-            print "WARNING: auto wildtype simulation in development"
-            sys.exit()
+            parameters.variantPDB = "./variantSimulations/%s/structures/%s.%s.pdb" \
+                                    % (parameters.protein,parameters.protein,parameters.variant)
+            parameters.variantPSF = "./variantSimulations/%s/structures/%s.%s.psf" \
+                                    % (parameters.protein,parameters.protein,parameters.variant)
+            if os.path.isfile(parameters.variantPDB):
+                if os.path.isfile(parameters.variantPSF):
+                    print "using %s %s as initial structure" \
+                        % (parameters.protein, parameters.variant)
+
+                #if no variant structure exists, use clean template to create
+                else:
+                    print "%s does not exist" % parameters.variantPSF
+                    parameters = genNAMDstructFiles(parameters)
+            else:
+                print "%s does not exist" % parameters.variantPDB
+                parameters = genNAMDstructFiles(parameters)
+
     else:
         print "no protein specified"
         sys.exit()
