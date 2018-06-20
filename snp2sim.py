@@ -14,10 +14,7 @@ def _parseCommandLine():
     )
 
     parser.add_argument("--mode",
-                        help="varTraj"
-                        "mdScaffold"
-                        "drugSearch"
-                        "varAnalysis",
+                        help="varMDsim, varScaffold, drugSearch, or varAnalysis",
                         action="store",
                         type=str,
                         )
@@ -71,62 +68,63 @@ def genNAMDconfig(parameters):
 parameters = _parseCommandLine()
 
 #todo: revamp to define workflow from config
-if parameters.mode == "varTraj":
-    print "Performing varTraj"
-    if parameters.protein:
+if parameters.protein:
+    print parameters.protein
+else:
+    print "no protein specified"
+    sys.exit()
 
-        if parameters.newStruct:
-            if os.path.isdir("./variantSimulations/%s" % parameters.protein):
-                print "ERROR - %s is already created"
-                sys.exit()
-            os.makedirs("./variantSimulations/%s/structures" % parameters.protein)
-            os.system("cp %s ./variantSimulations/%s/structures/%s.template.pdb" \
-                      % (parameters.newStruct, parameters.protein, parameters.protein)) 
+if parameters.mode == "varMDsim":
+    print "Performing varMDsim"
+    if parameters.newStruct:
+        if os.path.isdir("./variantSimulations/%s" % parameters.protein):
+            print "ERROR - %s is already created"
+            sys.exit()
+        os.makedirs("./variantSimulations/%s/structures" % parameters.protein)
+        os.system("cp %s ./variantSimulations/%s/structures/%s.template.pdb" \
+                  % (parameters.newStruct, parameters.protein, parameters.protein)) 
 
-        if parameters.variant:
-            #todo - check that variant format is correct "wt" or "x###x"
-            #check if variant stucture files have already been generated
-            parameters.variantPDB = "./variantSimulations/%s/structures/%s.%s.pdb" \
-                                    % (parameters.protein,parameters.protein,parameters.variant)
-            parameters.variantPSF = "./variantSimulations/%s/structures/%s.%s.psf" \
-                                    % (parameters.protein,parameters.protein,parameters.variant)
-            if os.path.isfile(parameters.variantPDB):
-                if os.path.isfile(parameters.variantPSF):
-                    print "using %s %s as initial structure" \
-                        % (parameters.protein, parameters.variant)
+    if parameters.variant:
+        #todo - check that variant format is correct "wt" or "x###x"
+        #check if variant stucture files have already been generated
+        parameters.variantPDB = "./variantSimulations/%s/structures/%s.%s.pdb" \
+                                % (parameters.protein,parameters.protein,parameters.variant)
+        parameters.variantPSF = "./variantSimulations/%s/structures/%s.%s.psf" \
+                                % (parameters.protein,parameters.protein,parameters.variant)
+        if os.path.isfile(parameters.variantPDB):
+            if os.path.isfile(parameters.variantPSF):
+                print "using %s %s as initial structure" \
+                    % (parameters.protein, parameters.variant)
 
-                #if no variant structure exists, use clean template to create
-                else:
-                    print "%s does not exist" % parameters.variantPSF
-                    parameters = genNAMDstructFiles(parameters)
+            #if no variant structure exists, use clean template to create
             else:
-                print "%s does not exist" % parameters.variantPDB
+                print "%s does not exist" % parameters.variantPSF
                 parameters = genNAMDstructFiles(parameters)
         else:
-            print "no variant specified... using wildtype"
-            parameters.variant = "wt"
-            parameters.variantPDB = "./variantSimulations/%s/structures/%s.%s.pdb" \
-                                    % (parameters.protein,parameters.protein,parameters.variant)
-            parameters.variantPSF = "./variantSimulations/%s/structures/%s.%s.psf" \
-                                    % (parameters.protein,parameters.protein,parameters.variant)
-            if os.path.isfile(parameters.variantPDB):
-                if os.path.isfile(parameters.variantPSF):
-                    print "using %s %s as initial structure" \
-                        % (parameters.protein, parameters.variant)
-
-                #if no variant structure exists, use clean template to create
-                else:
-                    print "%s does not exist" % parameters.variantPSF
-                    parameters = genNAMDstructFiles(parameters)
-            else:
-                print "%s does not exist" % parameters.variantPDB
-                parameters = genNAMDstructFiles(parameters)
-
+            print "%s does not exist" % parameters.variantPDB
+            parameters = genNAMDstructFiles(parameters)
     else:
-        print "no protein specified"
-        sys.exit()
-    
+        print "no variant specified... using wildtype"
+        parameters.variant = "wt"
+        parameters.variantPDB = "./variantSimulations/%s/structures/%s.%s.pdb" \
+                                % (parameters.protein,parameters.protein,parameters.variant)
+        parameters.variantPSF = "./variantSimulations/%s/structures/%s.%s.psf" \
+                                % (parameters.protein,parameters.protein,parameters.variant)
+        if os.path.isfile(parameters.variantPDB):
+            if os.path.isfile(parameters.variantPSF):
+                print "using %s %s as initial structure" \
+                    % (parameters.protein, parameters.variant)
 
+            #if no variant structure exists, use clean template to create
+            else:
+                print "%s does not exist" % parameters.variantPSF
+                parameters = genNAMDstructFiles(parameters)
+        else:
+            print "%s does not exist" % parameters.variantPDB
+            parameters = genNAMDstructFiles(parameters)
+
+
+    
     
     if parameters.simLength:
         print "Performing Variant %ins Simulation" % parameters.simLength
@@ -136,12 +134,20 @@ if parameters.mode == "varTraj":
         print "simulation length not specified"
         sys.exit()
 
-    #check for required files
+#######
 
-elif parameters.mode == "mdScaffold":
+elif parameters.mode == "varScaffold":
     #check for mode parameters
-    #check for mode parameters
-    print "Performing mdScaffold"
+    print "Performing varScaffold"
+
+    #check if variant specified, otherwise perform clustering for all variants
+    #if new clustParamID, create config
+    #check if clustParamID config exists
+    #create TCL
+    #create template structures
+    
+
+
     
 elif parameters.mode == "drugSearch":
     #check for mode parameters
