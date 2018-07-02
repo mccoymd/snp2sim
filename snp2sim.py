@@ -48,11 +48,29 @@ def _parseCommandLine():
 def genNAMDstructFiles(parameters):
     parameters.templatePDB = "./variantSimulations/%s/structures/%s.template.pdb" \
                              % (parameters.protein,parameters.protein)
+
+    if not os.path.exists("./variantSimulations/%s/bin/" % parameters.protein):
+        os.makedirs("./variantSimulations/%s/bin/" % parameters.protein)
+
     if os.path.isfile(parameters.templatePDB):
         print "generating solvated/ionized PDB and PSF from %s" \
             % parameters.templatePDB
-        #TODO generate tcl to create variant structure pdb and psf
+
+            
+        if os.path.isfile("./variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
+                          % (parameters.protein, parameters.protein, parameters.variant)):
+            print "%s.%s.genStructFiles.tcl exists" \
+                % (parameters.protein, parameters.variant)
+        else:
+            parameters = genStructTCL(parameters)
+
         #TODO generate solvated/ionized PDB and PSF using vmd
+
+
+
+
+        parameters = solvStructTCL(parameters)
+        sys.exit()
     else:
         print "no template exists"
         print "remove ./variantSimulations/%s directory" % parameters.protein
@@ -61,11 +79,65 @@ def genNAMDstructFiles(parameters):
 
     return parameters
 
+def genStructTCL(parameters):
+    parameters.basePDB = "./variantSimulations/%s/structures/%s.wt.UNSOLVATED.pdb" \
+                         % (parameters.protein, parameters.protein)
+    parameters.basePSF = "./variantSimulations/%s/structures/%s.wt.UNSOLVATED.psf" \
+                         % (parameters.protein, parameters.protein)
+
+    if not os.path.isfile("./variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
+                      % (parameters.protein, parameters.protein)):
+        print "generating wt struct file %s.wt.genStructFiles.tcl" \
+                      % (parameters.protein)
+
+
+        structFileName = "./variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
+                         % (parameters.protein, parameters.protein)
+        structFile = open(structFileName,"w+")
+        
+        structFile.write("package require psfgen\n")
+        for tFile in parameters.simTopology:
+            structFile.write("topology %s\n" % tFile)
+        structFile.write("pdbalias residue HIS HSE\n")
+        structFile.write("segment PROT {pdb %s}\n" % parameters.templatePDB)
+        structFile.write("coordpdb %s PROT\n" % parameters.templatePDB)
+        structFile.write("guesscoord\n")
+        structFile.write("writepdb %s\n" % parameters.basePDB)
+        structFile.write("writepsf %s\n" % parameters.basePSF)
+        structFile.write("quit\n")
+                        
+    varStructFileName = "./variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
+                        % (parameters.protein, parameters.protein,parameters.variant)
+                         
+    if not os.path.isfile(varStructFileName):
+        outPrefix = "./variantSimulations/%s/structures/%s.%s.UNSOLVATED" \
+                    % (parameters.protein, parameters.protein, parameters.variant)
+        varStructFile = open(varStructFileName,"w+")
+        varStructFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
+                            % (parameters.basePSF, parameters.basePDB, \
+                               outPrefix, parameters.varResID, parameters.varAA))
+        varStructFile.write("quit\n");
+
+    
+    return(parameters)
+
+def solvStructTCL(parameters):
+
+    return(parameters)
+
 def genNAMDconfig(parameters):
     #todo generate NAMD config file
     return(parameters)
 
 parameters = _parseCommandLine()
+
+### Hardcoded Parameters
+parameters.simTopology = ("./simParameters/top_all36_prot.rtf",
+                          "./simParameters/toppar_water_ions_namd.str")
+parameters.simParameters = ("./simParameters/par_all36_prot.prm",
+                            "./simParameters/toppar_water_ions_namd.str")
+
+
 
 #todo: revamp to define workflow from config
 if parameters.protein:
@@ -86,6 +158,9 @@ if parameters.mode == "varMDsim":
 
     if parameters.variant:
         #todo - check that variant format is correct "wt" or "x###x"
+
+        ## parameters of resid and aa hardcoded in...
+        
         #check if variant stucture files have already been generated
         parameters.variantPDB = "./variantSimulations/%s/structures/%s.%s.pdb" \
                                 % (parameters.protein,parameters.protein,parameters.variant)
