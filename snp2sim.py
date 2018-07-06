@@ -35,6 +35,11 @@ def _parseCommandLine():
                         action="store",
                         type=str,
                         )
+    parser.add_argument("--newScaff",
+                        help="path to scaffold config (search RMSD and # iterations, alignment aa, clusteraa",
+                        action="store",
+                        type=str,
+                        )
     
     parser.add_argument("--simLength",
                         help="varTraj simulation length in ns",
@@ -84,6 +89,9 @@ def genNAMDstructFiles(parameters):
 
         genSolvTCL(parameters)
         genSolvCommand = "%s -e %s" % (parameters.VMDpath, parameters.solvTCL)
+        if not os.path.exists("%s/variantSimulations/%s/config/" % \
+                              (parameters.runDIR,parameters.protein)):
+            os.makedirs("./variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
         os.system(genSolvCommand)
     else:
         print "no template exists"
@@ -248,7 +256,7 @@ print(parameters.runDIR)
 
 if parameters.protein:
     print parameters.protein
-    parameters.VNDpath = "vmd"
+    parameters.VMDpath = "vmd"
     parameters.NAMDpath = "namd2"
     if parameters.mode == "varMDsim":
         if not parameters.simID:
@@ -266,31 +274,43 @@ if parameters.protein:
             parameters.variant = "wt"
             
         parameters.simPDB = "%s/variantSimulations/%s/structures/%s.%s.pdb" \
-                            % (parameters.runDIR,parameters.protein,parameters.protein,parameters.variant)
+                            % (parameters.runDIR,parameters.protein,
+                               parameters.protein,parameters.variant)
         parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
-                            % (parameters.runDIR,parameters.protein,parameters.protein,parameters.variant)
+                            % (parameters.runDIR,parameters.protein,
+                               parameters.protein,parameters.variant)
         parameters.templatePDB = "%s/variantSimulations/%s/structures/%s.template.pdb" \
-                                 % (parameters.runDIR,parameters.protein,parameters.protein)
+                                 % (parameters.runDIR,parameters.protein,
+                                    parameters.protein)
         parameters.wtPDB = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.pdb" \
-                             % (parameters.runDIR,parameters.protein, parameters.protein)
+                             % (parameters.runDIR,parameters.protein,
+                                parameters.protein)
         parameters.wtPSF = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.psf" \
-                             % (parameters.runDIR,parameters.protein, parameters.protein)
+                             % (parameters.runDIR,parameters.protein,
+                                parameters.protein)
         parameters.varPrefix = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED" \
-                               % (parameters.runDIR,parameters.protein, parameters.protein, parameters.variant)
+                               % (parameters.runDIR,parameters.protein,
+                                  parameters.protein, parameters.variant)
         parameters.varPDB = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.pdb" \
-                             % (parameters.runDIR, parameters.protein, parameters.protein, parameters.variant)
+                             % (parameters.runDIR, parameters.protein,
+                                parameters.protein, parameters.variant)
         parameters.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
-                             % (parameters.runDIR,parameters.protein, parameters.protein, parameters.variant)
+                             % (parameters.runDIR,parameters.protein,
+                                parameters.protein, parameters.variant)
         parameters.wtStructTCL = "%s/variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
                                  % (parameters.runDIR,parameters.protein, parameters.protein)
         parameters.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
-                                  % (parameters.runDIR,parameters.protein, parameters.protein, parameters.variant)
+                                  % (parameters.runDIR,parameters.protein,
+                                     parameters.protein, parameters.variant)
         parameters.solvTCL = "%s/variantSimulations/%s/bin/%s.%s.genSolvStruct.tcl" \
-                             % (parameters.runDIR,parameters.protein, parameters.protein, parameters.variant)
-        parameters.solvBoundary = "%s/variantSimulations/%s/bin/%s.%s.solvBoundary.txt" \
-                                  % (parameters.runDIR,parameters.protein, parameters.protein, parameters.variant)
+                             % (parameters.runDIR,parameters.protein,
+                                parameters.protein, parameters.variant)
+        parameters.solvBoundary = "%s/variantSimulations/%s/config/%s.%s.solvBoundary.txt" \
+                                  % (parameters.runDIR,parameters.protein,
+                                     parameters.protein, parameters.variant)
         parameters.structPrefix = "%s/variantSimulations/%s/structures/%s.%s" \
-                                  % (parameters.runDIR,parameters.protein, parameters.protein, parameters.variant)
+                                  % (parameters.runDIR,parameters.protein,
+                                     parameters.protein, parameters.variant)
         parameters.NAMDconfig = "%s/variantSimulations/%s/config/%s.%s.%s.NAMD" \
                                   % (parameters.runDIR, parameters.protein, parameters.protein,
                                      parameters.variant, parameters.simID)
@@ -313,7 +333,8 @@ if parameters.mode == "varMDsim":
             sys.exit()
         os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
         os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
-                  % (parameters.runDIR,parameters.newStruct, parameters.protein, parameters.protein)) 
+                  % (parameters.runDIR,parameters.newStruct,
+                     parameters.protein, parameters.protein)) 
 
     if os.path.isfile(parameters.simPDB):
         if os.path.isfile(parameters.simPSF):
@@ -356,8 +377,9 @@ if parameters.mode == "varMDsim":
 #######
 
 elif parameters.mode == "varScaffold":
-    #check for mode parameters
     print "Performing varScaffold"
+
+    
 
     #check if variant specified, otherwise perform clustering for all variants
     #if new clustParamID, create config
