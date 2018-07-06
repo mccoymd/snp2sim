@@ -239,7 +239,7 @@ def genNAMDconfig(parameters):
     configFile.write("# Minimization\n")
     configFile.write("minimize            1000\n")
     configFile.write("reinitvels          $temperature\n\n")
-    configFile.write("run                 %i\n" % (parameters.simLength*50000)) # using 2 fs step size
+    configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
                      
 
     
