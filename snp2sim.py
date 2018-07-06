@@ -84,14 +84,14 @@ def genNAMDstructFiles(parameters):
             print "unsolvated PDB and PSF exist"
         else:
             genStructTCL(parameters)
-            genStructCommand = "%s -e %s" % (parameters.vmdPath, parameters.varStructTCL)
+            genStructCommand = "%s -e %s" % (parameters.VMDpath, parameters.varStructTCL)
             os.system(genStructCommand)
 
         genSolvTCL(parameters)
         genSolvCommand = "%s -e %s" % (parameters.VMDpath, parameters.solvTCL)
         if not os.path.exists("%s/variantSimulations/%s/config/" % \
                               (parameters.runDIR,parameters.protein)):
-            os.makedirs("./variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
+            os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
         os.system(genSolvCommand)
     else:
         print "no template exists"
@@ -165,9 +165,9 @@ def genNAMDconfig(parameters):
         minmax = minmax.split(" ")
         minmax = [float(i) for i in minmax]
 
-        parameters.dimX = minmax[3] - minmax[0]
-        parameters.dimY = minmax[4] - minmax[1]
-        parameters.dimZ = minmax[5] - minmax[2]
+        parameters.dimX = minmax[3] - minmax[0] + 0.1
+        parameters.dimY = minmax[4] - minmax[1] + 0.1
+        parameters.dimZ = minmax[5] - minmax[2] + 0.1
 
     else:
         print "boundary file does not exist"
@@ -209,11 +209,12 @@ def genNAMDconfig(parameters):
     configFile.write("langevinTemp        $temperature\n")
     configFile.write("langevinHydrogen    off    ;# don't couple langevin bath to hydrogens\n\n")
     configFile.write("#Periodic Boundary Conditions\n")
-    configFile.write("cellBasisVector1 %.2f 0.0 0.0\n" % parameters.dimX)
-    configFile.write("cellBasisVector2 0.0 %.2f 0.0\n" % parameters.dimY)
-    configFile.write("cellBasisVector3 0.0 0.0 %.2f\n" % parameters.dimZ)
-    configFile.write("cellOrigin %.2f %.2f %.2f\n\n" % \
+    configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
+    configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
+    configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
+    configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
                      (center[0], center[1], center[0]))
+    configFile.write("margin 1.0\n\n")
     configFile.write("wrapAll on\n\n")
     configFile.write("# PME (for full-system periodic electrostatics)\n")
     configFile.write("PME                 yes\n")
@@ -333,7 +334,7 @@ if parameters.mode == "varMDsim":
             sys.exit()
         os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
         os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
-                  % (parameters.runDIR,parameters.newStruct,
+                  % (parameters.newStruct,parameters.runDIR,
                      parameters.protein, parameters.protein)) 
 
     if os.path.isfile(parameters.simPDB):
