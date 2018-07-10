@@ -268,6 +268,28 @@ def genNAMDconfig(parameters):
     
     return
 
+def genSingleRunTCL(parameters):
+    print "generating %s" % parameters.singleRunTCL
+    pdbTCL = open(parameters.singleRunTCL,"w+")
+    pdbTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+    variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+    print "using DCD files in %s" % variantDIR
+    for tFile in os.listdir(variantDIR):
+        if tFile.endswith(".dcd"):
+            dcdFile = variantDIR + tFile
+            pdbTCL.write("mol addfile %s waitfor all\n" % dcdFile)
+
+    pdbTCL.write("package require pbctools\n")
+    pdbTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
+
+    allPDBoutput = "%s/%s.%s.%s.pdb" % (variantDIR, parameters.protein,
+                                        parameters.variant, parameters.simID)
+    pdbTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
+                   % allPDBoutput)
+    pdbTCL.write("quit")
+    
+    return
+
 def genClusterTCL(parameters):
 #TODO - currently config must be formated as:
 #NOTE:: 3 lines, CASE SPECIFIC, NEEDS IMPROVEMENT
@@ -317,17 +339,18 @@ def genClusterTCL(parameters):
 
     clustTCL.write("package require pbctools\n")
     clustTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
-    clustTCL.write("set nf [molinfo top get numframes]\n")
-    clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
-    clustTCL.write("set refStruct [atomselect top all frame 0]\n")
-    clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
-    clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
-    clustTCL.write("  set curRes [atomselect top %s frame $i]\n" % alignmentRes)
-    clustTCL.write("  set M [measure fit $curRes $refRes]\n")
-    clustTCL.write("  $curStruct move $M\n")
-    clustTCL.write("}\n")
-    clustTCL.write("set output [open %s w]\n" % scaffLOG)
     if not parameters.singleRun:
+        clustTCL.write("set nf [molinfo top get numframes]\n")
+        clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
+        clustTCL.write("set refStruct [atomselect top all frame 0]\n")
+        clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
+        clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
+        clustTCL.write("  set curRes [atomselect top %s frame $i]\n" % alignmentRes)
+        clustTCL.write("  set M [measure fit $curRes $refRes]\n")
+        clustTCL.write("  $curStruct move $M\n")
+        clustTCL.write("}\n")
+        clustTCL.write("set output [open %s w]\n" % scaffLOG)
+
         clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
         clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
         clustTCL.write("puts $output [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
@@ -561,6 +584,9 @@ if parameters.protein:
     parameters.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
                               % (parameters.runDIR,parameters.protein,
                                  parameters.protein, parameters.variant)
+    parameters.singleRunTCL = "%s/variantSimulations/%s/bin/%s.%s.genSingleRunPDB.tcl" \
+                              % (parameters.runDIR,parameters.protein,
+                                 parameters.protein, parameters.variant)
     parameters.solvTCL = "%s/variantSimulations/%s/bin/%s.%s.genSolvStruct.tcl" \
                          % (parameters.runDIR,parameters.protein,
                             parameters.protein, parameters.variant)
@@ -629,6 +655,12 @@ if parameters.mode == "varMDsim":
 
         print "running NAMD with %i processors" % parameters.simProc
         os.system(runNAMDcommand)
+        
+        if parameters.singleRun:
+            genSingleRunTCL(parameters)
+            genPDBcommand = "%s -e %s" % (parameters.VMDpath, parameters.singleRunTCL)
+            os.system(genPDBcommand)
+            
         
     else:
         print "simulation length not specified"        
