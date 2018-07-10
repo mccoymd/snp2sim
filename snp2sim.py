@@ -61,10 +61,33 @@ def _parseCommandLine():
                         action="store",
                         type=str,
                         )
+    parser.add_argument("--scaffID",
+                        help="name of scaffolding parameters set",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--VMDpath",
+                        help="path to VMD executable",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--NAMDpath",
+                        help="path to NAMD executable",
+                        action="store",
+                        type=str,
+                        )
     parser.add_argument("--simProc",
                         help="number of processors to run simulation",
                         action="store",
                         type=int,
+                        )
+    parser.add_argument("--singleRun",
+                        help="output summary PDB trajectory only",
+                        action="store_true",
+                        )
+    parser.add_argument("--clustPDBtraj",
+                        help="cluster results from multiple varScafold singleRun",
+                        action="store_true",
                         )
 
     cmdlineparameters, unknownparams = parser.parse_known_args()
@@ -245,6 +268,227 @@ def genNAMDconfig(parameters):
     
     return
 
+def genClusterTCL(parameters):
+#TODO - currently config must be formated as:
+#NOTE:: 3 lines, CASE SPECIFIC, NEEDS IMPROVEMENT
+#alignmentRes "(atomselection)"
+#clusterRes "(atomselection)"
+#rmsdThresh (num)
+    
+    scaffParameters = open(parameters.scaffParams,"r")
+    scaffLines = scaffParameters.readlines()
+
+    alignmentRes = scaffLines[0]
+    alignmentRes = alignmentRes.rstrip()
+    alignmentRes = alignmentRes.replace("alignmentRes ","")
+
+    clusterRes = scaffLines[1]
+    clusterRes = clusterRes.rstrip()
+    clusterRes = clusterRes.replace("clusterRes ","")
+
+    rmsdThresh = scaffLines[2]
+    rmsdThresh = rmsdThresh.rstrip()
+    rmsdThresh = rmsdThresh.replace("rmsdThresh ","")
+
+
+    #regenerate config even if one exists to ensure new trajecories are included
+    
+    if not os.path.exists("%s/variantSimulations/%s/results/%s/scaffold" % \
+                          (parameters.runDIR,parameters.protein,parameters.variant)):
+        os.makedirs("%s/variantSimulations/%s/results/%s/scaffold" % \
+                    (parameters.runDIR,parameters.protein,parameters.variant))
+
+    #will not generate new TCL if previous scaffID log exists
+    scaffLOG = parameters.scaffBASE + ".log"
+    print scaffLOG
+    if os.path.isfile(scaffLOG):
+        print "%s exists. Remove to recalculate Scaffolds" % scaffLOG
+        return
+        
+    print "generating %s" % parameters.scaffoldTCL
+    clustTCL = open(parameters.scaffoldTCL,"w+")
+    clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+    variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+    print "using DCD files in %s" % variantDIR
+    for tFile in os.listdir(variantDIR):
+        if tFile.endswith(".dcd"):
+            dcdFile = variantDIR + tFile
+            clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
+
+    clustTCL.write("package require pbctools\n")
+    clustTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
+    clustTCL.write("set nf [molinfo top get numframes]\n")
+    clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
+    clustTCL.write("set refStruct [atomselect top all frame 0]\n")
+    clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
+    clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
+    clustTCL.write("  set curRes [atomselect top %s frame $i]\n" % alignmentRes)
+    clustTCL.write("  set M [measure fit $curRes $refRes]\n")
+    clustTCL.write("  $curStruct move $M\n")
+    clustTCL.write("}\n")
+    clustTCL.write("set output [open %s w]\n" % scaffLOG)
+    if not parameters.singleRun:
+        clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
+        clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
+        clustTCL.write("puts $output [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
+                       % rmsdThresh)
+    else:
+        clustTCL.write("puts $output \"Only generated summary PDB file\"\n")
+    clustTCL.write("close $output\n")
+    allPDBoutput = parameters.scaffBASE + ".all.pdb"
+    clustTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
+                   % allPDBoutput)
+    clustTCL.write("quit")
+
+#legacy code for surveying the trajectoies
+#    for {set i 60} {$i < 80} {incr i} {
+#                set thr [expr $i / 100.0]
+#                puts $output [puts $thr]
+#                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
+#            }
+    
+    return
+
+def genPDBclustTCL(parameters):
+    scaffParameters = open(parameters.scaffParams,"r")
+    scaffLines = scaffParameters.readlines()
+
+    alignmentRes = scaffLines[0]
+    alignmentRes = alignmentRes.rstrip()
+    alignmentRes = alignmentRes.replace("alignmentRes ","")
+
+    clusterRes = scaffLines[1]
+    clusterRes = clusterRes.rstrip()
+    clusterRes = clusterRes.replace("clusterRes ","")
+
+    rmsdThresh = scaffLines[2]
+    rmsdThresh = rmsdThresh.rstrip()
+    rmsdThresh = rmsdThresh.replace("rmsdThresh ","")
+
+
+    #regenerate config even if one exists to ensure new trajecories are included
+    scaffPath = "%s/variantSimulations/%s/results/%s/scaffold" % \
+                          (parameters.runDIR,parameters.protein,parameters.variant)
+    if not os.path.exists(scaffPath):
+        os.makedirs(scaffPath)
+
+    #will not generate new TCL if previous scaffID log exists
+    scaffLOG = parameters.scaffBASE + ".log"
+    print scaffLOG
+    if os.path.isfile(scaffLOG):
+        print "%s exists. Remove to recalculate Scaffolds" % scaffLOG
+        return
+
+    print "generating %s" % parameters.scaffoldTCL
+    clustTCL = open(parameters.scaffoldTCL,"w+")
+    for trajFile in os.listdir(scaffPath):
+        if trajFile.endswith(".pdb"):
+            pdbFile = scaffPath + "/" + trajFile
+            clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
+#    clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+#    variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+#    print "using DCD files in %s" % variantDIR
+#    for tFile in os.listdir(variantDIR):
+#        if tFile.endswith(".dcd"):
+#            dcdFile = variantDIR + tFile
+#            clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
+
+#    clustTCL.write("package require pbctools\n")
+#    clustTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
+    clustTCL.write("set nf [molinfo top get numframes]\n")
+    clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
+    clustTCL.write("set refStruct [atomselect top all frame 0]\n")
+    clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
+    clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
+    clustTCL.write("  set curRes [atomselect top %s frame $i]\n" % alignmentRes)
+    clustTCL.write("  set M [measure fit $curRes $refRes]\n")
+    clustTCL.write("  $curStruct move $M\n")
+    clustTCL.write("}\n")
+    clustTCL.write("set output [open %s w]\n" % scaffLOG)
+    clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
+    clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
+    clustTCL.write("puts $output [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
+                   % rmsdThresh)
+    clustTCL.write("close $output\n")
+
+
+    allPDBoutput = parameters.scaffBASE + ".all.pdb"
+    clustTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
+                   % allPDBoutput)
+    clustTCL.write("quit")
+
+#legacy code for surveying the trajectoies
+#    for {set i 60} {$i < 80} {incr i} {
+#                set thr [expr $i / 100.0]
+#                puts $output [puts $thr]
+#                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
+#            }
+    
+    return
+
+def sortPDBclusters(parameters):
+    allPDBoutput = parameters.scaffBASE + ".all.pdb"
+    scaffLOG = parameters.scaffBASE + ".log"    
+
+    allPDBstruct = open(allPDBoutput, "r")
+    allPDBlines = allPDBstruct.readlines()
+    pdbHeader = allPDBlines.pop(0)
+    indPDB = []
+    currPDB = ""
+    for pdbLine in allPDBlines:
+        currPDB = currPDB + pdbLine
+        if "END" in pdbLine:
+            indPDB.append(currPDB)
+            currPDB = ""
+
+    clustLogfile = open(scaffLOG, "r")
+    clustLogLines = clustLogfile.readlines()
+    clusterMembership = clustLogLines[1]
+    clusterMembership = clusterMembership.rstrip()
+    clusterMembership = clusterMembership.replace("} {","_")
+    clusterMembership = clusterMembership.replace("{","")
+    clusterMembership = clusterMembership.replace("}","")
+    clusterMembership = clusterMembership.split("_")
+    del clusterMembership[-1]
+    
+    scaffNum = 1;
+    for indCluster in clusterMembership:
+        indCluster = indCluster.split(" ")
+        if len(indCluster) > 0.1*len(indPDB):
+            scaffFileName = parameters.scaffBASE + ".cluster" + str(scaffNum) + ".pdb"
+            scaffFile = open(scaffFileName,"w+")
+            scaffFile.write(pdbHeader)
+            for structID in indCluster: 
+                scaffFile.write(indPDB[int(structID)])
+            scaffNum += 1 
+
+    return
+
+
+def genScaffoldTCL(parameters):
+    scaffParameters = open(parameters.scaffParams,"r")
+    scaffLines = scaffParameters.readlines()
+
+    alignmentRes = scaffLines[0]
+    alignmentRes = alignmentRes.rstrip()
+    alignmentRes = alignmentRes.replace("alignmentRes ","")
+
+    scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
+    genScaff = open(parameters.clusterTCL, "w+")
+    for tFile in os.listdir(scaffDIR):
+        if tFile.endswith(".pdb"):
+            if "cluster" in tFile:
+                pdbClustFile = scaffDIR + tFile
+                pdbScaffFile = pdbClustFile
+                pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
+                genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
+                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
+                genScaff.write("set avePos [measure avpos $domain]\n")
+                genScaff.write("$domain set {x y z} $avePos\n")
+                genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
+                
+    genScaff.write("quit\n")
+    return
 
 #### start of program move to main()
 
@@ -252,74 +496,92 @@ parameters = _parseCommandLine()
 
 ### Hardcoded Parameters
 
-parameters.runDIR = os.getcwd()
+#parameters.runDIR = os.getcwd()
+parameters.runDIR = os.path.abspath(__file__)
+parameters.runDIR = os.path.dirname(parameters.runDIR)
 print(parameters.runDIR)
 
 if parameters.protein:
     print parameters.protein
-    parameters.VMDpath = "vmd"
-    parameters.NAMDpath = "namd2"
+    if not parameters.VMDpath:
+        parameters.VMDpath = "vmd"
+    if not parameters.NAMDpath:
+        parameters.NAMDpath = "namd2"
+        
     if parameters.mode == "varMDsim":
         if not parameters.simID:
             parameters.simID = str(random.randint(1,1000))
-            
-        parameters.simTopology = ("%s/simParameters/top_all36_prot.rtf" % parameters.runDIR,
-                                  "%s/simParameters/toppar_water_ions_namd.str" % parameters.runDIR)
-        parameters.simParameters = ("%s/simParameters/par_all36_prot.prm" % parameters.runDIR,
-                                    "%s/simParameters/toppar_water_ions_namd.str" %parameters.runDIR)
+
         if parameters.varResID and parameters.varAA:
             parameters.variant = parameters.varResID + parameters.varAA
         else:
             print "varResID and varAA not specified"
             print"Using WT structure for simulation"
             parameters.variant = "wt"
+
+    if parameters.mode == "varScaffold":
+        if not parameters.scaffID:
+            print "no scaff ID - exiting"
+            sys.exit()
             
-        parameters.simPDB = "%s/variantSimulations/%s/structures/%s.%s.pdb" \
-                            % (parameters.runDIR,parameters.protein,
-                               parameters.protein,parameters.variant)
-        parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
-                            % (parameters.runDIR,parameters.protein,
-                               parameters.protein,parameters.variant)
-        parameters.templatePDB = "%s/variantSimulations/%s/structures/%s.template.pdb" \
-                                 % (parameters.runDIR,parameters.protein,
-                                    parameters.protein)
-        parameters.wtPDB = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.pdb" \
+    parameters.simTopology = ("%s/simParameters/top_all36_prot.rtf" % parameters.runDIR,
+                              "%s/simParameters/toppar_water_ions_namd.str" % parameters.runDIR)
+    parameters.simParameters = ("%s/simParameters/par_all36_prot.prm" % parameters.runDIR,
+                                "%s/simParameters/toppar_water_ions_namd.str" %parameters.runDIR)
+
+    if not parameters.simProc:
+        parameters.simProc = multiprocessing.cpu_count()    
+    
+    parameters.simPDB = "%s/variantSimulations/%s/structures/%s.%s.pdb" \
+                        % (parameters.runDIR,parameters.protein,
+                           parameters.protein,parameters.variant)
+    parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
+                        % (parameters.runDIR,parameters.protein,
+                           parameters.protein,parameters.variant)
+    parameters.templatePDB = "%s/variantSimulations/%s/structures/%s.template.pdb" \
                              % (parameters.runDIR,parameters.protein,
                                 parameters.protein)
-        parameters.wtPSF = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.psf" \
-                             % (parameters.runDIR,parameters.protein,
-                                parameters.protein)
-        parameters.varPrefix = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED" \
-                               % (parameters.runDIR,parameters.protein,
-                                  parameters.protein, parameters.variant)
-        parameters.varPDB = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.pdb" \
-                             % (parameters.runDIR, parameters.protein,
-                                parameters.protein, parameters.variant)
-        parameters.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
-                             % (parameters.runDIR,parameters.protein,
-                                parameters.protein, parameters.variant)
-        parameters.wtStructTCL = "%s/variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
-                                 % (parameters.runDIR,parameters.protein, parameters.protein)
-        parameters.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
-                                  % (parameters.runDIR,parameters.protein,
-                                     parameters.protein, parameters.variant)
-        parameters.solvTCL = "%s/variantSimulations/%s/bin/%s.%s.genSolvStruct.tcl" \
-                             % (parameters.runDIR,parameters.protein,
-                                parameters.protein, parameters.variant)
-        parameters.solvBoundary = "%s/variantSimulations/%s/config/%s.%s.solvBoundary.txt" \
-                                  % (parameters.runDIR,parameters.protein,
-                                     parameters.protein, parameters.variant)
-        parameters.structPrefix = "%s/variantSimulations/%s/structures/%s.%s" \
-                                  % (parameters.runDIR,parameters.protein,
-                                     parameters.protein, parameters.variant)
-        parameters.NAMDconfig = "%s/variantSimulations/%s/config/%s.%s.%s.NAMD" \
-                                  % (parameters.runDIR, parameters.protein, parameters.protein,
-                                     parameters.variant, parameters.simID)
-        parameters.NAMDout = "%s/variantSimulations/%s/results/%s/trajectory/%s.%s.%s" \
-                             % (parameters.runDIR, parameters.protein, parameters.variant,
-                                parameters.protein, parameters.variant, parameters.simID)
-                                
-        
+    parameters.wtPDB = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.pdb" \
+                       % (parameters.runDIR,parameters.protein,
+                          parameters.protein)
+    parameters.wtPSF = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.psf" \
+                       % (parameters.runDIR,parameters.protein,
+                          parameters.protein)
+    parameters.varPrefix = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED" \
+                           % (parameters.runDIR,parameters.protein,
+                              parameters.protein, parameters.variant)
+    parameters.varPDB = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.pdb" \
+                        % (parameters.runDIR, parameters.protein,
+                           parameters.protein, parameters.variant)
+    parameters.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
+                        % (parameters.runDIR,parameters.protein,
+                           parameters.protein, parameters.variant)
+    parameters.wtStructTCL = "%s/variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
+                             % (parameters.runDIR,parameters.protein, parameters.protein)
+    parameters.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
+                              % (parameters.runDIR,parameters.protein,
+                                 parameters.protein, parameters.variant)
+    parameters.solvTCL = "%s/variantSimulations/%s/bin/%s.%s.genSolvStruct.tcl" \
+                         % (parameters.runDIR,parameters.protein,
+                            parameters.protein, parameters.variant)
+    parameters.solvBoundary = "%s/variantSimulations/%s/config/%s.%s.solvBoundary.txt" \
+                              % (parameters.runDIR,parameters.protein,
+                                 parameters.protein, parameters.variant)
+    parameters.structPrefix = "%s/variantSimulations/%s/structures/%s.%s" \
+                              % (parameters.runDIR,parameters.protein,
+                                 parameters.protein, parameters.variant)
+    parameters.NAMDconfig = "%s/variantSimulations/%s/config/%s.%s.%s.NAMD" \
+                            % (parameters.runDIR, parameters.protein, parameters.protein,
+                               parameters.variant, parameters.simID)
+    parameters.NAMDout = "%s/variantSimulations/%s/results/%s/trajectory/%s.%s.%s" \
+                         % (parameters.runDIR, parameters.protein, parameters.variant,
+                            parameters.protein, parameters.variant, parameters.simID)
+
+    parameters.scaffParams = "%s/variantSimulations/%s/config/%s.scaff" \
+                         % (parameters.runDIR, parameters.protein, parameters.scaffID)
+    parameters.resultsDIR =  "%s/variantSimulations/%s/results" % \
+                             (parameters.runDIR, parameters.protein)
+       
 else:
     print "no protein specified"
     sys.exit()
@@ -354,11 +616,8 @@ if parameters.mode == "varMDsim":
 
     if parameters.simLength:
         print "Performing Variant %.3f ns Simulation" % parameters.simLength
-        parameters.simLength = parameters.simLength
         genNAMDconfig(parameters)
 
-        if not parameters.simProc:
-            parameters.simProc = multiprocessing.cpu_count()    
         runNAMDcommand = "%s +p%i %s > %s.log" % \
                          (parameters.NAMDpath, parameters.simProc,
                           parameters.NAMDconfig, parameters.NAMDout)
@@ -381,13 +640,87 @@ elif parameters.mode == "varScaffold":
     print "Performing varScaffold"
 
     
-
-    #check if variant specified, otherwise perform clustering for all variants
-    #if new clustParamID, create config
-    #check if clustParamID config exists
-    #create TCL
-    #create template structures
     
+    if parameters.newScaff:
+        if not os.path.isdir("%s/variantSimulations/%s/config" % \
+                             (parameters.runDIR,parameters.protein)):
+            os.makedirs("%s/variantSimulations/%s/config" % \
+                        (parameters.runDIR,parameters.protein))
+        if not os.path.isfile(parameters.scaffParams):
+            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
+                      % (parameters.newScaff,parameters.runDIR,
+                         parameters.protein, parameters.scaffID))
+
+        else:
+            print "Scaff config for %s exists." % (parameters.scaffParams)
+            print "Select new scaffID or remove existing scaff config"
+            sys.exit()
+
+    if os.path.isfile(parameters.scaffParams):
+        #check if variant specified, otherwise perform clustering for all variants
+        if parameters.variant:
+            print "generating Scaffold for %s ONLY" % (parameters.variant)
+            variantList = (parameters.variant,)
+        else:
+            print "generating all Variant Scaffolds"
+            variantList = os.listdir(parameters.resultsDIR)
+
+## TODO include option to analyze trajectory clusters to determine rmsd threshold
+        for varSimResult in variantList:
+            parameters.variant = varSimResult
+            parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
+                                % (parameters.runDIR,parameters.protein,
+                                   parameters.protein,parameters.variant)
+            parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genScaffold.tcl" % \
+                                      (parameters.runDIR, parameters.protein,
+                                       parameters.protein, parameters.variant, parameters.scaffID)
+            parameters.trajAnalysisTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.analyzeTraj.tcl" % \
+                                          (parameters.runDIR, parameters.protein,
+                                           parameters.protein, parameters.variant, parameters.scaffID)
+            parameters.clusterTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genRepScaffold.tcl" % \
+                                          (parameters.runDIR, parameters.protein,
+                                           parameters.protein, parameters.variant, parameters.scaffID)
+            parameters.scaffBASE = "%s/variantSimulations/%s/results/%s/scaffold/%s.%s.%s" % \
+                                   (parameters.runDIR, parameters.protein,parameters.variant,
+                                    parameters.protein, parameters.variant, parameters.scaffID)
+
+
+            print "generating Scaffold for %s" % (parameters.variant)
+            #will not generate new TCL if previous scaffID log exists
+            scaffLOG = parameters.scaffBASE + ".log"
+            print scaffLOG
+            if not os.path.isfile(scaffLOG):
+                if not parameters.clustPDBtraj:
+                    genClusterTCL(parameters)
+                    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+                    os.system(vmdClustCommand)
+                else:
+                    parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genPDBtrajScaffold.tcl" % \
+                                              (parameters.runDIR, parameters.protein,
+                                               parameters.protein, parameters.variant, parameters.scaffID)
+                    genPDBclustTCL(parameters)
+                    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+                    os.system(vmdClustCommand)                    
+                if not parameters.singleRun:
+                    sortPDBclusters(parameters)
+                    genScaffoldTCL(parameters)
+                    vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
+                    os.system(vmdScaffCommand)
+                else:
+                    print "only calculating PDB trajectory from DCD"
+                    trajID = str(random.randint(1,1000))
+                    oldTrajName = parameters.scaffBASE + ".all.pdb"
+                    newTrajName = parameters.scaffBASE + ".run" + trajID + ".pdb"
+                    os.system("mv %s %s" % (oldTrajName, newTrajName))
+                    sys.exit()
+
+                
+            else:
+                print "%s exists. Remove to regenerate scaffold stats" % scaffLOG
+
+    else:
+        print "Scaffold Parameters %s does not exist" % (parameters.scaffParams)
+        print "Exiting"
 
 
     
