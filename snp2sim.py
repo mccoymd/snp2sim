@@ -93,6 +93,10 @@ def _parseCommandLine():
                         help="pdb trajectory files to import, list one after another",
                         action="store",
                         )
+    parser.add_argument("--cgcRun",
+                        help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
+                        action="store_true",
+                        )
 
     cmdlineparameters, unknownparams = parser.parse_known_args()
     parameters = copy.copy(cmdlineparameters)
@@ -688,6 +692,11 @@ if parameters.mode == "varMDsim":
             genSingleRunTCL(parameters)
             genPDBcommand = "%s -e %s" % (parameters.VMDpath, parameters.singleRunTCL)
             os.system(genPDBcommand)
+            if parameters.cgcRun:
+                CGCpdb = parameters.NAMDout + ".pdb"
+                CGClog = parameters.NAMDout + ".log"
+                os.system("mv %s %s" % (CGCpdb, parameters.runDIR))
+                os.system("mv %s %s" % (CGClog, parameters.runDIR))
             
         
     else:
