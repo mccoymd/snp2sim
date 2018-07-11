@@ -89,6 +89,10 @@ def _parseCommandLine():
                         help="cluster results from multiple varScafold singleRun",
                         action="store_true",
                         )
+    parser.add_argument("--loadPDBtraj", nargs='+',
+                        help="pdb trajectory files to import, list one after another",
+                        action="store",
+                        )
 
     cmdlineparameters, unknownparams = parser.parse_known_args()
     parameters = copy.copy(cmdlineparameters)
@@ -339,24 +343,22 @@ def genClusterTCL(parameters):
 
     clustTCL.write("package require pbctools\n")
     clustTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
-    if not parameters.singleRun:
-        clustTCL.write("set nf [molinfo top get numframes]\n")
-        clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
-        clustTCL.write("set refStruct [atomselect top all frame 0]\n")
-        clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
-        clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
-        clustTCL.write("  set curRes [atomselect top %s frame $i]\n" % alignmentRes)
-        clustTCL.write("  set M [measure fit $curRes $refRes]\n")
-        clustTCL.write("  $curStruct move $M\n")
-        clustTCL.write("}\n")
-        clustTCL.write("set output [open %s w]\n" % scaffLOG)
-
-        clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
-        clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
-        clustTCL.write("puts $output [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
-                       % rmsdThresh)
-    else:
-        clustTCL.write("puts $output \"Only generated summary PDB file\"\n")
+    clustTCL.write("set nf [molinfo top get numframes]\n")
+    clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
+    clustTCL.write("set refStruct [atomselect top all frame 0]\n")
+    clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
+    clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
+    clustTCL.write("  set curRes [atomselect top %s frame $i]\n" % alignmentRes)
+    clustTCL.write("  set M [measure fit $curRes $refRes]\n")
+    clustTCL.write("  $curStruct move $M\n")
+    clustTCL.write("}\n")
+    clustTCL.write("set output [open %s w]\n" % scaffLOG)
+    
+    clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
+    clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
+    clustTCL.write("puts $output [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
+                   % rmsdThresh)
+    clustTCL.write("puts $output \"Only generated summary PDB file\"\n")
     clustTCL.write("close $output\n")
     allPDBoutput = parameters.scaffBASE + ".all.pdb"
     clustTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
@@ -403,10 +405,21 @@ def genPDBclustTCL(parameters):
         return
 
     print "generating %s" % parameters.scaffoldTCL
+
+    binPath = "%s/variantSimulations/%s/bin/" % \
+                          (parameters.runDIR,parameters.protein)
+    if not os.path.exists(binPath):
+        os.makedirs(binPath)
+
+            
     clustTCL = open(parameters.scaffoldTCL,"w+")
-    for trajFile in os.listdir(scaffPath):
+    variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+    if not os.path.exists(variantDIR):
+        os.makedirs(variantDIR)
+        
+    for trajFile in os.listdir(variantDIR):
         if trajFile.endswith(".pdb"):
-            pdbFile = scaffPath + "/" + trajFile
+            pdbFile = variantDIR + "/" + trajFile
             clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 #    clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 #    variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
@@ -546,7 +559,9 @@ if parameters.protein:
         if not parameters.scaffID:
             print "no scaff ID - exiting"
             sys.exit()
-            
+
+
+        
     parameters.simTopology = ("%s/simParameters/top_all36_prot.rtf" % parameters.runDIR,
                               "%s/simParameters/toppar_water_ions_namd.str" % parameters.runDIR)
     parameters.simParameters = ("%s/simParameters/par_all36_prot.prm" % parameters.runDIR,
@@ -602,12 +617,25 @@ if parameters.protein:
     parameters.NAMDout = "%s/variantSimulations/%s/results/%s/trajectory/%s.%s.%s" \
                          % (parameters.runDIR, parameters.protein, parameters.variant,
                             parameters.protein, parameters.variant, parameters.simID)
-
     parameters.scaffParams = "%s/variantSimulations/%s/config/%s.scaff" \
                          % (parameters.runDIR, parameters.protein, parameters.scaffID)
     parameters.resultsDIR =  "%s/variantSimulations/%s/results" % \
                              (parameters.runDIR, parameters.protein)
-       
+    parameters.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
+                         % (parameters.runDIR, parameters.protein, parameters.variant)
+                            
+
+    if parameters.loadPDBtraj:
+        variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+        if not os.path.exists(variantDIR):
+            os.makedirs(variantDIR)
+
+        for pdbFile in parameters.loadPDBtraj:
+            pdbNewLoc = parameters.trajDIR + os.path.basename(pdbFile)
+            print pdbNewLoc
+            os.system("mv %s %s" % (pdbFile,pdbNewLoc))
+    
+
 else:
     print "no protein specified"
     sys.exit()
@@ -733,18 +761,18 @@ elif parameters.mode == "varScaffold":
                     genPDBclustTCL(parameters)
                     vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
                     os.system(vmdClustCommand)                    
-                if not parameters.singleRun:
-                    sortPDBclusters(parameters)
-                    genScaffoldTCL(parameters)
-                    vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
-                    os.system(vmdScaffCommand)
-                else:
-                    print "only calculating PDB trajectory from DCD"
-                    trajID = str(random.randint(1,1000))
-                    oldTrajName = parameters.scaffBASE + ".all.pdb"
-                    newTrajName = parameters.scaffBASE + ".run" + trajID + ".pdb"
-                    os.system("mv %s %s" % (oldTrajName, newTrajName))
-                    sys.exit()
+
+                sortPDBclusters(parameters)
+                genScaffoldTCL(parameters)
+                vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
+                os.system(vmdScaffCommand)
+#                else:
+#                    print "only calculating PDB trajectory from DCD"
+#                    trajID = str(random.randint(1,1000))
+#                    oldTrajName = parameters.scaffBASE + ".all.pdb"
+#                    newTrajName = parameters.scaffBASE + ".run" + trajID + ".pdb"
+#                    os.system("mv %s %s" % (oldTrajName, newTrajName))
+#                    sys.exit()
 
                 
             else:
