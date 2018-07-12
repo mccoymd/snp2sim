@@ -498,8 +498,10 @@ def sortPDBclusters(parameters):
             scaffFileName = parameters.scaffBASE + ".cluster" + str(scaffNum) + ".pdb"
             scaffFile = open(scaffFileName,"w+")
             scaffFile.write(pdbHeader)
-            for structID in indCluster: 
-                scaffFile.write(indPDB[int(structID)])
+            for structID in indCluster:
+                print structID
+                if structID:
+                    scaffFile.write(indPDB[int(structID)])
             scaffNum += 1 
 
     return
@@ -552,12 +554,12 @@ if parameters.protein:
         if not parameters.simID:
             parameters.simID = str(random.randint(1,1000))
 
-        if parameters.varResID and parameters.varAA:
-            parameters.variant = parameters.varResID + parameters.varAA
-        else:
-            print "varResID and varAA not specified"
-            print"Using WT structure for simulation"
-            parameters.variant = "wt"
+    if parameters.varResID and parameters.varAA:
+        parameters.variant = parameters.varResID + parameters.varAA
+    else:
+        print "varResID and varAA not specified"
+        print"Using WT structure for simulation"
+        parameters.variant = "wt"
 
     if parameters.mode == "varScaffold":
         if not parameters.scaffID:
@@ -637,7 +639,7 @@ if parameters.protein:
         for pdbFile in parameters.loadPDBtraj:
             pdbNewLoc = parameters.trajDIR + os.path.basename(pdbFile)
             print pdbNewLoc
-            os.system("mv %s %s" % (pdbFile,pdbNewLoc))
+            os.system("cp %s %s" % (pdbFile,pdbNewLoc))
     
 
 else:
@@ -698,8 +700,7 @@ if parameters.mode == "varMDsim":
                 cwd = os.getcwd()
                 os.system("mv %s %s" % (CGCpdb, cwd))
                 os.system("mv %s %s" % (CGClog, cwd))
-            
-        
+
     else:
         print "simulation length not specified"        
         sys.exit()
@@ -776,13 +777,13 @@ elif parameters.mode == "varScaffold":
                 genScaffoldTCL(parameters)
                 vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
                 os.system(vmdScaffCommand)
-#                else:
-#                    print "only calculating PDB trajectory from DCD"
-#                    trajID = str(random.randint(1,1000))
-#                    oldTrajName = parameters.scaffBASE + ".all.pdb"
-#                    newTrajName = parameters.scaffBASE + ".run" + trajID + ".pdb"
-#                    os.system("mv %s %s" % (oldTrajName, newTrajName))
-#                    sys.exit()
+
+                if parameters.cgcRun:
+                    cwd = os.getcwd()
+                    scaffPDB = parameters.scaffBASE + "*.scaffold.pdb"
+                    os.system("mv %s %s" % (scaffLOG, cwd))
+                    os.system("mv %s %s" % (scaffPDB, cwd))
+                    
 
                 
             else:
