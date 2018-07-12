@@ -695,8 +695,9 @@ if parameters.mode == "varMDsim":
             if parameters.cgcRun:
                 CGCpdb = parameters.NAMDout + ".pdb"
                 CGClog = parameters.NAMDout + ".log"
-                os.system("mv %s %s" % (CGCpdb, parameters.runDIR))
-                os.system("mv %s %s" % (CGClog, parameters.runDIR))
+                cwd = os.getcwd()
+                os.system("mv %s %s" % (CGCpdb, cwd))
+                os.system("mv %s %s" % (CGClog, cwd))
             
         
     else:
