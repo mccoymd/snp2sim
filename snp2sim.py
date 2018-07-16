@@ -35,6 +35,11 @@ def _parseCommandLine():
                         action="store",
                         type=str,
                         )
+    parser.add_argument("--bindingTemplate",
+                        help="path to PDB file used to create search space to align scaffold",
+                        action="store",
+                        type=str,
+                        )
     parser.add_argument("--newScaff",
                         help="path to scaffold config (search RMSD and # iterations, alignment aa, clusteraa",
                         action="store",
@@ -61,6 +66,11 @@ def _parseCommandLine():
                         action="store",
                         type=str,
                         )
+    parser.add_argument("--bindingID",
+                        help="name for autodock template config (search space and alignment res)",
+                        action="store",
+                        type=str,
+                        )
     parser.add_argument("--scaffID",
                         help="name of scaffolding parameters set",
                         action="store",
@@ -73,6 +83,21 @@ def _parseCommandLine():
                         )
     parser.add_argument("--NAMDpath",
                         help="path to NAMD executable",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--PYTHONSHpath",
+                        help="path to autodock tools python executable",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--ADTpath",
+                        help="path to autodock utilities directory",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--newBindingConfig",
+                        help="path to new binding config file",
                         action="store",
                         type=str,
                         )
@@ -97,6 +122,11 @@ def _parseCommandLine():
                         help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
                         action="store_true",
                         )
+    parser.add_argument("--bindSingleVar",
+                        help="only bind single variant scaffolds",
+                        action="store_true",
+                        )
+    
 
     cmdlineparameters, unknownparams = parser.parse_known_args()
     parameters = copy.copy(cmdlineparameters)
@@ -549,6 +579,12 @@ if parameters.protein:
         parameters.VMDpath = "vmd"
     if not parameters.NAMDpath:
         parameters.NAMDpath = "namd2"
+    if not parameters.PYTHONSHpath:
+       #make sure pythonsh (from AutoDockTools) has been added to path
+        parameters.PYTHONSHpath = "pythonsh"
+    if not parameters.ADTpath:
+        #must have path for "prepare_xxx.py" scripts from autodock tools
+        parameters.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
         
     if parameters.mode == "varMDsim":
         if not parameters.simID:
@@ -629,7 +665,11 @@ if parameters.protein:
                              (parameters.runDIR, parameters.protein)
     parameters.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
                          % (parameters.runDIR, parameters.protein, parameters.variant)
-                            
+
+    if parameters.bindingID:
+        parameters.drugBindConfig = "%s/variantSimulations/%s/config/%s.autodock" \
+                                    % (parameters.runDIR, parameters.protein, parameters.bindingID)
+    
 
     if parameters.loadPDBtraj:
         variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
@@ -796,9 +836,82 @@ elif parameters.mode == "varScaffold":
 
     
 elif parameters.mode == "drugSearch":
-    #check for mode parameters
-    #check for mode parameters
     print "Performing drugSearch"
+    if parameters.newBindingConfig:
+        if not os.path.isfile(parameters.drugBindConfig):            
+            print "using new config %s" % parameters.newBindingConfig
+            configDIR = "%s/variantSimulations/%s/config" % \
+                        (parameters.runDIR,parameters.protein)
+            if not os.path.isdir(configDIR):
+                os.makedirs(configDIR)
+                
+            os.system("cp %s %s/%s.autodock" % (parameters.newBindingConfig, configDIR,
+                                                parameters.bindingID))
+        else:
+            print "%s already exists - remove or choose new bindingID" % parameters.drugBindConfig
+            sys.exit()
+
+    if parameters.bindingID:
+        print "using search space defined in %s" % parameters.drugBindConfig
+
+        if parameters.bindSingleVar:
+            bindingVar = [parameters.variant,]
+        else:
+            bindingVar = os.listdir(parameters.resultsDIR)
+
+        if not os.path.isfile(parameters.templatePDB):
+            if parameters.bindingTemplate:
+                if not os.path.isdir("%s/variantSimulations/%s/structures/" %\
+                                 (parameters.runDIR,parameters.protein)):
+                    os.makedirs("%s/variantSimulations/%s/structures" % \
+                                (parameters.runDIR,parameters.protein))
+                os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
+                          % (parameters.bindingTemplate, parameters.runDIR,
+                             parameters.protein, parameters.protein))
+            else:
+                print "specify binding template"
+                sys.exit()
+
+            
+            
+        for var in bindingVar:
+            #regenerate pdbqt for all scaffold.pdb files
+            print "binding to variant %s" % var
+            os.system("rm %s/%s/scaffold/*pdbqt" % (parameters.resultsDIR, var))
+            for scaffPDB in os.listdir("%s/%s/scaffold/" % (parameters.resultsDIR, var)):
+                if scaffPDB.endswith("scaffold.pdb"):
+                    print scaffPDB
+
+            
+    # - - align to reference pdb
+    # - - create pdbqt from file
+    # - - create flex/rigid pdbqt from pdbqt
+    # - Check for proper flex/rigid files for given
+    # - - if single run, set variable as file path
+    # - - else set variable as multiple file paths
+
+                    
+    else:
+        print "specify bindingID"
+        sys.exit()
+        
+
+    #import new scaffolds - need config defining flex residues
+    # - if new pdbqt
+
+
+    #import new drugs
+    # - if new pdbqt
+    # - - create pdbqt from file
+    # - Check for drug pdbqt from parameter name
+    # - - if single run, set variable as file path
+    # - - else set variable as multiple file paths
+    
+    #for each scaffold
+    # - for each drug
+    # - - bind drug to single scaffold
+    # - - - build config - need search space 
+    
     
 elif parameters.mode == "varAnalysis":
     #check for mode parameters
