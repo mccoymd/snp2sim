@@ -869,21 +869,21 @@ elif parameters.mode == "varScaffold":
     print "Performing varScaffold"
 
     
-    
-    if parameters.newScaff:
-        if not os.path.isdir("%s/variantSimulations/%s/config" % \
-                             (parameters.runDIR,parameters.protein)):
-            os.makedirs("%s/variantSimulations/%s/config" % \
-                        (parameters.runDIR,parameters.protein))
-        if not os.path.isfile(parameters.scaffParams):
-            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
-                      % (parameters.newScaff,parameters.runDIR,
-                         parameters.protein, parameters.scaffID))
-
-        else:
-            print "Scaff config for %s exists." % (parameters.scaffParams)
-            print "Select new scaffID or remove existing scaff config"
-            sys.exit()
+#moved to start    
+#    if parameters.newScaff:
+#        if not os.path.isdir("%s/variantSimulations/%s/config" % \
+#                             (parameters.runDIR,parameters.protein)):
+#            os.makedirs("%s/variantSimulations/%s/config" % \
+#                        (parameters.runDIR,parameters.protein))
+#        if not os.path.isfile(parameters.scaffParams):
+#            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
+#                      % (parameters.newScaff,parameters.runDIR,
+#                         parameters.protein, parameters.scaffID))
+#
+#        else:
+#            print "Scaff config for %s exists." % (parameters.scaffParams)
+#            print "Select new scaffID or remove existing scaff config"
+#            sys.exit()
 
     if os.path.isfile(parameters.scaffParams):
         #check if variant specified, otherwise perform clustering for all variants
@@ -1004,6 +1004,24 @@ elif parameters.mode == "drugSearch":
             print pdbNewLoc
             os.system("cp %s %s" % (pdbFile,pdbNewLoc))
 
+    if not parameters.drugLibrary:
+        if parameters.singleDrug:
+            #todo - add single drug binding
+            print "binding single drug not configured"
+            sys.exit()
+        else:
+            print "no drug specified"
+            sys.exit()
+    else:
+        parameters.drugLibPath = "%s/drugLibraries/%s" % \
+                                 (parameters.runDIR, parameters.drugLibrary)
+        if not os.path.isdir(parameters.drugLibPath):
+            print "drug library does not exist"
+            sys.exit()
+        else:
+            print "using small molecules in %s" % parameters.drugLibPath
+                            
+
             
     if parameters.bindingID:
         print "using search space defined in %s" % parameters.drugBindConfig
@@ -1062,19 +1080,9 @@ elif parameters.mode == "drugSearch":
                         os.system(prepFlexScaff)
 
                         
-                    if not parameters.drugLibrary:
-                        if parameters.singleDrug:
-                            #todo - add single drug binding
-                            print "binding single drug"
-                        else:
-                            print "no drug specified"
-                            sys.exit()
-                    else:
-                        #check if library exists
-                        
                         #generate config for each drug
                             
-                    genVinaConfig(parameters)
+                    #genVinaConfig(parameters)
                         
 
             
