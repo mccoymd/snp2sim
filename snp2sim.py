@@ -101,6 +101,22 @@ def _parseCommandLine():
                         action="store",
                         type=str,
                         )
+    parser.add_argument("--flexBinding",
+                        help="path to file with flex residue numbers",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--drugLibrary",
+                        help="name of snp2sim drug library",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--singleDrug",
+                        help="path to single drug PDBQT",
+                        action="store",
+                        type=str,
+                        )
+
     parser.add_argument("--simProc",
                         help="number of processors to run simulation",
                         action="store",
@@ -116,6 +132,10 @@ def _parseCommandLine():
                         )
     parser.add_argument("--loadPDBtraj", nargs='+',
                         help="pdb trajectory files to import, list one after another",
+                        action="store",
+                        )
+    parser.add_argument("--inputScaff", nargs='+',
+                        help="pdb scaffold files to import, list one after another",
                         action="store",
                         )
     parser.add_argument("--cgcRun",
@@ -554,12 +574,93 @@ def genScaffoldTCL(parameters):
                 pdbScaffFile = pdbClustFile
                 pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
                 genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
-                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
+#                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
+                genScaff.write("set domain [atomselect top all]\n")
                 genScaff.write("set avePos [measure avpos $domain]\n")
                 genScaff.write("$domain set {x y z} $avePos\n")
                 genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
                 
     genScaff.write("quit\n")
+    return
+
+def parseADconfig(parameters):
+    paramFile = "%s/variantSimulations/%s/config/%s.autodock" % \
+                        (parameters.runDIR,parameters.protein,parameters.bindingID)
+    autodockParams = open(paramFile, "r")
+    paramData = autodockParams.readlines()
+    parameters.ADsearchSpace = [paramData.pop(0).rstrip(),
+                                paramData.pop(0).rstrip(),
+                                paramData.pop(0).rstrip(),
+                                paramData.pop(0).rstrip(),
+                                paramData.pop(0).rstrip(),
+                                paramData.pop(0).rstrip()]
+    return(parameters)
+
+def parseFlexConfig(parameters):
+    #TODO input from config folder
+    parameters.flexRes = paramData.pop(0)
+    parameters.flexRes = parameters.flexRes.rstrip()
+    parameters.flexRes = parameters.flexRes.split(" ")
+
+    return(parameters)
+
+def getFlexRes(pdbFile,flexRes):
+    flexConfig = open(flexRes, "r").readlines()
+    flexRes = flexConfig.pop(0)
+    flexRes = flexRes.rstrip()
+    flexRes = flexRes.split(" ")
+    
+    
+    currScaff = open(pdbFile,"r").readlines()
+    currScaff.pop(0)
+    flexRes = [int(x) for x in flexRes]
+    flexRes.sort()
+    flexResNum = flexRes.pop(0)
+    flexResID = ""
+    for line in currScaff:
+        resNum = line[22:26]
+        if len(resNum) > 1:
+            resNum = int(resNum)
+        if flexResNum == resNum:
+#            print resNum
+            resName = line[17:20]
+            flexResID = "%s_%s%s" % (flexResID,resName,str(flexResNum))
+            if len(flexRes) > 0:
+
+                flexResNum = flexRes.pop(0)
+            else:
+                flexResNum = 0
+    return(flexResID[1:])
+
+def alignScaff(parameters, currScaff):
+    if parameters.scaffID:
+        scaffParameters = open(parameters.scaffParams,"r")
+    else:
+        print "no scaff params specified"
+        sys.exit()
+        
+    scaffLines = scaffParameters.readlines()
+
+    clusterRes = scaffLines[1]
+    clusterRes = clusterRes.rstrip()
+    clusterRes = clusterRes.replace("clusterRes ","")
+    
+    alignmentConfig = "%s/variantSimulations/%s/bin/%s.%s.alignStuct.TCL" \
+                            % (parameters.runDIR, parameters.protein,
+                               parameters.protein, parameters.variant)
+    alignmentTCL = open(alignmentConfig, "w+")
+    alignmentTCL.write("mol new %s\n" % parameters.templatePDB)
+    alignmentTCL.write("set ref [atomselect top %s]\n" % clusterRes)
+    alignmentTCL.write("mol new %s\n" % currScaff)
+    alignmentTCL.write("set target [atomselect top %s]\n" % clusterRes)
+    alignmentTCL.write("set allP [atomselect top all]\n")
+    alignmentTCL.write("set M [measure fit $target $ref]\n")
+    alignmentTCL.write("$allP move $M\n")
+    alignmentTCL.write("$allP writepdb %s\n" % currScaff)
+    alignmentTCL.write("quit\n")
+    alignmentTCL.close()
+    alignmentCommand = "%s -e %s" % (parameters.VMDpath, alignmentConfig)
+    os.system(alignmentCommand)
     return
 
 #### start of program move to main()
@@ -681,7 +782,24 @@ if parameters.protein:
             print pdbNewLoc
             os.system("cp %s %s" % (pdbFile,pdbNewLoc))
     
+    if parameters.newScaff:
+        if not os.path.isdir("%s/variantSimulations/%s/config" % \
+                             (parameters.runDIR,parameters.protein)):
+            os.makedirs("%s/variantSimulations/%s/config" % \
+                        (parameters.runDIR,parameters.protein))
+        if not os.path.isfile(parameters.scaffParams):
+            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
+                      % (parameters.newScaff,parameters.runDIR,
+                         parameters.protein, parameters.scaffID))
 
+        else:
+            print "Scaff config for %s exists." % (parameters.scaffParams)
+            print "Select new scaffID or remove existing scaff config"
+            sys.exit()
+
+
+
+            
 else:
     print "no protein specified"
     sys.exit()
@@ -851,13 +969,45 @@ elif parameters.mode == "drugSearch":
             print "%s already exists - remove or choose new bindingID" % parameters.drugBindConfig
             sys.exit()
 
+
+    parameters.flexConfig = "%s/variantSimulations/%s/config/%s.flex" % \
+                            (parameters.runDIR,parameters.protein,parameters.bindingID)
+
+    if parameters.flexBinding:
+        if not os.path.isdir("%s/variantSimulations/%s/config" % \
+                             (parameters.runDIR,parameters.protein)):
+            os.makedirs("%s/variantSimulations/%s/config" % \
+                        (parameters.runDIR,parameters.protein))
+            
+        
+        if not os.path.isfile(parameters.flexConfig):
+            os.system("cp %s %s" \
+                      % (parameters.flexBinding, parameters.flexConfig))
+        else:
+            print "%s already exists - remove or choose new bindingID" % parameters.flexConfig
+            sys.exit()
+
+
+
+            
+    #TODO input custom drug librarys 
+
+    if parameters.inputScaff:
+        print "using input scaffolds"
+        variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+        if not os.path.exists(variantDIR):
+            os.makedirs(variantDIR)
+
+        for pdbFile in parameters.inputScaff:
+            pdbNewLoc = parameters.trajDIR + os.path.basename(pdbFile)
+            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
+            print pdbNewLoc
+            os.system("cp %s %s" % (pdbFile,pdbNewLoc))
+
+            
     if parameters.bindingID:
         print "using search space defined in %s" % parameters.drugBindConfig
 
-        if parameters.bindSingleVar:
-            bindingVar = [parameters.variant,]
-        else:
-            bindingVar = os.listdir(parameters.resultsDIR)
 
         if not os.path.isfile(parameters.templatePDB):
             if parameters.bindingTemplate:
@@ -872,15 +1022,60 @@ elif parameters.mode == "drugSearch":
                 print "specify binding template"
                 sys.exit()
 
-            
+       
+                
+        if parameters.bindSingleVar:
+            bindingVar = [parameters.variant,]
+        else:
+            bindingVar = os.listdir(parameters.resultsDIR)
             
         for var in bindingVar:
             #regenerate pdbqt for all scaffold.pdb files
             print "binding to variant %s" % var
-            os.system("rm %s/%s/scaffold/*pdbqt" % (parameters.resultsDIR, var))
-            for scaffPDB in os.listdir("%s/%s/scaffold/" % (parameters.resultsDIR, var)):
+            #todo check if pdbqt exist already
+            scaffDIR = "%s/%s/scaffold/" % (parameters.resultsDIR, var)
+            for scaffPDB in os.listdir(scaffDIR):
                 if scaffPDB.endswith("scaffold.pdb"):
                     print scaffPDB
+                    currScaffPath = scaffDIR + scaffPDB
+                    #align scaff to template
+                    alignScaff(parameters,currScaffPath)
+
+                    scaff1out = os.path.splitext(currScaffPath)[0] + ".pdbqt"
+                    prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
+                                 % (parameters.PYTHONSHpath, parameters.ADTpath,
+                                    currScaffPath,scaff1out)
+                    os.system(prepBaseScaff)
+
+                    if os.path.isfile(parameters.flexConfig):
+                        print "Found Flex Config: performing flexable residue binding"
+                        
+                        scaffFlexRes = getFlexRes(currScaffPath,parameters.flexConfig)
+                        print scaffFlexRes
+                        parameters.scaffFlex = os.path.splitext(currScaffPath)[0] + ".flex.pdbqt"
+                        parameters.scaffRigid = os.path.splitext(currScaffPath)[0] + ".rigid.pdbqt"
+                        prepFlexScaff = "%s %s/prepare_flexreceptor4.py -r %s -s %s -g %s -x %s" \
+                                     % (parameters.PYTHONSHpath, parameters.ADTpath,
+                                        scaff1out, scaffFlexRes,
+                                        parameters.scaffRigid, parameters.scaffFlex)
+                        print prepFlexScaff
+                        os.system(prepFlexScaff)
+
+                        
+                    if not parameters.drugLibrary:
+                        if parameters.singleDrug:
+                            #todo - add single drug binding
+                            print "binding single drug"
+                        else:
+                            print "no drug specified"
+                            sys.exit()
+                    else:
+                        #check if library exists
+                        
+                        #generate config for each drug
+                            
+                    genVinaConfig(parameters)
+                        
 
             
     # - - align to reference pdb
