@@ -799,6 +799,10 @@ if parameters.protein:
     parameters.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
                          % (parameters.runDIR, parameters.protein, parameters.variant)
 
+    #hardcoding bindingID as drugLibrary
+    #TODO - refactor to remove "bindingID"
+    parameters.bindingID = parameters.drugLibrary
+    
     if parameters.bindingID:
         parameters.drugBindConfig = "%s/variantSimulations/%s/config/%s.autodock" \
                                     % (parameters.runDIR, parameters.protein, parameters.bindingID)
