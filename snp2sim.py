@@ -683,7 +683,7 @@ def genVinaConfig(parameters):
         vinaConfig.write("receptor = %s\n" % parameters.scaff1out)
     else:
         vinaConfig.write("receptor = %s\n" % parameters.scaffRigid)
-    vinaConfig.write("flex = %s\n" % parameters.scaffFlex)
+        vinaConfig.write("flex = %s\n" % parameters.scaffFlex)
     vinaConfig.write("ligand = %s\n" % parameters.currDrugPath)
     vinaConfig.write("out = %s/%s.pdbqt\n" % (parameters.vinaOutDir, parameters.vinaBase))
     vinaConfig.write("log = %s/%s.log\n" % (parameters.vinaOutDir, parameters.vinaBase))
