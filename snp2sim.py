@@ -64,7 +64,7 @@ def _parseCommandLine():
     parser.add_argument("--vinaExh",
                         help="exhaustiveness parameter of autodock vina",
                         action="store",
-                        default="30",
+                        default="50",
                         type=str,
                         )
     parser.add_argument("--clustThresh",
@@ -1114,7 +1114,8 @@ elif parameters.mode == "drugSearch":
                     scaffBase = os.path.splitext(scaffBase)[0]
 
                     parameters.scaff1out = scaffBase + ".pdbqt"
-                    prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
+                    #prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
+                    prepBaseScaff =  "%s %s/prepare_receptor4.py -r %s -o %s" \
                                  % (parameters.PYTHONSHpath, parameters.ADTpath,
                                     currScaffPath,parameters.scaff1out)
                     os.system(prepBaseScaff)
