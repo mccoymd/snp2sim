@@ -1039,9 +1039,9 @@ elif parameters.mode == "drugSearch":
     if parameters.inputScaff:
         print "using input scaffolds"
         variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
-        if not os.path.exists(variantDIR):
-            os.makedirs(variantDIR)
-
+        #if not os.path.exists(variantDIR):
+        #    os.makedirs(variantDIR)
+        os.makedirs(variantDIR)
         inputCount = 1
         for pdbFile in parameters.inputScaff:
 #            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
