@@ -61,6 +61,18 @@ def _parseCommandLine():
                         action="store",
                         type=str,
                         )
+    parser.add_argument("--vinaExh",
+                        help="exhaustiveness parameter of autodock vina",
+                        action="store",
+                        default="30",
+                        type=str,
+                        )
+    parser.add_argument("--clustThresh",
+                        help="exhaustiveness parameter of autodock vina",
+                        action="store",
+                        default="0.09",
+                        type=float,
+                        )
     parser.add_argument("--simID",
                         help="amino acid to change",
                         action="store",
@@ -78,6 +90,11 @@ def _parseCommandLine():
                         )
     parser.add_argument("--VMDpath",
                         help="path to VMD executable",
+                        action="store",
+                        type=str,
+                        )
+    parser.add_argument("--VINApath",
+                        help="path to AutoDock Vina executable",
                         action="store",
                         type=str,
                         )
@@ -475,16 +492,6 @@ def genPDBclustTCL(parameters):
         if trajFile.endswith(".pdb"):
             pdbFile = variantDIR + "/" + trajFile
             clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
-#    clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
-#    variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
-#    print "using DCD files in %s" % variantDIR
-#    for tFile in os.listdir(variantDIR):
-#        if tFile.endswith(".dcd"):
-#            dcdFile = variantDIR + tFile
-#            clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
-
-#    clustTCL.write("package require pbctools\n")
-#    clustTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
     clustTCL.write("set nf [molinfo top get numframes]\n")
     clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
     clustTCL.write("set refStruct [atomselect top all frame 0]\n")
@@ -544,7 +551,7 @@ def sortPDBclusters(parameters):
     scaffNum = 1;
     for indCluster in clusterMembership:
         indCluster = indCluster.split(" ")
-        if len(indCluster) > 0.1*len(indPDB):
+        if len(indCluster) > parameters.clustThresh*len(indPDB):
             scaffFileName = parameters.scaffBASE + ".cluster" + str(scaffNum) + ".pdb"
             scaffFile = open(scaffFileName,"w+")
             scaffFile.write(pdbHeader)
@@ -558,6 +565,7 @@ def sortPDBclusters(parameters):
 
 
 def genScaffoldTCL(parameters):
+    
     scaffParameters = open(parameters.scaffParams,"r")
     scaffLines = scaffParameters.readlines()
 
@@ -644,6 +652,12 @@ def alignScaff(parameters, currScaff):
     clusterRes = scaffLines[1]
     clusterRes = clusterRes.rstrip()
     clusterRes = clusterRes.replace("clusterRes ","")
+
+    if not os.path.isdir("%s/variantSimulations/%s/bin/" \
+                         % (parameters.runDIR, parameters.protein)):
+        os.makedirs("%s/variantSimulations/%s/bin/" \
+                     % (parameters.runDIR, parameters.protein))
+
     
     alignmentConfig = "%s/variantSimulations/%s/bin/%s.%s.alignStuct.TCL" \
                             % (parameters.runDIR, parameters.protein,
@@ -661,6 +675,22 @@ def alignScaff(parameters, currScaff):
     alignmentTCL.close()
     alignmentCommand = "%s -e %s" % (parameters.VMDpath, alignmentConfig)
     os.system(alignmentCommand)
+    return
+
+def genVinaConfig(parameters):
+    vinaConfig = open(parameters.vinaConfig,"w+")
+    if not os.path.isfile(parameters.flexConfig):
+        vinaConfig.write("receptor = %s\n" % parameters.scaff1out)
+    else:
+        vinaConfig.write("receptor = %s\n" % parameters.scaffRigid)
+    vinaConfig.write("flex = %s\n" % parameters.scaffFlex)
+    vinaConfig.write("ligand = %s\n" % parameters.currDrugPath)
+    vinaConfig.write("out = %s/%s.pdbqt\n" % (parameters.vinaOutDir, parameters.vinaBase))
+    vinaConfig.write("log = %s/%s.log\n" % (parameters.vinaOutDir, parameters.vinaBase))
+    vinaConfig.write("exhaustiveness = %s\n" % parameters.vinaExh)
+    for searchParam in parameters.ADsearchSpace:
+        vinaConfig.write("%s\n" % searchParam)
+
     return
 
 #### start of program move to main()
@@ -686,6 +716,8 @@ if parameters.protein:
     if not parameters.ADTpath:
         #must have path for "prepare_xxx.py" scripts from autodock tools
         parameters.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
+    if not parameters.VINApath:
+        parameters.VINApath = "vina"
         
     if parameters.mode == "varMDsim":
         if not parameters.simID:
@@ -969,7 +1001,20 @@ elif parameters.mode == "drugSearch":
             print "%s already exists - remove or choose new bindingID" % parameters.drugBindConfig
             sys.exit()
 
+    if os.path.isfile(parameters.drugBindConfig):
+        parseADconfig(parameters)
+    else:
+        print "%s does not exist" % parameters.drugBindConfig
+        sys.exit()
 
+    parameters.vinaOutDir = "%s/variantSimulations/%s/results/%s/drugBinding/" % \
+                            (parameters.runDIR,
+                             parameters.protein,
+                             parameters.variant)
+    if not os.path.isdir(parameters.vinaOutDir):
+        os.makedirs(parameters.vinaOutDir)
+
+        
     parameters.flexConfig = "%s/variantSimulations/%s/config/%s.flex" % \
                             (parameters.runDIR,parameters.protein,parameters.bindingID)
 
@@ -987,23 +1032,24 @@ elif parameters.mode == "drugSearch":
             print "%s already exists - remove or choose new bindingID" % parameters.flexConfig
             sys.exit()
 
-
-
-            
-    #TODO input custom drug librarys 
-
     if parameters.inputScaff:
         print "using input scaffolds"
-        variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+        variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
         if not os.path.exists(variantDIR):
             os.makedirs(variantDIR)
 
+        inputCount = 1
         for pdbFile in parameters.inputScaff:
-            pdbNewLoc = parameters.trajDIR + os.path.basename(pdbFile)
-            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
-            print pdbNewLoc
+#            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
+#            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
+            inputID = "input%s" % str(inputCount)
+            pdbNewLoc = "%s/%s.%s.%s.scaffold.pdb" % (variantDIR, parameters.protein,
+                                                      parameters.variant, inputID)
+            inputCount += 1
+#            print pdbNewLoc
             os.system("cp %s %s" % (pdbFile,pdbNewLoc))
 
+    #TODO input custom drug librarys 
     if not parameters.drugLibrary:
         if parameters.singleDrug:
             #todo - add single drug binding
@@ -1013,13 +1059,15 @@ elif parameters.mode == "drugSearch":
             print "no drug specified"
             sys.exit()
     else:
-        parameters.drugLibPath = "%s/drugLibraries/%s" % \
+        parameters.drugLibPath = "%s/drugLibraries/%s/" % \
                                  (parameters.runDIR, parameters.drugLibrary)
         if not os.path.isdir(parameters.drugLibPath):
             print "drug library does not exist"
             sys.exit()
         else:
             print "using small molecules in %s" % parameters.drugLibPath
+
+            
                             
 
             
@@ -1058,11 +1106,13 @@ elif parameters.mode == "drugSearch":
                     currScaffPath = scaffDIR + scaffPDB
                     #align scaff to template
                     alignScaff(parameters,currScaffPath)
+                    scaffBase = scaffDIR + os.path.splitext(scaffPDB)[0]
+                    scaffBase = os.path.splitext(scaffBase)[0]
 
-                    scaff1out = os.path.splitext(currScaffPath)[0] + ".pdbqt"
+                    parameters.scaff1out = scaffBase + ".pdbqt"
                     prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
                                  % (parameters.PYTHONSHpath, parameters.ADTpath,
-                                    currScaffPath,scaff1out)
+                                    currScaffPath,parameters.scaff1out)
                     os.system(prepBaseScaff)
 
                     if os.path.isfile(parameters.flexConfig):
@@ -1070,20 +1120,37 @@ elif parameters.mode == "drugSearch":
                         
                         scaffFlexRes = getFlexRes(currScaffPath,parameters.flexConfig)
                         print scaffFlexRes
-                        parameters.scaffFlex = os.path.splitext(currScaffPath)[0] + ".flex.pdbqt"
-                        parameters.scaffRigid = os.path.splitext(currScaffPath)[0] + ".rigid.pdbqt"
+                        parameters.scaffFlex = scaffBase + ".flex.pdbqt"
+                        parameters.scaffRigid = scaffBase + ".rigid.pdbqt"
                         prepFlexScaff = "%s %s/prepare_flexreceptor4.py -r %s -s %s -g %s -x %s" \
                                      % (parameters.PYTHONSHpath, parameters.ADTpath,
-                                        scaff1out, scaffFlexRes,
+                                        parameters.scaff1out, scaffFlexRes,
                                         parameters.scaffRigid, parameters.scaffFlex)
                         print prepFlexScaff
                         os.system(prepFlexScaff)
 
+                    for dFile in os.listdir(parameters.drugLibPath):
+                        if dFile.endswith(".pdbqt"):
+                            parameters.currDrugPath = parameters.drugLibPath + dFile
+                            parameters.drugBase = os.path.splitext(dFile)[0]
+                            parameters.vinaBase = os.path.basename("%s.%s.%s" % \
+                                                                   (scaffBase,parameters.bindingID,
+                                                                    parameters.drugBase))
+                            parameters.vinaConfig = "%s/variantSimulations/%s/config/%s.vina" % \
+                                                    (parameters.runDIR,
+                                                     parameters.protein,
+                                                     parameters.vinaBase)
+
+                            genVinaConfig(parameters)
+                            vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+                            os.system(vinaCommand)
                         
-                        #generate config for each drug
-                            
-                    #genVinaConfig(parameters)
-                        
+                    if parameters.cgcRun:
+                        cwd = os.getcwd()
+                        vinaOUT = parameters.vinaOutDir + "*.pdbqt"
+                        vinaLOG = parameters.vinaOutDir + "*.log"
+                        os.system("cp %s %s" % (vinaLOG, cwd))
+                        os.system("cp %s %s" % (vinaOUT, cwd))
 
             
     # - - align to reference pdb
