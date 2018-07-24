@@ -6,6 +6,8 @@ import argparse
 import copy
 import random
 import multiprocessing
+import mdtraj as md
+import numpy as np
 
 def _parseCommandLine():
 
@@ -556,7 +558,7 @@ def sortPDBclusters(parameters):
             scaffFile = open(scaffFileName,"w+")
             scaffFile.write(pdbHeader)
             for structID in indCluster:
-                print structID
+#                print structID
                 if structID:
                     scaffFile.write(indPDB[int(structID)])
             scaffNum += 1 
@@ -589,6 +591,44 @@ def genScaffoldTCL(parameters):
                 genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
                 
     genScaff.write("quit\n")
+    return
+
+def genScaffoldMDTRAJ(parameters):
+    
+    scaffParameters = open(parameters.scaffParams,"r")
+    scaffLines = scaffParameters.readlines()
+
+    alignmentRes = scaffLines[0]
+    alignmentRes = alignmentRes.rstrip()
+    alignmentRes = alignmentRes.replace("alignmentRes ","")
+
+    scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
+    genScaff = open(parameters.clusterTCL, "w+")
+    for tFile in os.listdir(scaffDIR):
+        if tFile.endswith(".pdb"):
+            if "cluster" in tFile:
+                pdbClustFile = scaffDIR + tFile
+                pdbScaffFile = pdbClustFile
+                pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
+                traj = md.load(pdbClustFile)
+                atom_indices = [a.index for a in traj.topology.atoms if a.element.symbol != 'H']
+                distances = np.empty((traj.n_frames, traj.n_frames))
+                for i in range(traj.n_frames):
+                    distances[i] = md.rmsd(traj, traj, i, atom_indices = atom_indices)
+
+                beta = 1
+                index = np.exp(-beta*distances / distances.std()).sum(axis=1).argmax()
+                centroid = traj[index]
+                centroid.save(pdbScaffFile)
+                
+#                genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
+#                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
+#                genScaff.write("set domain [atomselect top all]\n")
+#                genScaff.write("set avePos [measure avpos $domain]\n")
+#                genScaff.write("$domain set {x y z} $avePos\n")
+#                genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
+#                
+#    genScaff.write("quit\n")
     return
 
 def parseADconfig(parameters):
@@ -968,9 +1008,11 @@ elif parameters.mode == "varScaffold":
                     os.system(vmdClustCommand)                    
 
                 sortPDBclusters(parameters)
-                genScaffoldTCL(parameters)
-                vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
-                os.system(vmdScaffCommand)
+                #old (wrong) way to gen rep structure
+                #genScaffoldTCL(parameters)
+                #vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
+                #os.system(vmdScaffCommand)
+                genScaffoldMDTRAJ(parameters)
 
                 if parameters.cgcRun:
                     cwd = os.getcwd()
