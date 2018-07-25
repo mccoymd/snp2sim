@@ -617,8 +617,8 @@ def genScaffoldMDTRAJ(parameters):
                 #memory optimized
                 maxSimScore = 0
                 maxSimStruct = traj[0]
-                for i in range(traj.n_frames):
-                    #print i
+                for i in random.sample(range(traj.n_frames),int(traj.n_frames/10)):
+                    print i
                     distances = md.rmsd(traj,traj,i,atom_indices = atom_indices)
                     simScore = np.exp(-distances).sum()
                     #print str(i) +" "+ str(simScore)
