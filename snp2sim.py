@@ -9,179 +9,162 @@ import multiprocessing
 import mdtraj as md
 import numpy as np
 
-def _parseCommandLine():
+class argParse():
+    def __init__(self):
+        self.requiredArgs = ['protein', 'mode']
+        self.args = yaml.load(open('config.yaml'))
+        self.__dict__.update(self.args)
+    def checkRequiredArgs(self):
+        for arg in self.requiredArgs:
+            assert getattr(self, arg), arg + " not specified! " + arg + " is required."
+    def setDefault(self):
+        ### Hardcoded Parameters
 
-    parser = argparse.ArgumentParser(
-        version="0.1",
-        description="snp2sim - Molecular Simulation of Somatic Variation",
-        epilog="written by Matthew McCoy, mdm299@georgetown.edu"
-    )
+        #parameters.runDIR = os.getcwd()
+        self.runDIR = os.path.abspath(__file__)
+        self.runDIR = os.path.dirname(self.runDIR)
+        print(self.runDIR)
 
-    parser.add_argument("--mode",
-                        help="varMDsim, varScaffold, drugSearch, or varAnalysis",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--protein",
-                        help="name of protein system",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--variant",
-                        help="variant as \"wt\" or \"x###x\"",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--newStruct",
-                        help="path to cleaned PDB file (protein structure w/ cannonical aa)",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--bindingTemplate",
-                        help="path to PDB file used to create search space to align scaffold",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--newScaff",
-                        help="path to scaffold config (search RMSD and # iterations, alignment aa, clusteraa",
-                        action="store",
-                        type=str,
-                        )
-    
-    parser.add_argument("--simLength",
-                        help="varTraj simulation length in ns",
-                        action="store",
-                        type=float,
-                        )
-    parser.add_argument("--varResID",
-                        help="variant residue ID from PDB template",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--varAA",
-                        help="amino acid to change",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--vinaExh",
-                        help="exhaustiveness parameter of autodock vina",
-                        action="store",
-                        default="50",
-                        type=str,
-                        )
-    parser.add_argument("--clustThresh",
-                        help="exhaustiveness parameter of autodock vina",
-                        action="store",
-                        default="0.09",
-                        type=float,
-                        )
-    parser.add_argument("--simID",
-                        help="amino acid to change",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--bindingID",
-                        help="name for autodock template config (search space and alignment res)",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--scaffID",
-                        help="name of scaffolding parameters set",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--VMDpath",
-                        help="path to VMD executable",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--VINApath",
-                        help="path to AutoDock Vina executable",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--NAMDpath",
-                        help="path to NAMD executable",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--PYTHONSHpath",
-                        help="path to autodock tools python executable",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--ADTpath",
-                        help="path to autodock utilities directory",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--newBindingConfig",
-                        help="path to new binding config file",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--flexBinding",
-                        help="path to file with flex residue numbers",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--drugLibrary",
-                        help="name of snp2sim drug library",
-                        action="store",
-                        type=str,
-                        )
-    parser.add_argument("--singleDrug",
-                        help="path to single drug PDBQT",
-                        action="store",
-                        type=str,
-                        )
+        print(self.protein)
 
-    parser.add_argument("--simProc",
-                        help="number of processors to run simulation",
-                        action="store",
-                        type=int,
-                        )
-    parser.add_argument("--singleRun",
-                        help="output summary PDB trajectory only",
-                        action="store_true",
-                        )
-    parser.add_argument("--clustPDBtraj",
-                        help="cluster results from multiple varScafold singleRun",
-                        action="store_true",
-                        )
-    parser.add_argument("--loadPDBtraj", nargs='+',
-                        help="pdb trajectory files to import, list one after another",
-                        action="store",
-                        )
-    parser.add_argument("--inputScaff", nargs='+',
-                        help="pdb scaffold files to import, list one after another",
-                        action="store",
-                        )
-    parser.add_argument("--cgcRun",
-                        help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
-                        action="store_true",
-                        )
-    parser.add_argument("--bindSingleVar",
-                        help="only bind single variant scaffolds",
-                        action="store_true",
-                        )
-    
+        if not self.VMDpath:
+            self.VMDpath = "vmd"
+        if not self.NAMDpath:
+            self.NAMDpath = "namd2"
+        if not self.PYTHONSHpath:
+           #make sure pythonsh (from AutoDockTools) has been added to path
+            self.PYTHONSHpath = "pythonsh"
+        if not self.ADTpath:
+            #must have path for "prepare_xxx.py" scripts from autodock tools
+            self.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
+        if not self.VINApath:
+            self.VINApath = "vina"
+            
+        if self.mode == "varMDsim":
+            if not self.simID:
+                self.simID = str(random.randint(1,1000))
 
-    cmdlineparameters, unknownparams = parser.parse_known_args()
-    parameters = copy.copy(cmdlineparameters)
+        if self.varResID and self.varAA:
+            self.variant = self.varResID + self.varAA
+        else:
+            print("varResID and varAA not specified")
+            print("Using WT structure for simulation")
+            self.variant = "wt"
 
-    return parameters
+        if self.mode == "varScaffold":
+            if not self.scaffID:
+                print("no scaff ID - exiting")
+                sys.exit()
+
+
+            
+        self.simTopology = ("%s/simParameters/top_all36_prot.rtf" % self.runDIR,
+                                  "%s/simParameters/toppar_water_ions_namd.str" % self.runDIR)
+        self.simParameters = ("%s/simParameters/par_all36_prot.prm" % self.runDIR,
+                                    "%s/simParameters/toppar_water_ions_namd.str" %self.runDIR)
+
+        if not self.simProc:
+            self.simProc = multiprocessing.cpu_count()    
+        
+        self.simPDB = "%s/variantSimulations/%s/structures/%s.%s.pdb" \
+                            % (self.runDIR,self.protein,
+                               self.protein,self.variant)
+        self.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
+                            % (self.runDIR,self.protein,
+                               self.protein,self.variant)
+        self.templatePDB = "%s/variantSimulations/%s/structures/%s.template.pdb" \
+                                 % (self.runDIR,self.protein,
+                                    self.protein)
+        self.wtPDB = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.pdb" \
+                           % (self.runDIR,self.protein,
+                              self.protein)
+        self.wtPSF = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.psf" \
+                           % (self.runDIR,self.protein,
+                              self.protein)
+        self.varPrefix = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED" \
+                               % (self.runDIR,self.protein,
+                                  self.protein, self.variant)
+        self.varPDB = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.pdb" \
+                            % (self.runDIR, self.protein,
+                               self.protein, self.variant)
+        self.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
+                            % (self.runDIR,self.protein,
+                               self.protein, self.variant)
+        self.wtStructTCL = "%s/variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
+                                 % (self.runDIR,self.protein, self.protein)
+        self.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
+                                  % (self.runDIR,self.protein,
+                                     self.protein, self.variant)
+        self.singleRunTCL = "%s/variantSimulations/%s/bin/%s.%s.genSingleRunPDB.tcl" \
+                                  % (self.runDIR,self.protein,
+                                     self.protein, self.variant)
+        self.solvTCL = "%s/variantSimulations/%s/bin/%s.%s.genSolvStruct.tcl" \
+                             % (self.runDIR,self.protein,
+                                self.protein, self.variant)
+        self.solvBoundary = "%s/variantSimulations/%s/config/%s.%s.solvBoundary.txt" \
+                                  % (self.runDIR,self.protein,
+                                     self.protein, self.variant)
+        self.structPrefix = "%s/variantSimulations/%s/structures/%s.%s" \
+                                  % (self.runDIR,self.protein,
+                                     self.protein, self.variant)
+        self.NAMDconfig = "%s/variantSimulations/%s/config/%s.%s.%s.NAMD" \
+                                % (self.runDIR, self.protein, self.protein,
+                                   self.variant, self.simID)
+        self.NAMDout = "%s/variantSimulations/%s/results/%s/trajectory/%s.%s.%s" \
+                             % (self.runDIR, self.protein, self.variant,
+                                self.protein, self.variant, self.simID)
+        self.scaffParams = "%s/variantSimulations/%s/config/%s.scaff" \
+                             % (self.runDIR, self.protein, self.scaffID)
+        self.resultsDIR =  "%s/variantSimulations/%s/results" % \
+                                 (self.runDIR, self.protein)
+        self.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
+                             % (self.runDIR, self.protein, self.variant)
+
+        #hardcoding bindingID as drugLibrary
+        #TODO - refactor to remove "bindingID"
+        self.bindingID = self.drugLibrary
+        
+        if self.bindingID:
+            self.drugBindConfig = "%s/variantSimulations/%s/config/%s.autodock" \
+                                        % (self.runDIR, self.protein, self.bindingID)
+        
+
+        if self.loadPDBtraj:
+            variantDIR = self.resultsDIR + "/" + self.variant + "/trajectory/"
+            if not os.path.exists(variantDIR):
+                os.makedirs(variantDIR)
+
+            for pdbFile in self.loadPDBtraj:
+                pdbNewLoc = self.trajDIR + os.path.basename(pdbFile)
+                print(pdbNewLoc)
+                os.system("cp %s %s" % (pdbFile,pdbNewLoc))
+        
+        if self.newScaff:
+            if not os.path.isdir("%s/variantSimulations/%s/config" % \
+                                 (self.runDIR,self.protein)):
+                os.makedirs("%s/variantSimulations/%s/config" % \
+                            (self.runDIR,self.protein))
+            if not os.path.isfile(self.scaffParams):
+                os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
+                          % (self.newScaff,self.runDIR,
+                             self.protein, self.scaffID))
+
+            else:
+                print("Scaff config for %s exists." % (self.scaffParams))
+                print("Select new scaffID or remove existing scaff config")
+                sys.exit()
+
 
 
 def genNAMDstructFiles(parameters):
     if not os.path.exists("%s/variantSimulations/%s/bin/" % (parameters.runDIR,parameters.protein)):
         os.makedirs("%s/variantSimulations/%s/bin/" % (parameters.runDIR,parameters.protein))
     if os.path.isfile(parameters.templatePDB):
-        print "generating solvated/ionized PDB and PSF from %s" \
-            % parameters.templatePDB
+        print("generating solvated/ionized PDB and PSF from %s" \
+                    % parameters.templatePDB)
 
         if os.path.isfile(parameters.varPDB) and os.path.isfile(parameters.varPSF):
-            print "unsolvated PDB and PSF exist"
+            print("unsolvated PDB and PSF exist")
         else:
             genStructTCL(parameters)
             genStructCommand = "%s -e %s" % (parameters.VMDpath, parameters.varStructTCL)
@@ -194,14 +177,13 @@ def genNAMDstructFiles(parameters):
             os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
         os.system(genSolvCommand)
     else:
-        print "no template exists"
-        print "use --new to specify clean PDB (only cannonical aa) "
+        print("no template exists")
+        print("use --new to specify clean PDB (only cannonical aa) ")
         sys.exit()
 
-    return
 
 def genStructTCL(parameters):
-    print "generating struct files"
+    print("generating struct files")
     structFile = open(parameters.varStructTCL,"w+")
     
     structFile.write("package require psfgen\n")
@@ -224,7 +206,6 @@ def genStructTCL(parameters):
     
     structFile.write("quit\n")
 
-    return
 
 def genSolvTCL(parameters):
     #todo - adjustable solvation/ionization parameters
@@ -243,7 +224,7 @@ def genSolvTCL(parameters):
     solvFile.write("puts $output [measure minmax $box]\n")
     solvFile.write("close $output\n")
     solvFile.write("quit")
-    return
+
 
 def genNAMDconfig(parameters):
     if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
@@ -270,8 +251,8 @@ def genNAMDconfig(parameters):
         parameters.dimZ = minmax[5] - minmax[2] + 0.1
 
     else:
-        print "boundary file does not exist"
-        print "remove solvated/ionized PDB and PSF and resubmit"
+        print("boundary file does not exist")
+        print("remove solvated/ionized PDB and PSF and resubmit")
         sys.exit()
         
     configFile = open(parameters.NAMDconfig,"w+")
@@ -343,14 +324,14 @@ def genNAMDconfig(parameters):
                      
 
     
-    return
+
 
 def genSingleRunTCL(parameters):
-    print "generating %s" % parameters.singleRunTCL
+    print("generating %s" % parameters.singleRunTCL)
     pdbTCL = open(parameters.singleRunTCL,"w+")
     pdbTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
     variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
-    print "using DCD files in %s" % variantDIR
+    print("using DCD files in %s" % variantDIR)
     for tFile in os.listdir(variantDIR):
         if tFile.endswith(".dcd"):
             dcdFile = variantDIR + tFile
@@ -365,7 +346,6 @@ def genSingleRunTCL(parameters):
                    % allPDBoutput)
     pdbTCL.write("quit")
     
-    return
 
 def genClusterTCL(parameters):
 #TODO - currently config must be formated as:
@@ -399,16 +379,16 @@ def genClusterTCL(parameters):
 
     #will not generate new TCL if previous scaffID log exists
     scaffLOG = parameters.scaffBASE + ".log"
-    print scaffLOG
+    print(scaffLOG)
     if os.path.isfile(scaffLOG):
-        print "%s exists. Remove to recalculate Scaffolds" % scaffLOG
+        print("%s exists. Remove to recalculate Scaffolds" % scaffLOG)
         return
         
-    print "generating %s" % parameters.scaffoldTCL
+    print("generating %s" % parameters.scaffoldTCL)
     clustTCL = open(parameters.scaffoldTCL,"w+")
     clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
     variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
-    print "using DCD files in %s" % variantDIR
+    print("using DCD files in %s" % variantDIR)
     for tFile in os.listdir(variantDIR):
         if tFile.endswith(".dcd"):
             dcdFile = variantDIR + tFile
@@ -445,7 +425,6 @@ def genClusterTCL(parameters):
 #                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
 #            }
     
-    return
 
 def genPDBclustTCL(parameters):
     scaffParameters = open(parameters.scaffParams,"r")
@@ -472,12 +451,12 @@ def genPDBclustTCL(parameters):
 
     #will not generate new TCL if previous scaffID log exists
     scaffLOG = parameters.scaffBASE + ".log"
-    print scaffLOG
+    print(scaffLOG)
     if os.path.isfile(scaffLOG):
-        print "%s exists. Remove to recalculate Scaffolds" % scaffLOG
+        print("%s exists. Remove to recalculate Scaffolds" % scaffLOG)
         return
 
-    print "generating %s" % parameters.scaffoldTCL
+    print("generating %s" % parameters.scaffoldTCL)
 
     binPath = "%s/variantSimulations/%s/bin/" % \
                           (parameters.runDIR,parameters.protein)
@@ -523,7 +502,6 @@ def genPDBclustTCL(parameters):
 #                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
 #            }
     
-    return
 
 def sortPDBclusters(parameters):
     allPDBoutput = parameters.scaffBASE + ".all.pdb"
@@ -563,7 +541,6 @@ def sortPDBclusters(parameters):
                     scaffFile.write(indPDB[int(structID)])
             scaffNum += 1 
 
-    return
 
 
 def genScaffoldTCL(parameters):
@@ -591,7 +568,6 @@ def genScaffoldTCL(parameters):
                 genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
                 
     genScaff.write("quit\n")
-    return
 
 def genScaffoldMDTRAJ(parameters):
     #TODO generate rep structure using cluster res
@@ -639,7 +615,6 @@ def genScaffoldMDTRAJ(parameters):
 #                genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
 #                
 #    genScaff.write("quit\n")
-    return
 
 def parseADconfig(parameters):
     paramFile = "%s/variantSimulations/%s/config/%s.autodock" % \
@@ -652,7 +627,7 @@ def parseADconfig(parameters):
                                 paramData.pop(0).rstrip(),
                                 paramData.pop(0).rstrip(),
                                 paramData.pop(0).rstrip()]
-    return(parameters)
+    return parameters
 
 def parseFlexConfig(parameters):
     #TODO input from config folder
@@ -660,7 +635,7 @@ def parseFlexConfig(parameters):
     parameters.flexRes = parameters.flexRes.rstrip()
     parameters.flexRes = parameters.flexRes.split(" ")
 
-    return(parameters)
+    return parameters
 
 def getFlexRes(pdbFile,flexRes):
     flexConfig = open(flexRes, "r").readlines()
@@ -688,13 +663,13 @@ def getFlexRes(pdbFile,flexRes):
                 flexResNum = flexRes.pop(0)
             else:
                 flexResNum = 0
-    return(flexResID[1:])
+    return flexResID[1:]
 
 def alignScaff(parameters, currScaff):
     if parameters.scaffID:
         scaffParameters = open(parameters.scaffParams,"r")
     else:
-        print "no scaff params specified"
+        print("no scaff params specified")
         sys.exit()
         
     scaffLines = scaffParameters.readlines()
@@ -725,7 +700,6 @@ def alignScaff(parameters, currScaff):
     alignmentTCL.close()
     alignmentCommand = "%s -e %s" % (parameters.VMDpath, alignmentConfig)
     os.system(alignmentCommand)
-    return
 
 def genVinaConfig(parameters):
     vinaConfig = open(parameters.vinaConfig,"w+")
@@ -741,537 +715,397 @@ def genVinaConfig(parameters):
     for searchParam in parameters.ADsearchSpace:
         vinaConfig.write("%s\n" % searchParam)
 
-    return
 
-#### start of program move to main()
+def main():
+    #### start of program move to main()
 
-parameters = _parseCommandLine()
+    parameters = argParse()
+    parameters.requiredArgs()
+    parameters.setDefault()
 
-### Hardcoded Parameters
+    
+    #todo: revamp to define workflow from config
 
-#parameters.runDIR = os.getcwd()
-parameters.runDIR = os.path.abspath(__file__)
-parameters.runDIR = os.path.dirname(parameters.runDIR)
-print(parameters.runDIR)
-
-if parameters.protein:
-    print parameters.protein
-    if not parameters.VMDpath:
-        parameters.VMDpath = "vmd"
-    if not parameters.NAMDpath:
-        parameters.NAMDpath = "namd2"
-    if not parameters.PYTHONSHpath:
-       #make sure pythonsh (from AutoDockTools) has been added to path
-        parameters.PYTHONSHpath = "pythonsh"
-    if not parameters.ADTpath:
-        #must have path for "prepare_xxx.py" scripts from autodock tools
-        parameters.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
-    if not parameters.VINApath:
-        parameters.VINApath = "vina"
-        
     if parameters.mode == "varMDsim":
-        if not parameters.simID:
-            parameters.simID = str(random.randint(1,1000))
+        print("Performing varMDsim")
+        if parameters.newStruct:
+            if os.path.isdir("%s/variantSimulations/%s" % (parameters.runDIR,parameters.protein)):
+                print("ERROR - %s is already created... resubmit with new protien name")
+                sys.exit()
+            os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
+            os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
+                      % (parameters.newStruct,parameters.runDIR,
+                         parameters.protein, parameters.protein)) 
 
-    if parameters.varResID and parameters.varAA:
-        parameters.variant = parameters.varResID + parameters.varAA
-    else:
-        print "varResID and varAA not specified"
-        print"Using WT structure for simulation"
-        parameters.variant = "wt"
+        if os.path.isfile(parameters.simPDB):
+            if os.path.isfile(parameters.simPSF):
+                print("using %s %s as initial structure" \
+                                    % (parameters.protein, parameters.variant))
 
-    if parameters.mode == "varScaffold":
-        if not parameters.scaffID:
-            print "no scaff ID - exiting"
-            sys.exit()
-
-
-        
-    parameters.simTopology = ("%s/simParameters/top_all36_prot.rtf" % parameters.runDIR,
-                              "%s/simParameters/toppar_water_ions_namd.str" % parameters.runDIR)
-    parameters.simParameters = ("%s/simParameters/par_all36_prot.prm" % parameters.runDIR,
-                                "%s/simParameters/toppar_water_ions_namd.str" %parameters.runDIR)
-
-    if not parameters.simProc:
-        parameters.simProc = multiprocessing.cpu_count()    
-    
-    parameters.simPDB = "%s/variantSimulations/%s/structures/%s.%s.pdb" \
-                        % (parameters.runDIR,parameters.protein,
-                           parameters.protein,parameters.variant)
-    parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
-                        % (parameters.runDIR,parameters.protein,
-                           parameters.protein,parameters.variant)
-    parameters.templatePDB = "%s/variantSimulations/%s/structures/%s.template.pdb" \
-                             % (parameters.runDIR,parameters.protein,
-                                parameters.protein)
-    parameters.wtPDB = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.pdb" \
-                       % (parameters.runDIR,parameters.protein,
-                          parameters.protein)
-    parameters.wtPSF = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.psf" \
-                       % (parameters.runDIR,parameters.protein,
-                          parameters.protein)
-    parameters.varPrefix = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED" \
-                           % (parameters.runDIR,parameters.protein,
-                              parameters.protein, parameters.variant)
-    parameters.varPDB = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.pdb" \
-                        % (parameters.runDIR, parameters.protein,
-                           parameters.protein, parameters.variant)
-    parameters.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
-                        % (parameters.runDIR,parameters.protein,
-                           parameters.protein, parameters.variant)
-    parameters.wtStructTCL = "%s/variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
-                             % (parameters.runDIR,parameters.protein, parameters.protein)
-    parameters.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
-                              % (parameters.runDIR,parameters.protein,
-                                 parameters.protein, parameters.variant)
-    parameters.singleRunTCL = "%s/variantSimulations/%s/bin/%s.%s.genSingleRunPDB.tcl" \
-                              % (parameters.runDIR,parameters.protein,
-                                 parameters.protein, parameters.variant)
-    parameters.solvTCL = "%s/variantSimulations/%s/bin/%s.%s.genSolvStruct.tcl" \
-                         % (parameters.runDIR,parameters.protein,
-                            parameters.protein, parameters.variant)
-    parameters.solvBoundary = "%s/variantSimulations/%s/config/%s.%s.solvBoundary.txt" \
-                              % (parameters.runDIR,parameters.protein,
-                                 parameters.protein, parameters.variant)
-    parameters.structPrefix = "%s/variantSimulations/%s/structures/%s.%s" \
-                              % (parameters.runDIR,parameters.protein,
-                                 parameters.protein, parameters.variant)
-    parameters.NAMDconfig = "%s/variantSimulations/%s/config/%s.%s.%s.NAMD" \
-                            % (parameters.runDIR, parameters.protein, parameters.protein,
-                               parameters.variant, parameters.simID)
-    parameters.NAMDout = "%s/variantSimulations/%s/results/%s/trajectory/%s.%s.%s" \
-                         % (parameters.runDIR, parameters.protein, parameters.variant,
-                            parameters.protein, parameters.variant, parameters.simID)
-    parameters.scaffParams = "%s/variantSimulations/%s/config/%s.scaff" \
-                         % (parameters.runDIR, parameters.protein, parameters.scaffID)
-    parameters.resultsDIR =  "%s/variantSimulations/%s/results" % \
-                             (parameters.runDIR, parameters.protein)
-    parameters.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
-                         % (parameters.runDIR, parameters.protein, parameters.variant)
-
-    #hardcoding bindingID as drugLibrary
-    #TODO - refactor to remove "bindingID"
-    parameters.bindingID = parameters.drugLibrary
-    
-    if parameters.bindingID:
-        parameters.drugBindConfig = "%s/variantSimulations/%s/config/%s.autodock" \
-                                    % (parameters.runDIR, parameters.protein, parameters.bindingID)
-    
-
-    if parameters.loadPDBtraj:
-        variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
-        if not os.path.exists(variantDIR):
-            os.makedirs(variantDIR)
-
-        for pdbFile in parameters.loadPDBtraj:
-            pdbNewLoc = parameters.trajDIR + os.path.basename(pdbFile)
-            print pdbNewLoc
-            os.system("cp %s %s" % (pdbFile,pdbNewLoc))
-    
-    if parameters.newScaff:
-        if not os.path.isdir("%s/variantSimulations/%s/config" % \
-                             (parameters.runDIR,parameters.protein)):
-            os.makedirs("%s/variantSimulations/%s/config" % \
-                        (parameters.runDIR,parameters.protein))
-        if not os.path.isfile(parameters.scaffParams):
-            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
-                      % (parameters.newScaff,parameters.runDIR,
-                         parameters.protein, parameters.scaffID))
-
+                #if no variant structure exists, use clean template to create
+            else:
+                print("%s does not exist" % parameters.simPSF)
+                print("generating new pdb and psf for simulation")
+                genNAMDstructFiles(parameters)
         else:
-            print "Scaff config for %s exists." % (parameters.scaffParams)
-            print "Select new scaffID or remove existing scaff config"
-            sys.exit()
-
-
-
-            
-else:
-    print "no protein specified"
-    sys.exit()
-
-#todo: revamp to define workflow from config
-
-if parameters.mode == "varMDsim":
-    print "Performing varMDsim"
-    if parameters.newStruct:
-        if os.path.isdir("%s/variantSimulations/%s" % (parameters.runDIR,parameters.protein)):
-            print "ERROR - %s is already created... resubmit with new protien name"
-            sys.exit()
-        os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
-        os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
-                  % (parameters.newStruct,parameters.runDIR,
-                     parameters.protein, parameters.protein)) 
-
-    if os.path.isfile(parameters.simPDB):
-        if os.path.isfile(parameters.simPSF):
-            print "using %s %s as initial structure" \
-                % (parameters.protein, parameters.variant)
-
-            #if no variant structure exists, use clean template to create
-        else:
-            print "%s does not exist" % parameters.simPSF
-            print "generating new pdb and psf for simulation"
+            print("%s does not exist" % parameters.simPDB)
+            print("generating new pdb and psf for simulation")
             genNAMDstructFiles(parameters)
-    else:
-        print "%s does not exist" % parameters.simPDB
-        print "generating new pdb and psf for simulation"
-        genNAMDstructFiles(parameters)
 
-    if parameters.simLength:
-        print "Performing Variant %.3f ns Simulation" % parameters.simLength
-        genNAMDconfig(parameters)
+        if parameters.simLength:
+            print("Performing Variant %.3f ns Simulation" % parameters.simLength)
+            genNAMDconfig(parameters)
 
-        runNAMDcommand = "%s +p%i %s > %s.log" % \
-                         (parameters.NAMDpath, parameters.simProc,
-                          parameters.NAMDconfig, parameters.NAMDout)
-        if not os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory/" \
-                             % (parameters.runDIR, parameters.protein, parameters.variant)):
-            os.makedirs("%s/variantSimulations/%s/results/%s/trajectory/" \
-                             % (parameters.runDIR, parameters.protein, parameters.variant))
+            runNAMDcommand = "%s +p%i %s > %s.log" % \
+                             (parameters.NAMDpath, parameters.simProc,
+                              parameters.NAMDconfig, parameters.NAMDout)
+            if not os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory/" \
+                                 % (parameters.runDIR, parameters.protein, parameters.variant)):
+                os.makedirs("%s/variantSimulations/%s/results/%s/trajectory/" \
+                                 % (parameters.runDIR, parameters.protein, parameters.variant))
 
 
-        print "running NAMD with %i processors" % parameters.simProc
-        os.system(runNAMDcommand)
-        
-        if parameters.singleRun:
-            genSingleRunTCL(parameters)
-            genPDBcommand = "%s -e %s" % (parameters.VMDpath, parameters.singleRunTCL)
-            os.system(genPDBcommand)
-            if parameters.cgcRun:
-                CGCpdb = parameters.NAMDout + ".pdb"
-                CGClog = parameters.NAMDout + ".log"
-                cwd = os.getcwd()
-                os.system("mv %s %s" % (CGCpdb, cwd))
-                os.system("mv %s %s" % (CGClog, cwd))
+            print("running NAMD with %i processors" % parameters.simProc)
+            os.system(runNAMDcommand)
+            
+            if parameters.singleRun:
+                genSingleRunTCL(parameters)
+                genPDBcommand = "%s -e %s" % (parameters.VMDpath, parameters.singleRunTCL)
+                os.system(genPDBcommand)
+                if parameters.cgcRun:
+                    CGCpdb = parameters.NAMDout + ".pdb"
+                    CGClog = parameters.NAMDout + ".log"
+                    cwd = os.getcwd()
+                    os.system("mv %s %s" % (CGCpdb, cwd))
+                    os.system("mv %s %s" % (CGClog, cwd))
 
-    else:
-        print "simulation length not specified"        
-        sys.exit()
-
-#######
-
-elif parameters.mode == "varScaffold":
-    print "Performing varScaffold"
-
-    
-#moved to start    
-#    if parameters.newScaff:
-#        if not os.path.isdir("%s/variantSimulations/%s/config" % \
-#                             (parameters.runDIR,parameters.protein)):
-#            os.makedirs("%s/variantSimulations/%s/config" % \
-#                        (parameters.runDIR,parameters.protein))
-#        if not os.path.isfile(parameters.scaffParams):
-#            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
-#                      % (parameters.newScaff,parameters.runDIR,
-#                         parameters.protein, parameters.scaffID))
-#
-#        else:
-#            print "Scaff config for %s exists." % (parameters.scaffParams)
-#            print "Select new scaffID or remove existing scaff config"
-#            sys.exit()
-
-    if os.path.isfile(parameters.scaffParams):
-        #check if variant specified, otherwise perform clustering for all variants
-        if parameters.variant:
-            print "generating Scaffold for %s ONLY" % (parameters.variant)
-            variantList = (parameters.variant,)
         else:
-            print "generating all Variant Scaffolds"
-            variantList = os.listdir(parameters.resultsDIR)
+            print("simulation length not specified")        
+            sys.exit()
 
-## TODO include option to analyze trajectory clusters to determine rmsd threshold
-        for varSimResult in variantList:
-            parameters.variant = varSimResult
-            parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
-                                % (parameters.runDIR,parameters.protein,
-                                   parameters.protein,parameters.variant)
-            parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genScaffold.tcl" % \
-                                      (parameters.runDIR, parameters.protein,
-                                       parameters.protein, parameters.variant, parameters.scaffID)
-            parameters.trajAnalysisTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.analyzeTraj.tcl" % \
+    #######
+
+    elif parameters.mode == "varScaffold":
+        print("Performing varScaffold")
+
+        
+    #moved to start    
+    #    if parameters.newScaff:
+    #        if not os.path.isdir("%s/variantSimulations/%s/config" % \
+    #                             (parameters.runDIR,parameters.protein)):
+    #            os.makedirs("%s/variantSimulations/%s/config" % \
+    #                        (parameters.runDIR,parameters.protein))
+    #        if not os.path.isfile(parameters.scaffParams):
+    #            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
+    #                      % (parameters.newScaff,parameters.runDIR,
+    #                         parameters.protein, parameters.scaffID))
+    #
+    #        else:
+    #            print "Scaff config for %s exists." % (parameters.scaffParams)
+    #            print "Select new scaffID or remove existing scaff config"
+    #            sys.exit()
+
+        if os.path.isfile(parameters.scaffParams):
+            #check if variant specified, otherwise perform clustering for all variants
+            if parameters.variant:
+                print("generating Scaffold for %s ONLY" % (parameters.variant))
+                variantList = (parameters.variant,)
+            else:
+                print("generating all Variant Scaffolds")
+                variantList = os.listdir(parameters.resultsDIR)
+
+    ## TODO include option to analyze trajectory clusters to determine rmsd threshold
+            for varSimResult in variantList:
+                parameters.variant = varSimResult
+                parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
+                                    % (parameters.runDIR,parameters.protein,
+                                       parameters.protein,parameters.variant)
+                parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genScaffold.tcl" % \
                                           (parameters.runDIR, parameters.protein,
                                            parameters.protein, parameters.variant, parameters.scaffID)
-            parameters.clusterTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genRepScaffold.tcl" % \
-                                          (parameters.runDIR, parameters.protein,
-                                           parameters.protein, parameters.variant, parameters.scaffID)
-            parameters.scaffBASE = "%s/variantSimulations/%s/results/%s/scaffold/%s.%s.%s" % \
-                                   (parameters.runDIR, parameters.protein,parameters.variant,
-                                    parameters.protein, parameters.variant, parameters.scaffID)
-
-
-            print "generating Scaffold for %s" % (parameters.variant)
-            #will not generate new TCL if previous scaffID log exists
-            scaffLOG = parameters.scaffBASE + ".log"
-            print scaffLOG
-            if not os.path.isfile(scaffLOG):
-                if not parameters.clustPDBtraj:
-                    genClusterTCL(parameters)
-                    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-                    os.system(vmdClustCommand)
-                else:
-                    parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genPDBtrajScaffold.tcl" % \
+                parameters.trajAnalysisTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.analyzeTraj.tcl" % \
                                               (parameters.runDIR, parameters.protein,
                                                parameters.protein, parameters.variant, parameters.scaffID)
-                    genPDBclustTCL(parameters)
-                    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-                    os.system(vmdClustCommand)                    
-
-                sortPDBclusters(parameters)
-                #old (wrong) way to gen rep structure
-                #genScaffoldTCL(parameters)
-                #vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
-                #os.system(vmdScaffCommand)
-                genScaffoldMDTRAJ(parameters)
-
-                if parameters.cgcRun:
-                    cwd = os.getcwd()
-                    scaffPDB = parameters.scaffBASE + "*.scaffold.pdb"
-                    os.system("mv %s %s" % (scaffLOG, cwd))
-                    os.system("mv %s %s" % (scaffPDB, cwd))
-                    
-
-                
-            else:
-                print "%s exists. Remove to regenerate scaffold stats" % scaffLOG
-
-    else:
-        print "Scaffold Parameters %s does not exist" % (parameters.scaffParams)
-        print "Exiting"
+                parameters.clusterTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genRepScaffold.tcl" % \
+                                              (parameters.runDIR, parameters.protein,
+                                               parameters.protein, parameters.variant, parameters.scaffID)
+                parameters.scaffBASE = "%s/variantSimulations/%s/results/%s/scaffold/%s.%s.%s" % \
+                                       (parameters.runDIR, parameters.protein,parameters.variant,
+                                        parameters.protein, parameters.variant, parameters.scaffID)
 
 
-    
-elif parameters.mode == "drugSearch":
-    print "Performing drugSearch"
-    if parameters.newBindingConfig:
-        if not os.path.isfile(parameters.drugBindConfig):            
-            print "using new config %s" % parameters.newBindingConfig
-            configDIR = "%s/variantSimulations/%s/config" % \
-                        (parameters.runDIR,parameters.protein)
-            if not os.path.isdir(configDIR):
-                os.makedirs(configDIR)
-                
-            os.system("cp %s %s/%s.autodock" % (parameters.newBindingConfig, configDIR,
-                                                parameters.bindingID))
-        else:
-            print "%s already exists - remove or choose new bindingID" % parameters.drugBindConfig
-            sys.exit()
+                print("generating Scaffold for %s" % (parameters.variant))
+                #will not generate new TCL if previous scaffID log exists
+                scaffLOG = parameters.scaffBASE + ".log"
+                print(scaffLOG)
+                if not os.path.isfile(scaffLOG):
+                    if not parameters.clustPDBtraj:
+                        genClusterTCL(parameters)
+                        vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+                        os.system(vmdClustCommand)
+                    else:
+                        parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genPDBtrajScaffold.tcl" % \
+                                                  (parameters.runDIR, parameters.protein,
+                                                   parameters.protein, parameters.variant, parameters.scaffID)
+                        genPDBclustTCL(parameters)
+                        vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+                        os.system(vmdClustCommand)                    
 
-    if os.path.isfile(parameters.drugBindConfig):
-        parseADconfig(parameters)
-    else:
-        print "%s does not exist" % parameters.drugBindConfig
-        sys.exit()
+                    sortPDBclusters(parameters)
+                    #old (wrong) way to gen rep structure
+                    #genScaffoldTCL(parameters)
+                    #vmdScaffCommand = "%s -e %s" % (parameters.VMDpath, parameters.clusterTCL)
+                    #os.system(vmdScaffCommand)
+                    genScaffoldMDTRAJ(parameters)
 
-    parameters.vinaOutDir = "%s/variantSimulations/%s/results/%s/drugBinding/" % \
-                            (parameters.runDIR,
-                             parameters.protein,
-                             parameters.variant)
-    if not os.path.isdir(parameters.vinaOutDir):
-        os.makedirs(parameters.vinaOutDir)
-
-        
-    parameters.flexConfig = "%s/variantSimulations/%s/config/%s.flex" % \
-                            (parameters.runDIR,parameters.protein,parameters.bindingID)
-
-    if parameters.flexBinding:
-        if not os.path.isdir("%s/variantSimulations/%s/config" % \
-                             (parameters.runDIR,parameters.protein)):
-            os.makedirs("%s/variantSimulations/%s/config" % \
-                        (parameters.runDIR,parameters.protein))
-            
-        
-        if not os.path.isfile(parameters.flexConfig):
-            os.system("cp %s %s" \
-                      % (parameters.flexBinding, parameters.flexConfig))
-        else:
-            print "%s already exists - remove or choose new bindingID" % parameters.flexConfig
-            sys.exit()
-
-    if parameters.inputScaff:
-        print "using input scaffolds"
-        variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
-        #if not os.path.exists(variantDIR):
-        #    os.makedirs(variantDIR)
-        os.makedirs(variantDIR)
-        inputCount = 1
-        for pdbFile in parameters.inputScaff:
-#            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
-#            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
-            inputID = "input%s" % str(inputCount)
-            pdbNewLoc = "%s/%s.%s.%s.scaffold.pdb" % (variantDIR, parameters.protein,
-                                                      parameters.variant, inputID)
-            inputCount += 1
-#            print pdbNewLoc
-            os.system("cp %s %s" % (pdbFile,pdbNewLoc))
-
-    #TODO input custom drug librarys 
-    if not parameters.drugLibrary:
-        if parameters.singleDrug:
-            #todo - add single drug binding
-            print "binding single drug not configured"
-            sys.exit()
-        else:
-            print "no drug specified"
-            sys.exit()
-    else:
-        parameters.drugLibPath = "%s/drugLibraries/%s/" % \
-                                 (parameters.runDIR, parameters.drugLibrary)
-        if not os.path.isdir(parameters.drugLibPath):
-            print "drug library does not exist"
-            sys.exit()
-        else:
-            print "using small molecules in %s" % parameters.drugLibPath
-
-            
-                            
-
-            
-    if parameters.bindingID:
-        print "using search space defined in %s" % parameters.drugBindConfig
-
-
-        if not os.path.isfile(parameters.templatePDB):
-            if parameters.bindingTemplate:
-                if not os.path.isdir("%s/variantSimulations/%s/structures/" %\
-                                 (parameters.runDIR,parameters.protein)):
-                    os.makedirs("%s/variantSimulations/%s/structures" % \
-                                (parameters.runDIR,parameters.protein))
-                os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
-                          % (parameters.bindingTemplate, parameters.runDIR,
-                             parameters.protein, parameters.protein))
-            else:
-                print "specify binding template"
-                sys.exit()
-
-       
-                
-        if parameters.bindSingleVar:
-            bindingVar = [parameters.variant,]
-        else:
-            bindingVar = os.listdir(parameters.resultsDIR)
-            
-        for var in bindingVar:
-            #regenerate pdbqt for all scaffold.pdb files
-            print "binding to variant %s" % var
-            #todo check if pdbqt exist already
-            scaffDIR = "%s/%s/scaffold/" % (parameters.resultsDIR, var)
-            for scaffPDB in os.listdir(scaffDIR):
-                if scaffPDB.endswith("scaffold.pdb"):
-                    print scaffPDB
-                    currScaffPath = scaffDIR + scaffPDB
-                    #align scaff to template
-                    alignScaff(parameters,currScaffPath)
-                    scaffBase = scaffDIR + os.path.splitext(scaffPDB)[0]
-                    scaffBase = os.path.splitext(scaffBase)[0]
-
-                    parameters.scaff1out = scaffBase + ".pdbqt"
-                    #prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
-                    prepBaseScaff =  "%s %s/prepare_receptor4.py -r %s -o %s" \
-                                 % (parameters.PYTHONSHpath, parameters.ADTpath,
-                                    currScaffPath,parameters.scaff1out)
-                    os.system(prepBaseScaff)
-
-                    if os.path.isfile(parameters.flexConfig):
-                        print "Found Flex Config: performing flexable residue binding"
-                        
-                        scaffFlexRes = getFlexRes(currScaffPath,parameters.flexConfig)
-                        print scaffFlexRes
-                        parameters.scaffFlex = scaffBase + ".flex.pdbqt"
-                        parameters.scaffRigid = scaffBase + ".rigid.pdbqt"
-                        prepFlexScaff = "%s %s/prepare_flexreceptor4.py -r %s -s %s -g %s -x %s" \
-                                     % (parameters.PYTHONSHpath, parameters.ADTpath,
-                                        parameters.scaff1out, scaffFlexRes,
-                                        parameters.scaffRigid, parameters.scaffFlex)
-                        print prepFlexScaff
-                        os.system(prepFlexScaff)
-
-                    for dFile in os.listdir(parameters.drugLibPath):
-                        if dFile.endswith(".pdbqt"):
-                            parameters.currDrugPath = parameters.drugLibPath + dFile
-                            parameters.drugBase = os.path.splitext(dFile)[0]
-                            parameters.vinaBase = os.path.basename("%s.%s.%s" % \
-                                                                   (scaffBase,parameters.bindingID,
-                                                                    parameters.drugBase))
-                            parameters.vinaConfig = "%s/variantSimulations/%s/config/%s.vina" % \
-                                                    (parameters.runDIR,
-                                                     parameters.protein,
-                                                     parameters.vinaBase)
-
-                            genVinaConfig(parameters)
-                            vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
-                            os.system(vinaCommand)
-                        
                     if parameters.cgcRun:
                         cwd = os.getcwd()
-                        vinaOUT = parameters.vinaOutDir + "*.pdbqt"
-                        vinaLOG = parameters.vinaOutDir + "*.log"
-                        os.system("cp %s %s" % (vinaLOG, cwd))
-                        os.system("cp %s %s" % (vinaOUT, cwd))
-
-            
-    # - - align to reference pdb
-    # - - create pdbqt from file
-    # - - create flex/rigid pdbqt from pdbqt
-    # - Check for proper flex/rigid files for given
-    # - - if single run, set variable as file path
-    # - - else set variable as multiple file paths
+                        scaffPDB = parameters.scaffBASE + "*.scaffold.pdb"
+                        os.system("mv %s %s" % (scaffLOG, cwd))
+                        os.system("mv %s %s" % (scaffPDB, cwd))
+                        
 
                     
-    else:
-        print "specify bindingID"
-        sys.exit()
+                else:
+                    print("%s exists. Remove to regenerate scaffold stats" % scaffLOG)
+
+        else:
+            print("Scaffold Parameters %s does not exist" % (parameters.scaffParams))
+            print("Exiting")
+
+
         
+    elif parameters.mode == "drugSearch":
+        print("Performing drugSearch")
+        if parameters.newBindingConfig:
+            if not os.path.isfile(parameters.drugBindConfig):            
+                print("using new config %s" % parameters.newBindingConfig)
+                configDIR = "%s/variantSimulations/%s/config" % \
+                            (parameters.runDIR,parameters.protein)
+                if not os.path.isdir(configDIR):
+                    os.makedirs(configDIR)
+                    
+                os.system("cp %s %s/%s.autodock" % (parameters.newBindingConfig, configDIR,
+                                                    parameters.bindingID))
+            else:
+                print("%s already exists - remove or choose new bindingID" % parameters.drugBindConfig)
+                sys.exit()
 
-    #import new scaffolds - need config defining flex residues
-    # - if new pdbqt
+        if os.path.isfile(parameters.drugBindConfig):
+            parseADconfig(parameters)
+        else:
+            print("%s does not exist" % parameters.drugBindConfig)
+            sys.exit()
+
+        parameters.vinaOutDir = "%s/variantSimulations/%s/results/%s/drugBinding/" % \
+                                (parameters.runDIR,
+                                 parameters.protein,
+                                 parameters.variant)
+        if not os.path.isdir(parameters.vinaOutDir):
+            os.makedirs(parameters.vinaOutDir)
+
+            
+        parameters.flexConfig = "%s/variantSimulations/%s/config/%s.flex" % \
+                                (parameters.runDIR,parameters.protein,parameters.bindingID)
+
+        if parameters.flexBinding:
+            if not os.path.isdir("%s/variantSimulations/%s/config" % \
+                                 (parameters.runDIR,parameters.protein)):
+                os.makedirs("%s/variantSimulations/%s/config" % \
+                            (parameters.runDIR,parameters.protein))
+                
+            
+            if not os.path.isfile(parameters.flexConfig):
+                os.system("cp %s %s" \
+                          % (parameters.flexBinding, parameters.flexConfig))
+            else:
+                print("%s already exists - remove or choose new bindingID" % parameters.flexConfig)
+                sys.exit()
+
+        if parameters.inputScaff:
+            print("using input scaffolds")
+            variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
+            #if not os.path.exists(variantDIR):
+            #    os.makedirs(variantDIR)
+            os.makedirs(variantDIR)
+            inputCount = 1
+            for pdbFile in parameters.inputScaff:
+    #            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
+    #            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
+                inputID = "input%s" % str(inputCount)
+                pdbNewLoc = "%s/%s.%s.%s.scaffold.pdb" % (variantDIR, parameters.protein,
+                                                          parameters.variant, inputID)
+                inputCount += 1
+    #            print pdbNewLoc
+                os.system("cp %s %s" % (pdbFile,pdbNewLoc))
+
+        #TODO input custom drug librarys 
+        if not parameters.drugLibrary:
+            if parameters.singleDrug:
+                #todo - add single drug binding
+                print("binding single drug not configured")
+                sys.exit()
+            else:
+                print("no drug specified")
+                sys.exit()
+        else:
+            parameters.drugLibPath = "%s/drugLibraries/%s/" % \
+                                     (parameters.runDIR, parameters.drugLibrary)
+            if not os.path.isdir(parameters.drugLibPath):
+                print("drug library does not exist")
+                sys.exit()
+            else:
+                print("using small molecules in %s" % parameters.drugLibPath)
+
+                
+                                
+
+                
+        if parameters.bindingID:
+            print("using search space defined in %s" % parameters.drugBindConfig)
 
 
-    #import new drugs
-    # - if new pdbqt
-    # - - create pdbqt from file
-    # - Check for drug pdbqt from parameter name
-    # - - if single run, set variable as file path
-    # - - else set variable as multiple file paths
-    
-    #for each scaffold
-    # - for each drug
-    # - - bind drug to single scaffold
-    # - - - build config - need search space 
-    
-    
-elif parameters.mode == "varAnalysis":
-    #check for mode parameters
-    #check for mode parameters
-    print "Performing varAnalysis"
-    
-else:
-    print "invalid mode selected"
-    
-#--protein
-#  name used to refer to group of variants
-#
-#--variant
-#  variant to simulate
-#
-#Mode specific options:
-#varTraj
-#  --simulation time
-#
-#mdScaffold
-#  --alignmentResID
-#  --clusterResID
-#  --clusterThresh
-#
-#drugSearch
-#  --searchSpace
-#  --library
-#
-#varAnalysis
-#
-#--------
-#additional tools (in development)
-#  buildSearchSpace - defines protein orientation and search parameters
-#  buildDrugLibrary - creates new library from set of small molecules pdb files
+            if not os.path.isfile(parameters.templatePDB):
+                if parameters.bindingTemplate:
+                    if not os.path.isdir("%s/variantSimulations/%s/structures/" %\
+                                     (parameters.runDIR,parameters.protein)):
+                        os.makedirs("%s/variantSimulations/%s/structures" % \
+                                    (parameters.runDIR,parameters.protein))
+                    os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
+                              % (parameters.bindingTemplate, parameters.runDIR,
+                                 parameters.protein, parameters.protein))
+                else:
+                    print("specify binding template")
+                    sys.exit()
+
+           
+                    
+            if parameters.bindSingleVar:
+                bindingVar = [parameters.variant,]
+            else:
+                bindingVar = os.listdir(parameters.resultsDIR)
+                
+            for var in bindingVar:
+                #regenerate pdbqt for all scaffold.pdb files
+                print("binding to variant %s" % var)
+                #todo check if pdbqt exist already
+                scaffDIR = "%s/%s/scaffold/" % (parameters.resultsDIR, var)
+                for scaffPDB in os.listdir(scaffDIR):
+                    if scaffPDB.endswith("scaffold.pdb"):
+                        print(scaffPDB)
+                        currScaffPath = scaffDIR + scaffPDB
+                        #align scaff to template
+                        alignScaff(parameters,currScaffPath)
+                        scaffBase = scaffDIR + os.path.splitext(scaffPDB)[0]
+                        scaffBase = os.path.splitext(scaffBase)[0]
+
+                        parameters.scaff1out = scaffBase + ".pdbqt"
+                        #prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
+                        prepBaseScaff =  "%s %s/prepare_receptor4.py -r %s -o %s" \
+                                     % (parameters.PYTHONSHpath, parameters.ADTpath,
+                                        currScaffPath,parameters.scaff1out)
+                        os.system(prepBaseScaff)
+
+                        if os.path.isfile(parameters.flexConfig):
+                            print("Found Flex Config: performing flexible residue binding")
+                            
+                            scaffFlexRes = getFlexRes(currScaffPath,parameters.flexConfig)
+                            print(scaffFlexRes)
+                            parameters.scaffFlex = scaffBase + ".flex.pdbqt"
+                            parameters.scaffRigid = scaffBase + ".rigid.pdbqt"
+                            prepFlexScaff = "%s %s/prepare_flexreceptor4.py -r %s -s %s -g %s -x %s" \
+                                         % (parameters.PYTHONSHpath, parameters.ADTpath,
+                                            parameters.scaff1out, scaffFlexRes,
+                                            parameters.scaffRigid, parameters.scaffFlex)
+                            print(prepFlexScaff)
+                            os.system(prepFlexScaff)
+
+                        for dFile in os.listdir(parameters.drugLibPath):
+                            if dFile.endswith(".pdbqt"):
+                                parameters.currDrugPath = parameters.drugLibPath + dFile
+                                parameters.drugBase = os.path.splitext(dFile)[0]
+                                parameters.vinaBase = os.path.basename("%s.%s.%s" % \
+                                                                       (scaffBase,parameters.bindingID,
+                                                                        parameters.drugBase))
+                                parameters.vinaConfig = "%s/variantSimulations/%s/config/%s.vina" % \
+                                                        (parameters.runDIR,
+                                                         parameters.protein,
+                                                         parameters.vinaBase)
+
+                                genVinaConfig(parameters)
+                                vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+                                os.system(vinaCommand)
+                            
+                        if parameters.cgcRun:
+                            cwd = os.getcwd()
+                            vinaOUT = parameters.vinaOutDir + "*.pdbqt"
+                            vinaLOG = parameters.vinaOutDir + "*.log"
+                            os.system("cp %s %s" % (vinaLOG, cwd))
+                            os.system("cp %s %s" % (vinaOUT, cwd))
+
+                
+        # - - align to reference pdb
+        # - - create pdbqt from file
+        # - - create flex/rigid pdbqt from pdbqt
+        # - Check for proper flex/rigid files for given
+        # - - if single run, set variable as file path
+        # - - else set variable as multiple file paths
+
+                        
+        else:
+            print("specify bindingID")
+            sys.exit()
+            
+
+        #import new scaffolds - need config defining flex residues
+        # - if new pdbqt
+
+
+        #import new drugs
+        # - if new pdbqt
+        # - - create pdbqt from file
+        # - Check for drug pdbqt from parameter name
+        # - - if single run, set variable as file path
+        # - - else set variable as multiple file paths
+        
+        #for each scaffold
+        # - for each drug
+        # - - bind drug to single scaffold
+        # - - - build config - need search space 
+        
+        
+    elif parameters.mode == "varAnalysis":
+        #check for mode parameters
+        #check for mode parameters
+        print("Performing varAnalysis")
+        
+    else:
+        print("invalid mode selected")
+        
+    #--protein
+    #  name used to refer to group of variants
+    #
+    #--variant
+    #  variant to simulate
+    #
+    #Mode specific options:
+    #varTraj
+    #  --simulation time
+    #
+    #mdScaffold
+    #  --alignmentResID
+    #  --clusterResID
+    #  --clusterThresh
+    #
+    #drugSearch
+    #  --searchSpace
+    #  --library
+    #
+    #varAnalysis
+    #
+    #--------
+    #additional tools (in development)
+    #  buildSearchSpace - defines protein orientation and search parameters
+    #  buildDrugLibrary - creates new library from set of small molecules pdb files
 
 
