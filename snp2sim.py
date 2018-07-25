@@ -594,13 +594,13 @@ def genScaffoldTCL(parameters):
     return
 
 def genScaffoldMDTRAJ(parameters):
-    
+    #TODO generate rep structure using cluster res
     scaffParameters = open(parameters.scaffParams,"r")
     scaffLines = scaffParameters.readlines()
 
-    alignmentRes = scaffLines[0]
-    alignmentRes = alignmentRes.rstrip()
-    alignmentRes = alignmentRes.replace("alignmentRes ","")
+    clusterRes = scaffLines[1]
+    clusterRes = clusterRes.rstrip()
+    clusterRes = clusterRes.replace("clusterRes ","")
 
     scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
     genScaff = open(parameters.clusterTCL, "w+")
@@ -612,14 +612,24 @@ def genScaffoldMDTRAJ(parameters):
                 pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
                 traj = md.load(pdbClustFile)
                 atom_indices = [a.index for a in traj.topology.atoms if a.element.symbol != 'H']
-                distances = np.empty((traj.n_frames, traj.n_frames))
-                for i in range(traj.n_frames):
-                    distances[i] = md.rmsd(traj, traj, i, atom_indices = atom_indices)
 
-                beta = 1
-                index = np.exp(-beta*distances / distances.std()).sum(axis=1).argmax()
-                centroid = traj[index]
-                centroid.save(pdbScaffFile)
+                #finding struct with max similarity within cluster
+                #memory optimized
+                maxSimScore = 0
+                maxSimStruct = traj[0]
+                for i in range(traj.n_frames):
+                    #print i
+                    distances = md.rmsd(traj,traj,i,atom_indices = atom_indices)
+                    simScore = np.exp(-distances).sum()
+                    #print str(i) +" "+ str(simScore)
+                    if simScore > maxSimScore:
+                        maxSimScore = simScore
+                        maxSimStruct = traj[i]
+                        #print maxSimScore
+
+                maxSimStruct.save(pdbScaffFile)
+
+                #centroid.save(pdbScaffFile)
                 
 #                genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
 #                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
