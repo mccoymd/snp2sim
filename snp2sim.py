@@ -768,7 +768,7 @@ if parameters.protein:
         parameters.variant = parameters.varResID + parameters.varAA
     else:
         print "varResID and varAA not specified"
-        print"Using WT structure for simulation"
+        print "Using WT structure for simulation"
         parameters.variant = "wt"
 
     if parameters.mode == "varScaffold":
