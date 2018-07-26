@@ -527,19 +527,19 @@ def genPDBclustTCL(parameters):
 
 def sortPDBclusters(parameters):
     allPDBoutput = parameters.scaffBASE + ".all.pdb"
-    traj = md.load(allPDBoutput)
+    #traj = md.load(allPDBoutput)
 
-    #allPDBstruct = open(allPDBoutput, "r")
-    #allPDBlines = allPDBstruct.readlines()
-    #pdbHeader = allPDBlines.pop(0)
-    #indPDB = []
-    #currPDB = ""
-    #for pdbLine in allPDBlines:
-    #    currPDB = currPDB + pdbLine
-    #    if "END" in pdbLine:
-    #        indPDB.append(currPDB)
-    #        currPDB = ""
-    #
+    allPDBstruct = open(allPDBoutput, "r")
+    allPDBlines = allPDBstruct.readlines()
+    pdbHeader = allPDBlines.pop(0)
+    indPDB = []
+    currPDB = ""
+    for pdbLine in allPDBlines:
+        currPDB = currPDB + pdbLine
+        if "END" in pdbLine:
+            indPDB.append(currPDB)
+            currPDB = ""
+    
     scaffLOG = parameters.scaffBASE + ".log"    
     clustLogfile = open(scaffLOG, "r")
     clustLogLines = clustLogfile.readlines()
@@ -553,18 +553,23 @@ def sortPDBclusters(parameters):
     del clusterMembership[-1]
     scaffNum = 1;
     #print(traj.n_frames)
+    print len(indPDB)
     for indCluster in clusterMembership:
         repStructIndex = int(indCluster.split(" ")[0])
-        if len(indCluster.split(" ")) > parameters.clustThresh*traj.n_frames:
-            repStruct = traj[repStructIndex]
+        #if len(indCluster.split(" ")) > parameters.clustThresh*traj.n_frames:
+        #    repStruct = traj[repStructIndex]
+        #    scaffFileName = parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb"
+        #    repStruct.save(scaffFileName)
+        #    scaffNum += 1 
+        #print str(len(indCluster)) + " cluster " + str(scaffNum)
+        if len(indCluster.split(" ")) > parameters.clustThresh*len(indPDB):
+            #scaffFileName = parameters.scaffBASE + ".cluster" + str(scaffNum) + ".pdb"
             scaffFileName = parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb"
-            repStruct.save(scaffFileName)
-            scaffNum += 1 
-        
-    #    if len(indCluster) > parameters.clustThresh*len(indPDB):
-    #        scaffFileName = parameters.scaffBASE + ".cluster" + str(scaffNum) + ".pdb"
-    #        scaffFile = open(scaffFileName,"w+")
-    #        scaffFile.write(pdbHeader)
+            scaffFile = open(scaffFileName,"w+")
+            scaffFile.write(pdbHeader)
+            scaffFile.write(indPDB[int(repStructIndex)])
+            scaffFile.close()
+            scaffNum += 1
     #        for structID in indCluster:
     #            print structID
     #            if structID:
