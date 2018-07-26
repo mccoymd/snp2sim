@@ -612,33 +612,24 @@ def genScaffoldMDTRAJ(parameters):
                 pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
                 traj = md.load(pdbClustFile)
                 atom_indices = [a.index for a in traj.topology.atoms if a.element.symbol != 'H']
+                numStruct = traj.n_frames
+                structLimit = 1500
+                if numStruct > structLimit:
+                    numStruct = structLimit
+                    repSet = traj[random.sample(range(traj.n_frames),structLimit)]
+                else:
+                    repSet = traj
 
-                #finding struct with max similarity within cluster
-                #memory optimized
-                maxSimScore = 0
-                maxSimStruct = traj[0]
-                for i in random.sample(range(traj.n_frames),int(traj.n_frames/10)):
-                    print i
-                    distances = md.rmsd(traj,traj,i,atom_indices = atom_indices)
-                    simScore = np.exp(-distances).sum()
-                    #print str(i) +" "+ str(simScore)
-                    if simScore > maxSimScore:
-                        maxSimScore = simScore
-                        maxSimStruct = traj[i]
-                        #print maxSimScore
+                distances = np.empty((repSet.n_frames,repSet.n_frames))
+                for i in range(repSet.n_frames):
+                    #print i
+                    distances[i] = md.rmsd(repSet,repSet,i,atom_indices = atom_indices)
 
-                maxSimStruct.save(pdbScaffFile)
-
+                index = np.exp(-distances/distances.std()).sum(axis=1).argmax()
+                print(index)
+                #centroid = repSet[index]
                 #centroid.save(pdbScaffFile)
                 
-#                genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
-#                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
-#                genScaff.write("set domain [atomselect top all]\n")
-#                genScaff.write("set avePos [measure avpos $domain]\n")
-#                genScaff.write("$domain set {x y z} $avePos\n")
-#                genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
-#                
-#    genScaff.write("quit\n")
     return
 
 def parseADconfig(parameters):
