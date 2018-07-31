@@ -218,6 +218,7 @@ def genStructTCL(parameters):
                    "W":"TRP","K":"LYS","Q":"GLN","E":"GLU","S":"SER",
                    "P":"PRO","V":"VAL","I":"ILE","C":"CYS","Y":"TYR",
                    "H":"HIS","R":"ARG","N":"ASN","D":"ASP","T":"THR"}
+        structFile.write("package require mutator")
         structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
                          % (parameters.wtPSF, parameters.wtPDB, \
                             parameters.varPrefix, parameters.varResID, longAA.get(parameters.varAA)))
