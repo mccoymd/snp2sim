@@ -176,7 +176,6 @@ def genNAMDstructFiles(parameters):
         print "use --new to specify clean PDB (only cannonical aa) "
         sys.exit()
 
-    return
 
 def genStructTCL(parameters):
     print "generating struct files"
@@ -203,7 +202,6 @@ def genStructTCL(parameters):
     
     structFile.write("quit\n")
 
-    return
 
 def genSolvTCL(parameters):
     #todo - adjustable solvation/ionization parameters
@@ -222,7 +220,6 @@ def genSolvTCL(parameters):
     solvFile.write("puts $output [measure minmax $box]\n")
     solvFile.write("close $output\n")
     solvFile.write("quit")
-    return
 
 def runNAMD(parameters):
     if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
@@ -355,7 +352,7 @@ def genSingleRunTCL(parameters):
     
     os.system(genPDBcommand)
 
-def genClusterTCL(parameters):
+def runClusterTCL(parameters):
 #TODO - currently config must be formated as:
 #NOTE:: 3 lines, CASE SPECIFIC, NEEDS IMPROVEMENT
 #alignmentRes "(atomselection)"
@@ -433,9 +430,10 @@ def genClusterTCL(parameters):
 #                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
 #            }
     
-    return
+    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+    os.system(vmdClustCommand)
 
-def genPDBclustTCL(parameters):
+def runPDBclustTCL(parameters):
     scaffParameters = open(parameters.scaffParams,"r")
     scaffLines = scaffParameters.readlines()
 
@@ -511,7 +509,8 @@ def genPDBclustTCL(parameters):
 #                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
 #            }
     
-    return
+    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+    os.system(vmdClustCommand)  
 
 def sortPDBclusters(parameters):
     allPDBoutput = parameters.scaffBASE + ".all.pdb"
@@ -564,8 +563,6 @@ def sortPDBclusters(parameters):
     #                scaffFile.write(indPDB[int(structID)])
     #    scaffNum += 1 
 
-    return
-
 
 def genScaffoldTCL(parameters):
     
@@ -592,7 +589,6 @@ def genScaffoldTCL(parameters):
                 genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
                 
     genScaff.write("quit\n")
-    return
 
 def genScaffoldMDTRAJ(parameters):
     #TODO generate rep structure using cluster res
@@ -631,7 +627,6 @@ def genScaffoldMDTRAJ(parameters):
                 #centroid = repSet[index]
                 #centroid.save(pdbScaffFile)
                 
-    return
 
 def parseADconfig(parameters):
     paramFile = "%s/variantSimulations/%s/config/%s.autodock" % \
@@ -644,7 +639,6 @@ def parseADconfig(parameters):
                                 paramData.pop(0).rstrip(),
                                 paramData.pop(0).rstrip(),
                                 paramData.pop(0).rstrip()]
-    return(parameters)
 
 def parseFlexConfig(parameters):
     #TODO input from config folder
@@ -652,7 +646,6 @@ def parseFlexConfig(parameters):
     parameters.flexRes = parameters.flexRes.rstrip()
     parameters.flexRes = parameters.flexRes.split(" ")
 
-    return(parameters)
 
 def getFlexRes(pdbFile,flexRes):
     flexConfig = open(flexRes, "r").readlines()
@@ -717,7 +710,6 @@ def alignScaff(parameters, currScaff):
     alignmentTCL.close()
     alignmentCommand = "%s -e %s" % (parameters.VMDpath, alignmentConfig)
     os.system(alignmentCommand)
-    return
 
 def genVinaConfig(parameters):
     vinaConfig = open(parameters.vinaConfig,"w+")
@@ -733,7 +725,8 @@ def genVinaConfig(parameters):
     for searchParam in parameters.ADsearchSpace:
         vinaConfig.write("%s\n" % searchParam)
 
-    return
+    vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+    os.system(vinaCommand)
 
 
 
@@ -838,16 +831,13 @@ def runVarScaffold(parameters):
             print scaffLOG
             if not os.path.isfile(scaffLOG):
                 if not parameters.clustPDBtraj:
-                    genClusterTCL(parameters)
-                    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-                    os.system(vmdClustCommand)
+                    runClusterTCL(parameters)
                 else:
                     parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genPDBtrajScaffold.tcl" % \
                                               (parameters.runDIR, parameters.protein,
                                                parameters.protein, parameters.variant, parameters.scaffID)
-                    genPDBclustTCL(parameters)
-                    vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-                    os.system(vmdClustCommand)                    
+                    runPDBclustTCL(parameters)
+                                      
 
                 sortPDBclusters(parameters)
                 #old (wrong) way to gen rep structure
@@ -1031,8 +1021,6 @@ def runDrugSearch(parameters):
                                                      parameters.vinaBase)
 
                             genVinaConfig(parameters)
-                            vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
-                            os.system(vinaCommand)
                         
                     if parameters.cgcRun:
                         cwd = os.getcwd()
