@@ -640,11 +640,12 @@ def parseADconfig(parameters):
                                 paramData.pop(0).rstrip(),
                                 paramData.pop(0).rstrip()]
 
-def parseFlexConfig(parameters):
-    #TODO input from config folder
-    parameters.flexRes = paramData.pop(0)
-    parameters.flexRes = parameters.flexRes.rstrip()
-    parameters.flexRes = parameters.flexRes.split(" ")
+#Function not used?
+# def parseFlexConfig(parameters):
+#     #TODO input from config folder
+#     parameters.flexRes = paramData.pop(0)
+#     parameters.flexRes = parameters.flexRes.rstrip()
+#     parameters.flexRes = parameters.flexRes.split(" ")
 
 
 def getFlexRes(pdbFile,flexRes):
