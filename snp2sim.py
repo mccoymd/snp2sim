@@ -22,6 +22,13 @@ class argParse():
 	def checkRequiredArgs(self):
 		for arg in self.requiredArgs:
 			assert (hasattr(self, arg) and getattr(self, arg)), arg + " not specified! " + arg + " is required."
+
+		if self.mode == "varMDsim":
+			if not self.simID:
+				self.simID = str(random.randint(1,1000))
+		if self.mode == "varScaffold":
+			assert (hasattr(self, "scaffID") and getattr(self, "scaffID")), "no scaff ID - exiting"
+
 	def setDefault(self):
 		self.runDIR = os.path.abspath(__file__)
 		self.runDIR = os.path.dirname(self.runDIR)
@@ -40,10 +47,6 @@ class argParse():
 			self.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
 		if not self.VINApath:
 			self.VINApath = "vina"
-			
-		if self.mode == "varMDsim":
-			if not self.simID:
-				self.simID = str(random.randint(1,1000))
 
 		if self.varResID and self.varAA:
 			self.variant = self.varResID + self.varAA
@@ -52,10 +55,6 @@ class argParse():
 			print("Using WT structure for simulation")
 			self.variant = "wt"
 
-		if self.mode == "varScaffold":
-			if not self.scaffID:
-				print("no scaff ID - exiting")
-				sys.exit()
 
 
 			
