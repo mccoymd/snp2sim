@@ -17,8 +17,8 @@ class argParse():
 		self.requiredArgs = ['protein', 'mode']
 		self.commandargs = _parseCommandLine()
 		self.__dict__.update(self.commandargs.__dict__)
-		self.args = yaml.load(open('config.yaml'))
-		self.__dict__.update(self.args)
+		#self.args = yaml.load(open('config.yaml'))
+		#self.__dict__.update(self.args)
 	def checkRequiredArgs(self):
 		for arg in self.requiredArgs:
 			assert (hasattr(self, arg) and getattr(self, arg)), arg + " not specified! " + arg + " is required."
@@ -304,9 +304,9 @@ def _parseCommandLine():
 						action="store",
 						)
 	parser.add_argument("--cgcRun",
-						help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
-						action="store_true",
-						)
+                            help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
+			    action="store_true",
+        )
 	parser.add_argument("--bindSingleVar",
 						help="only bind single variant scaffolds",
 						action="store_true",
@@ -362,7 +362,7 @@ def genStructTCL(parameters):
 				   "W":"TRP","K":"LYS","Q":"GLN","E":"GLU","S":"SER",
 				   "P":"PRO","V":"VAL","I":"ILE","C":"CYS","Y":"TYR",
 				   "H":"HIS","R":"ARG","N":"ASN","D":"ASP","T":"THR"}
-		structFile.write("package require mutator")
+		structFile.write("package require mutator\n")
 		structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
 						 % (parameters.wtPSF, parameters.wtPDB, \
 							parameters.varPrefix, parameters.varResID, longAA.get(parameters.varAA)))
@@ -484,16 +484,19 @@ def runNAMD(parameters):
 	configFile.write("reinitvels          $temperature\n\n")
 	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
 					 
-	runNAMDcommand = "%s +p%i %s > %s.log" % \
-						 (parameters.NAMDpath, parameters.simProc,
-						  parameters.NAMDconfig, parameters.NAMDout)
 	if not os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory/" \
 						 % (parameters.runDIR, parameters.protein, parameters.variant)):
 		os.makedirs("%s/variantSimulations/%s/results/%s/trajectory/" \
 						 % (parameters.runDIR, parameters.protein, parameters.variant))
 
 	print("running NAMD with %i processors" % parameters.simProc)
-	os.system(runNAMDcommand)
+
+#moving to runVarMDsim
+#        runNAMDcommand = "%s +p%i %s > %s.log" % \
+#			 (parameters.NAMDpath, parameters.simProc,
+#			  parameters.NAMDconfig, parameters.NAMDout)
+#	os.system(runNAMDcommand)
+                
 
 def genSingleRunTCL(parameters):
 	print("generating %s" % parameters.singleRunTCL)
@@ -675,9 +678,10 @@ def runPDBclustTCL(parameters):
 #                puts $output [puts $thr]
 #                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
 #            }
-	
-	vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-	os.system(vmdClustCommand)  
+
+# moving this to runVarScaffold
+#	vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+#	os.system(vmdClustCommand)  
 
 def sortPDBclusters(parameters):
 	allPDBoutput = parameters.scaffBASE + ".all.pdb"
@@ -895,8 +899,9 @@ def genVinaConfig(parameters):
 	for searchParam in parameters.ADsearchSpace:
 		vinaConfig.write("%s\n" % searchParam)
 
-	vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
-	os.system(vinaCommand)
+#moving to runDrugSearch                
+#	vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+#	os.system(vinaCommand)
 
 
 
@@ -933,6 +938,13 @@ def runVarMDsim(parameters):
 		print("Performing Variant %.3f ns Simulation" % parameters.simLength)
 		
 		runNAMD(parameters)
+                runNAMDcommand = "%s +p%i %s > %s.log" % \
+			         (parameters.NAMDpath, parameters.simProc,
+			          parameters.NAMDconfig, parameters.NAMDout)
+	        os.system(runNAMDcommand)
+                if not os.path.isfile("parameters.NAMDout.dcd"):
+                        print("NAMD run failed")
+                        sys.exit()
 		
 		if parameters.singleRun:
 			genSingleRunTCL(parameters)
@@ -1006,7 +1018,10 @@ def runVarScaffold(parameters):
 											  (parameters.runDIR, parameters.protein,
 											   parameters.protein, parameters.variant, parameters.scaffID)
 					runPDBclustTCL(parameters)
-									  
+	                                vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+	                                os.system(vmdClustCommand)  
+
+					
 
 				sortPDBclusters(parameters)
 				#old (wrong) way to gen rep structure
@@ -1190,6 +1205,9 @@ def runDrugSearch(parameters):
 													 parameters.vinaBase)
 
 							genVinaConfig(parameters)
+                                                        vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+	                                                os.system(vinaCommand)
+
 						
 					if parameters.cgcRun:
 						cwd = os.getcwd()
@@ -1231,7 +1249,7 @@ def runDrugSearch(parameters):
 def main():
 
 	parameters = argParse()
-	parameters.requiredArgs()
+	parameters.checkRequiredArgs()
 	parameters.setDefault()
 
 	if parameters.mode == "varMDsim":
