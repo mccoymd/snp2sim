@@ -120,6 +120,10 @@ class argParse():
 		self.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
 							 % (self.runDIR, self.protein, self.variant)
 
+		self.drugLibPath = "%s/drugLibraries/%s/" % \
+				   (self.runDIR, self.drugLibrary)
+
+                
 		#hardcoding bindingID as drugLibrary
 		#TODO - refactor to remove "bindingID"
 		self.bindingID = self.drugLibrary
@@ -1111,23 +1115,24 @@ def runDrugSearch(parameters):
 #            print pdbNewLoc
 			os.system("cp %s %s" % (pdbFile,pdbNewLoc))
 
-	#TODO input custom drug librarys 
-	if not parameters.drugLibrary:
+
+	if parameters.drugLibrary:
 		if parameters.singleDrug:
 			#todo - add single drug binding
-			print("binding single drug not configured")
-			sys.exit()
-		else:
-			print("no drug specified")
-			sys.exit()
-	else:
-		parameters.drugLibPath = "%s/drugLibraries/%s/" % \
-								 (parameters.runDIR, parameters.drugLibrary)
-		if not os.path.isdir(parameters.drugLibPath):
-			print("drug library does not exist")
-			sys.exit()
-		else:
+			print("binding single drug %s" % parameters.singleDrug)
+                        if not os.path.isdir(parameters.drugLibPath):
+			        print("drug library does not exist! Creating it!")
+			        os.makedirs(parameters.drugLibPath)
+                        os.system("cp %s %s" % (parameters.singleDrug,
+                                                parameters.drugLibPath))
 			print("using small molecules in %s" % parameters.drugLibPath)
+
+		else:
+		        if not os.path.isdir(parameters.drugLibPath):
+			        print("drug library does not exist ")
+			        sys.exit()
+		        else:
+			        print("using small molecules in %s" % parameters.drugLibPath)
 
 			
 							
@@ -1174,8 +1179,10 @@ def runDrugSearch(parameters):
 					parameters.scaff1out = scaffBase + ".pdbqt"
 					#prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
 					prepBaseScaff =  "%s %s/prepare_receptor4.py -r %s -o %s" \
-								 % (parameters.PYTHONSHpath, parameters.ADTpath,
-									currScaffPath,parameters.scaff1out)
+                                                         % (parameters.PYTHONSHpath,
+                                                            parameters.ADTpath,
+                                                            currScaffPath,
+                                                            parameters.scaff1out)
 					os.system(prepBaseScaff)
 
 					if os.path.isfile(parameters.flexConfig):
