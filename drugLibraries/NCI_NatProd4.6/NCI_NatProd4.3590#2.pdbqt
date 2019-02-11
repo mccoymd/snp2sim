@@ -1,0 +1,9 @@
+REMARK  Name = NSC 3590#2
+REMARK  0 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1 CA   UNL     1      11.792   9.750   0.000  0.00  0.00    +0.000 Ca
+ENDROOT
+TORSDOF 0

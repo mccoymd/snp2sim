@@ -1,0 +1,38 @@
+REMARK  Name = 107677
+REMARK  12 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C_6  and  C_24
+REMARK    2  A    between atoms: C_7  and  C_24
+REMARK    3  A    between atoms: C_9  and  C_26
+REMARK    4  A    between atoms: C_16  and  C_17
+REMARK    5  A    between atoms: C_17  and  O_19
+REMARK    6  A    between atoms: C_20  and  C_21
+REMARK    7  A    between atoms: C_21  and  O_23
+REMARK    8  A    between atoms: C_24  and  C_25
+REMARK    9  A    between atoms: C_26  and  C_27
+REMARK   10  A    between atoms: C_27  and  N_28
+REMARK   11  A    between atoms: N_28  and  C_29
+REMARK   12  A    between atoms: N_28  and  C_30
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C   UNL     1       7.380 -11.159   0.000  0.00  0.00    +0.098 C 
+ATOM      2  C   UNL     1       7.068 -12.626   0.000  0.00  0.00    +0.098 C 
+ENDROOT
+BRANCH   2   3
+ATOM      3  C   UNL     1       8.183 -13.630   0.000  0.00  0.00    +0.330 C 
+ATOM      6  O   UNL     1       7.871 -15.097   0.000  0.00  0.00    -0.246 OA
+BRANCH   3   4
+ATOM      4  O   UNL     1       9.609 -13.166   0.000  0.00  0.00    -0.478 OA
+ATOM      5  H   UNL     1      10.306 -13.793   0.000  0.00  0.00    +0.295 HD
+ENDBRANCH   3   4
+ENDBRANCH   2   3
+BRANCH   1   7
+ATOM      7  C   UNL     1       8.806 -10.695   0.000  0.00  0.00    +0.330 C 
+ATOM     10  O   UNL     1       9.118  -9.228   0.000  0.00  0.00    -0.246 OA
+BRANCH   7   8
+ATOM      8  O   UNL     1       9.921 -11.699   0.000  0.00  0.00    -0.478 OA
+ATOM      9  H   UNL     1       9.726 -12.615   0.000  0.00  0.00    +0.295 HD
+ENDBRANCH   7   8
+ENDBRANCH   1   7
+TORSDOF 4

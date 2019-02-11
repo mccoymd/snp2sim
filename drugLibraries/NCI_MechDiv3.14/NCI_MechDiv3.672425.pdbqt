@@ -1,0 +1,21 @@
+REMARK  Name = 672425
+REMARK  6 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C_11  and  C_20
+REMARK    2  A    between atoms: C_20  and  CA_21
+REMARK    3  A    between atoms: CA_21  and  N_22
+REMARK    4  A    between atoms: CA_21  and  C_23
+REMARK    5  A    between atoms: C_23  and  OXT_25
+REMARK    6  A    between atoms: N_26  and  O_29
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  N   UNL     1       8.062  10.299   0.000  0.00  0.00    +0.282 N 
+ATOM      4  O   UNL     1       8.812   9.000   0.000  0.00  0.00    +0.093 OA
+ATOM      5  O   UNL     1       8.812  11.598   0.000  0.00  0.00    -0.534 OA
+ENDROOT
+BRANCH   1   2
+ATOM      2  O   UNL     1       6.562  10.299   0.000  0.00  0.00    -0.231 OA
+ATOM      3  H   UNL     1       6.094  11.110   0.000  0.00  0.00    +0.390 HD
+ENDBRANCH   1   2
+TORSDOF 1

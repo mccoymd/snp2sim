@@ -1,0 +1,37 @@
+REMARK  Name = NSC 46709
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: CG_1  and  CB_2
+REMARK    2  A    between atoms: CG_1  and  CD2_8
+REMARK    3  A    between atoms: CG_1  and  CD1_9
+REMARK    4  A    between atoms: CB_2  and  CA_3
+REMARK    5  A    between atoms: CA_3  and  N_4
+REMARK    6  A    between atoms: CA_3  and  C_5
+REMARK    7  A    between atoms: C_5  and  OXT_6
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      3  CA  LEU A   1       0.569   0.192   0.000  0.00  0.00    +0.161 C 
+ENDROOT
+BRANCH   3   4
+ATOM      4  N   LEU A   1       0.502   1.691   0.000  0.00  0.00    -0.318 NA
+ATOM      5  H1  LEU A   1      -0.403   2.161   0.000  0.00  0.00    +0.119 HD
+ATOM      6  H2  LEU A   1       1.362   2.240   0.000  0.00  0.00    +0.119 HD
+ENDBRANCH   3   4
+BRANCH   3   7
+ATOM      7  C   LEU A   1       1.901  -0.499   0.000  0.00  0.00    +0.322 C 
+ATOM     10  O   LEU A   1       3.165   0.309   0.000  0.00  0.00    -0.249 OA
+BRANCH   7   8
+ATOM      8  OXT LEU A   1       1.968  -1.997   0.000  0.00  0.00    -0.480 OA
+ATOM      9  HXT LEU A   1       1.178  -2.501   0.000  0.00  0.00    +0.295 HD
+ENDBRANCH   7   8
+ENDBRANCH   3   7
+BRANCH   3   2
+ATOM      2  CB  LEU A   1      -0.695  -0.615   0.000  0.00  0.00    +0.033 C 
+BRANCH   2   1
+ATOM      1  CG  LEU A   1      -2.026   0.076   0.000  0.00  0.00    -0.015 C 
+ATOM     11  CD2 LEU A   1      -2.093   1.574   0.000  0.00  0.00    +0.007 C 
+ATOM     12  CD1 LEU A   1      -3.290  -0.732   0.000  0.00  0.00    +0.007 C 
+ENDBRANCH   2   1
+ENDBRANCH   3   2
+TORSDOF 5

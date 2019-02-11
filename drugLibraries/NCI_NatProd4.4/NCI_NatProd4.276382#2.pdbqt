@@ -1,0 +1,21 @@
+REMARK  Name = NSC 276382#2
+REMARK  2 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: O_1  and  S_3
+REMARK    2  A    between atoms: S_3  and  O_6
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      3  S   UNL     1      23.035 -21.677   0.000  0.00  0.00    +0.205 S 
+ATOM      4  O   UNL     1      21.736 -22.427   0.000  0.00  0.00    -0.118 OA
+ATOM      5  O   UNL     1      24.334 -20.927   0.000  0.00  0.00    -0.118 OA
+ENDROOT
+BRANCH   3   1
+ATOM      1  O   UNL     1      23.785 -22.977   0.000  0.00  0.00    -0.231 OA
+ATOM      2  H   UNL     1      23.035 -24.276   0.000  0.00  0.00    +0.247 HD
+ENDBRANCH   3   1
+BRANCH   3   6
+ATOM      6  O   UNL     1      22.285 -20.378   0.000  0.00  0.00    -0.231 OA
+ATOM      7  H   UNL     1      23.035 -19.079   0.000  0.00  0.00    +0.247 HD
+ENDBRANCH   3   6
+TORSDOF 2

@@ -1,0 +1,16 @@
+REMARK  Name = 73413
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: N_1  and  C_11
+REMARK    2  A    between atoms: N_2  and  C_13
+REMARK    3  A    between atoms: C_8  and  O_27
+REMARK    4  A    between atoms: C_14  and  O_26
+REMARK    5  A    between atoms: C_20  and  N_23
+REMARK    6  A    between atoms: C_21  and  S_28
+REMARK    7  A    between atoms: S_28  and  O_31
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1 NA   UNL     1       0.275   1.025   0.000  0.00  0.00    +0.000 Na
+ENDROOT
+TORSDOF 0

@@ -1,0 +1,69 @@
+REMARK  Name = 125066
+REMARK  53 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C_2  and  C_7
+REMARK    2  A    between atoms: C_3  and  C_7
+REMARK    3  A    between atoms: C_3  and  C_14
+REMARK    4  A    between atoms: C_3  and  N_20
+REMARK    5  A    between atoms: C_4  and  C_5
+REMARK    6  A    between atoms: C_4  and  N_20
+REMARK    7  A    between atoms: C_5  and  C_6
+REMARK    8  A    between atoms: C_5  and  N_12
+REMARK    9  A    between atoms: C_16  and  N_110
+REMARK   10  A    between atoms: C_17  and  C_21
+REMARK   11  A    between atoms: C_18  and  C_22
+REMARK   12  A    between atoms: C_24  and  C_25
+REMARK   13  A    between atoms: C_24  and  C_26
+REMARK   14  A    between atoms: C_24  and  N_65
+REMARK   15  A    between atoms: C_26  and  O_71
+REMARK   16  A    between atoms: C_26  and  C_73
+REMARK   17  A    between atoms: C_29  and  C_30
+REMARK   18  A    between atoms: C_29  and  N_66
+REMARK   19  A    between atoms: C_29  and  C_67
+REMARK   20  A    between atoms: C_30  and  C_32
+REMARK   21  A    between atoms: C_30  and  O_108
+REMARK   22  A    between atoms: C_32  and  C_34
+REMARK   23  A    between atoms: C_32  and  C_61
+REMARK   24  A    between atoms: C_37  and  C_38
+REMARK   25  A    between atoms: C_37  and  C_39
+REMARK   26  A    between atoms: C_37  and  N_68
+REMARK   27  A    between atoms: C_39  and  C_62
+REMARK   28  A    between atoms: C_39  and  O_109
+REMARK   29  A    between atoms: C_43  and  C_44
+REMARK   30  A    between atoms: C_43  and  N_69
+REMARK   31  A    between atoms: C_44  and  C_46
+REMARK   32  A    between atoms: C_49  and  C_51
+REMARK   33  A    between atoms: C_53  and  C_55
+REMARK   34  A    between atoms: C_57  and  C_58
+REMARK   35  A    between atoms: C_57  and  N_70
+REMARK   36  A    between atoms: C_58  and  C_59
+REMARK   37  A    between atoms: C_59  and  S_60
+REMARK   38  A    between atoms: S_60  and  C_63
+REMARK   39  A    between atoms: S_60  and  C_64
+REMARK   40  A    between atoms: O_71  and  C_79
+REMARK   41  A    between atoms: C_80  and  O_85
+REMARK   42  A    between atoms: C_81  and  O_94
+REMARK   43  A    between atoms: C_82  and  O_95
+REMARK   44  A    between atoms: C_83  and  C_84
+REMARK   45  A    between atoms: C_83  and  O_107
+REMARK   46  A    between atoms: O_85  and  C_86
+REMARK   47  A    between atoms: C_88  and  O_97
+REMARK   48  A    between atoms: C_89  and  O_98
+REMARK   49  A    between atoms: C_90  and  C_91
+REMARK   50  A    between atoms: C_90  and  O_96
+REMARK   51  A    between atoms: C_92  and  O_100
+REMARK   52  A    between atoms: O_100  and  C_101
+REMARK   53  A    between atoms: O_102  and  S_103
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      3  S   UNL     1     -11.852  27.968   0.000  0.00  0.00    -0.003 S 
+ATOM      4  O   UNL     1     -13.352  27.968   0.000  0.00  0.00    -0.345 OA
+ATOM      5  O   UNL     1     -11.852  26.468   0.000  0.00  0.00    -0.268 OA
+ATOM      6  O   UNL     1     -10.352  27.968   0.000  0.00  0.00    -0.345 OA
+ENDROOT
+BRANCH   3   1
+ATOM      1  O   UNL     1     -11.852  29.468   0.000  0.00  0.00    -0.270 OA
+ATOM      2  H   UNL     1     -11.012  29.953   0.000  0.00  0.00    +0.243 HD
+ENDBRANCH   3   1
+TORSDOF 1
