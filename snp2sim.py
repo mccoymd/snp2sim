@@ -365,7 +365,7 @@ def genStructTCL(parameters):
 		longAA = { "G":"GLY","A":"ALA","L":"LEU","M":"MET","F":"PHE",
 				   "W":"TRP","K":"LYS","Q":"GLN","E":"GLU","S":"SER",
 				   "P":"PRO","V":"VAL","I":"ILE","C":"CYS","Y":"TYR",
-				   "H":"HIS","R":"ARG","N":"ASN","D":"ASP","T":"THR"}
+				   "H":"HSE","R":"ARG","N":"ASN","D":"ASP","T":"THR"}
 		structFile.write("package require mutator\n")
 		structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
 						 % (parameters.wtPSF, parameters.wtPDB, \
@@ -946,7 +946,7 @@ def runVarMDsim(parameters):
 			         (parameters.NAMDpath, parameters.simProc,
 			          parameters.NAMDconfig, parameters.NAMDout)
 	        os.system(runNAMDcommand)
-                if not os.path.isfile("parameters.NAMDout.dcd"):
+                if not os.path.isfile("%s.dcd" % parameters.NAMDout):
                         print("NAMD run failed")
                         sys.exit()
 		
