@@ -1,0 +1,3 @@
+alignmentRes "backbone and resid 19 to 131"
+clusterRes "backbone and resid 19 20 54 56 66 68 115 116 117 121 122 123 124 125"
+rmsdThresh 0.7

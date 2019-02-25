@@ -3,13 +3,20 @@ Molecular Simulation of Protein Structure Variants
 Questions: Matthew McCoy - mdm299 <at> georgetown.edu
 
 ## Installation Instructions
-The SNP2SIM workflow is a Python script which generates variant specific structural scaffolding for small molecule docking simulations.
+The SNP2SIM workflow is a Python script which generates 
+variant specific structural scaffolding for small molecule 
+docking simulations.
 
-Dependencies:
-  Python
+### Installing Molecular Simulation Dependencies:
   Installed to PATH
+  
+#### Nanoscale Molecular Dynamics (NAMD)
     NAMD executable "namd2"
+
+### Visual Molecular Dynamics (VMD)
     VMD executatble "vmd"
+
+### AutoDock Vina and AutoDockTools
     AutoDock Vina executable "vina"
     pythonsh (from AutoDockTools) executable "pythonsh"
   Alternatively, AutoDockTools scripts prepare_receptor4.py, prepare_flexreceptor4.py
@@ -22,7 +29,36 @@ Usage:python snp2sim.py <<options>>
   results in a predefined directory structure. If the required
   trajectory/scaffold files are not present in the snp2sim directory,
   they must be speficied through the command line.
+  
+  use PD-L1 as example
 
+### Generating Structural Trajectories using varMDsim
+
+#### Input Files
+
+#### Command line options
+
+#### Output files
+
+
+### Generating Variant Scaffolds using varScaffold
+
+#### Input Files
+
+#### Command line options
+
+#### Output files
+
+
+### Generating Small Molecule Docking Results using drugSearch
+
+#### Input Files
+
+#### Command line options
+
+#### Output files
+
+  
 ## Command Line Options:
 ### General:
 --mode <string>
