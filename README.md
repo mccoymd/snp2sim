@@ -15,7 +15,7 @@ Dependencies:
   Alternatively, AutoDockTools scripts prepare_receptor4.py, prepare_flexreceptor4.py
   installed at /opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/
 
-##Example Usage
+## Example Usage
 Usage:python snp2sim.py <<options>>
 
   The workflow is configured to store intermediate files and
@@ -23,8 +23,8 @@ Usage:python snp2sim.py <<options>>
   trajectory/scaffold files are not present in the snp2sim directory,
   they must be speficied through the command line.
 
-##Command Line Options:
-###General:
+## Command Line Options:
+### General:
 --mode <string>
   select which snp2sim module to run
   appropriate values: varMDsim, varScaffold, drugSearch
@@ -33,7 +33,7 @@ Usage:python snp2sim.py <<options>>
   user specified name for simulation
   used in naming output directories and file
 
-###Optional:
+### Optional:
 --varResID <integer>
   Position in input PDB file to mutate to varAA
 
@@ -59,8 +59,8 @@ Usage:python snp2sim.py <<options>>
   If flag is set, output files will be copied to
   working directory (for output on CGC platform app)
 
-###Options specific to snp2sim modules
-####varMDsim:
+### Options specific to snp2sim modules
+#### varMDsim:
   Usage Notes:
   If a variant is now specified using --varResID and --varAA,
   the simulation will run on the unmutated structure
@@ -84,7 +84,7 @@ Usage:python snp2sim.py <<options>>
       Used to run SNP2SIM
 
 
-####varScaffold:
+#### varScaffold:
   Usage Notes
   The imput config file specifies the alignment and clustering parameters
   It is recommend that multiple itterations with different RMSD thresholds
@@ -115,7 +115,7 @@ Usage:python snp2sim.py <<options>>
       paths to PDB trajectory files, separated by single space
 
 
-####drugSearch:
+#### drugSearch:
   Usage Notes:
   This module requires the input of the search space parameters provided to --newBindingConfig
   defined in reference to a template structure (original input PDB)
@@ -161,5 +161,5 @@ Usage:python snp2sim.py <<options>>
   
 
 
-###Analysis (in development)
+### Analysis (in development)
 
