@@ -38,6 +38,12 @@ Usage:python snp2sim.py <<options>>
 
 #### Command line options
 
+WT simulation
+`python snp2sim --mode varMDsim --protein PDL1  --newStruct example/PDL1.Vtype.pdb --simLength 0.1`
+
+Variant simulation
+`python snp2sim --mode varMDsim --protein PDL1 --varResID 115 --varAA T  --newStruct example/PDL1.Vtype.pdb --simLength 0.1`
+
 #### Output files
 
 
@@ -197,5 +203,9 @@ Usage:python snp2sim.py <<options>>
   
 
 
-### Analysis (in development)
+### In Development
+
+#### Input parameters using YAML Config file
+
+#### AutoDock Results Analysis
 
