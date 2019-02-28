@@ -76,19 +76,19 @@ configureation files that have been previously generated.
 
 #### Output files
 
-<Protein Name> refers to the value of the --protein command line option.
+PROTEIN refers to the value of the --protein command line option.
 The module will output tcl scripts for the generation of the solvated 
-protein structure in the "variantSimulations/<Protein Name>/bin/" directory. 
+protein structure in the "variantSimulations/PROTEIN/bin/" directory. 
 
-NAMD configs are output to the "variantSimulations/<Protein Name>/config/" directory.
+NAMD configs are output to the "variantSimulations/PROTEIN/config/" directory.
 
 NAMD input structure files (solvated psf and pdb files)
-are output to the "variantSimulations/<Protein Name>/structures/" directory.
+are output to the "variantSimulations/PROTEIN/structures/" directory.
 
-<Variant> refers to the concatenated values of --varResID and --varAA
+VARIANT refers to the concatenated values of --varResID and --varAA
 
 NAMD trajectory results are found in the 
-"variantSimulations/<Protein Name>/<Variant>/trajectory" directory.
+"variantSimulations/PROTEIN/VARIANT/trajectory" directory.
 
 ### Generating Variant Scaffolds using varScaffold
 
@@ -111,7 +111,7 @@ in the example directory for the format.
 The output files include a representative PDB for each cluster, 
 as well as a log file with the cluster assignments for all 
 trajectory structures are stored in the 
-"variantSimulations/<Protein Name>/<Variant>/scaffold"
+"variantSimulations/PROTEIN/VARIANT/scaffold"
 
 ### Generating Small Molecule Docking Results using drugSearch
 
