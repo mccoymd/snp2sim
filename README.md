@@ -3,58 +3,115 @@ Molecular Simulation of Protein Structure Variants
 Questions: Matthew McCoy - mdm299 <at> georgetown.edu
 
 ## Installation Instructions
-The SNP2SIM workflow is a Python script which generates 
+The SNP2SIM workflow is a Python script which controls the 
+execution of molecular simulations to generate
 variant specific structural scaffolding for small molecule 
-docking simulations.
-
-### Installing Molecular Simulation Dependencies:
-  Installed to PATH
+docking. The script runs on a linux operating system and 
+controls the execution of third party software detailed below.
   
-#### Nanoscale Molecular Dynamics (NAMD)
-    NAMD executable "namd2"
+### Nanoscale Molecular Dynamics (NAMD)
+NAMD is used to execute the molecular dynamics simulations,
+and can be downloaded from 
+https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
+The binaries should be added to the users PATH environment variable as "namd2".
+
+Alternatively, the user can specify the location of the executable 
+using the `--NAMDpath <path to NAMD binary>` command line option.
 
 ### Visual Molecular Dynamics (VMD)
-    VMD executatble "vmd"
+VMD is used to maniputulate and analyze protein structure files 
+and can be downloaded from 
+https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=VMD
+The binaries should be added to the users PATH environment variable as "vmd".
+
+Alternatively, the user can specify the location of the executable 
+using the `--VMDpath <path to VMD binary>` command line option.
 
 ### AutoDock Vina and AutoDockTools
-    AutoDock Vina executable "vina"
-    pythonsh (from AutoDockTools) executable "pythonsh"
-  Alternatively, AutoDockTools scripts prepare_receptor4.py, prepare_flexreceptor4.py
-  installed at /opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/
+AutoDock Vina is used for the small molecule binding simulations
+and can be downloaded from 
+http://vina.scripps.edu/download.html
+The AutoDock Vina executable should be added to the users PATH environment variable 
+as "vina".
+
+Alternatively, the user can specify the location of the executable 
+using the `--VINApath <path to AutoDock Vina binary>` command line option.
+
+From the included AutoDock Tools, the python wrapper script "pythonsh" 
+should be added to to the users PATH environment 
+
+AutoDockTools scripts prepare_receptor4.py and prepare_flexreceptor4.py 
+should be installed to directory path 
+`/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/`
+
+Alternatively, the user can specify the location of the pythonsh executable  
+can be specified using the `--PYTHONSHpath <path to pythonsh>` command line option
+and the lovation of the Ulititys24 folder included with the AutoDock Tools distribution
+can be specified with the `--ADTpath <path to Utilities24 directory` command line option.
 
 ## Example Usage
 Usage:python snp2sim.py <<options>>
 
-  The workflow is configured to store intermediate files and
-  results in a predefined directory structure. If the required
-  trajectory/scaffold files are not present in the snp2sim directory,
-  they must be speficied through the command line.
+The workflow is configured to store intermediate files and
+results in a predefined directory structure. If the required
+trajectory/scaffold files are not present in the snp2sim directory,
+they must be speficied through the command line.
   
-  use PD-L1 as example
+The files used to run a case study using PD-L1 are provided
+in the "example" directory.
 
 ### Generating Structural Trajectories using varMDsim
 
 #### Input Files
+The input file is a single chain of a PDB structure.
 
 #### Command line options
 
 WT simulation
-`python snp2sim --mode varMDsim --protein PDL1  --newStruct example/PDL1.Vtype.pdb --simLength 0.1`
+note: If the name used as the --protein already exists in the output directory, 
+the --newStruct option is not necessary and the workflow will utilize the
+configureation files that have been previously generated. 
 
-Variant simulation
-`python snp2sim --mode varMDsim --protein PDL1 --varResID 115 --varAA T  --newStruct example/PDL1.Vtype.pdb --simLength 0.1`
+`python snp2sim.py --mode varMDsim --protein PDL1 --varResID 115 --varAA T  --newStruct example/PDL1.Vtype.pdb --simLength 0.1`
 
 #### Output files
 
+<Protein Name> refers to the value of the --protein command line option.
+The module will output tcl scripts for the generation of the solvated 
+protein structure in the "variantSimulations/<Protein Name>/bin/" directory. 
+
+NAMD configs are output to the "variantSimulations/<Protein Name>/config/" directory.
+
+NAMD input structure files (solvated psf and pdb files)
+are output to the "variantSimulations/<Protein Name>/structures/" directory.
+
+<Variant> refers to the concatenated values of --varResID and --varAA
+
+NAMD trajectory results are found in the 
+"variantSimulations/<Protein Name>/<Variant>/trajectory" directory.
 
 ### Generating Variant Scaffolds using varScaffold
 
 #### Input Files
+If NAMD output exists in the file structure defined by the 
+--protein --varResID and --varAA command line options.
+
+The input can also be a list of PDB formatted trajectory files using 
+the --clustPDBtraj command line option.
+
+Additionally, a clustering config is required. See the template file
+in the example directory for the format.
 
 #### Command line options
 
+`python snp2sim.py --mode varScaffold --protein PDL1 --newScaff example/pdl1ScaffConfig.0.7.txt --scaffID bindingRes `
+
 #### Output files
 
+The output files include a representative PDB for each cluster, 
+as well as a log file with the cluster assignments for all 
+trajectory structures are stored in the 
+"variantSimulations/<Protein Name>/<Variant>/scaffold"
 
 ### Generating Small Molecule Docking Results using drugSearch
 
@@ -203,9 +260,4 @@ Variant simulation
   
 
 
-### In Development
-
-#### Input parameters using YAML Config file
-
-#### AutoDock Results Analysis
 
