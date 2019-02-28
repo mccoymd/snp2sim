@@ -1,6 +1,6 @@
 # SNP2SIM
 Molecular Simulation of Protein Structure Variants
-Questions: Matthew McCoy - mdm299 <at> georgetown.edu
+Questions: Matthew McCoy - mdm299 "at" georgetown.edu
 
 ## Installation Instructions
 The SNP2SIM workflow is a Python script which controls the 
@@ -16,7 +16,7 @@ https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD
 The binaries should be added to the users PATH environment variable as "namd2".
 
 Alternatively, the user can specify the location of the executable 
-using the `--NAMDpath <path to NAMD binary>` command line option.
+using the `--NAMDpath "path to NAMD binary"` command line option.
 
 ### Visual Molecular Dynamics (VMD)
 VMD is used to maniputulate and analyze protein structure files 
@@ -25,7 +25,7 @@ https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=VMD
 The binaries should be added to the users PATH environment variable as "vmd".
 
 Alternatively, the user can specify the location of the executable 
-using the `--VMDpath <path to VMD binary>` command line option.
+using the `--VMDpath "path to VMD binary"` command line option.
 
 ### AutoDock Vina and AutoDockTools
 AutoDock Vina is used for the small molecule binding simulations
@@ -35,7 +35,7 @@ The AutoDock Vina executable should be added to the users PATH environment varia
 as "vina".
 
 Alternatively, the user can specify the location of the executable 
-using the `--VINApath <path to AutoDock Vina binary>` command line option.
+using the `--VINApath "path to AutoDock Vina binary"` command line option.
 
 From the included AutoDock Tools, the python wrapper script "pythonsh" 
 should be added to to the users PATH environment 
@@ -45,12 +45,12 @@ should be installed to directory path
 `/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/`
 
 Alternatively, the user can specify the location of the pythonsh executable  
-can be specified using the `--PYTHONSHpath <path to pythonsh>` command line option
+can be specified using the `--PYTHONSHpath "path to pythonsh"` command line option
 and the lovation of the Ulititys24 folder included with the AutoDock Tools distribution
-can be specified with the `--ADTpath <path to Utilities24 directory` command line option.
+can be specified with the `--ADTpath "path to Utilities24 directory` command line option.
 
 ## Example Usage
-Usage:python snp2sim.py <<options>>
+Usage:python snp2sim.py ""options""
 
 The workflow is configured to store intermediate files and
 results in a predefined directory structure. If the required
@@ -124,34 +124,34 @@ trajectory structures are stored in the
   
 ## Command Line Options:
 ### General:
---mode <string>
+--mode "string"
   select which snp2sim module to run
   appropriate values: varMDsim, varScaffold, drugSearch
 
---protein <string>
+--protein "string"
   user specified name for simulation
   used in naming output directories and file
 
 ### Optional:
---varResID <integer>
+--varResID "integer"
   Position in input PDB file to mutate to varAA
 
---varAA <character>
+--varAA "character"
   Single letter code for one of 20 canonical amino acids to mutate varResID
 
---NAMDpath <string>
+--NAMDpath "string"
   path to NAMD executatble
 
---VMDpath <string>
+--VMDpath "string"
   path to VMD executable
 
---VINApath <string>
+--VINApath "string"
   path to AutoDock Vina execuatable
 
---PYTHONSHpath <string>
+--PYTHONSHpath "string"
   path to AutoDockTools script PYTHONSH
 
---ATDpath <string>
+--ATDpath "string"
   path th AutoDockTools Utilitys directory
 
 --cgcRun
@@ -165,17 +165,17 @@ trajectory structures are stored in the
   the simulation will run on the unmutated structure
 
   Module Options
-    --newStruct <file path>
+    --newStruct "file path"
       PDB file containing only the protein structure
 
-    --simLength <real number>
+    --simLength "real number"
       length of the NAMD simulation in nanoseconds
 
-    --simID <string> (optional - default to random numeric ID)
+    --simID "string" (optional - default to random numeric ID)
       Unique identier for the simulation run for generating
       multiple independent trajectories for input to varScaffold
 
-    --simProc <integer> (optional - default is to run on all processors)
+    --simProc "integer" (optional - default is to run on all processors)
       number of processors to run NAMD simulation
 
     --singleRun (optional)
@@ -190,19 +190,19 @@ trajectory structures are stored in the
   are run to determine the value which optimizes the number of variant scaffolds.
   
   Text file formatted as:
-  >alignementRes "<<VMD atomselect command>>"
-  >clusterRes "<<VMD atomselect command>>"
-  >rmsdThresh <<real number>>
+  "alignementRes """VMD atomselect command"""
+  "clusterRes """VMD atomselect command"""
+  "rmsdThresh ""real number""
 
   Module Options
-    --newScaff <file path>
+    --newScaff "file path"
       path to config file with alignment and clustering parameters (see above)
       
-    --scaffID <string>
+    --scaffID "string"
       Specifies naming of scaffolding output logfile containing
       cluster assignements for alignment and clustering parameters
 
-    --clustThresh <real number> (optional - default 0.09)
+    --clustThresh "real number" (optional - default 0.09)
       The minimum porportion of the trajectory population required
       for scaffold identification
 
@@ -210,7 +210,7 @@ trajectory structures are stored in the
       if PDB clusters generated from varMDsim --singleRun are used as input
       this flag must be set and trajectory files specified with --loadPDBtraj
 
-    --loadPDBtraj <file path(s)> (optional)
+    --loadPDBtraj "file path(s)" (optional)
       paths to PDB trajectory files, separated by single space
 
 
@@ -220,12 +220,12 @@ trajectory structures are stored in the
   defined in reference to a template structure (original input PDB)
   Values can be determines using methods specified in the AutoDock Tutorial
   Binding Config:
-  >center_x = <<x coordinate>>
-  >center_y = <<y coordinate>>
-  >center_z = <<z coordinate>>
-  >size_x = <<dimension of x>>
-  >size_y = <<dimension of y>>
-  >size_z = <<dimension of z>>
+  "center_x = ""x coordinate""
+  "center_y = ""y coordinate""
+  "center_z = ""z coordinate""
+  "size_x = ""dimension of x""
+  "size_y = ""dimension of y""
+  "size_z = ""dimension of z""
 
   Additionally, the flexable residues can be supplied to --flexBinding as
   a sting of integers corresponding to the numeric residue ID of
@@ -235,27 +235,27 @@ trajectory structures are stored in the
   ./snp2sim/drugLibraries/
 
   Module Options:
-    --bindingTemplate <file path>
+    --bindingTemplate "file path"
       path to PDB file used to specify AutoDock Vina search space
 
-    --newBindingConfig <file path>
+    --newBindingConfig "file path"
       path to config file defining search space for AutoDock Vina
 
-    --flexBinding <file path>
+    --flexBinding "file path"
       path to file containing a line of intergers corresponding to
       the residue ID of the binding residues.
 
-    --drugLibrary <string>
+    --drugLibrary "string"
       Name of drug library in snp2sim/drugLibraries or identifier for
       ligands input through the command line
 
-    --singleDrug <file path>
+    --singleDrug "file path"
       Path to PDBQT formated ligand file
 
-    --inputScaff <file path(s)> (optional)
+    --inputScaff "file path(s)" (optional)
       path to PDB files of variant specific scaffolds
 
-    --vinaExh <integer> (optional - default 50)
+    --vinaExh "integer" (optional - default 50)
       used to specifiy exhaustiveness of AutoDock Vina search
   
 
