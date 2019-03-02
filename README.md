@@ -131,7 +131,7 @@ residues to use
 --newScaff example/pdl1ScaffConfig.0.7.txt --scaffID bindingRes
 --bindingTemplate example/PDL1.Vtype --newBindingConfig example/pdl1SearchSpace.txt 
 --flexBinding example/pdl1FlexRes.txt --drugLibrary pdl1-SMI 
---inputScaff example/exampleResults/PDL1.115T.bindingRes.cl1.scaffold.pdb example/exampleResults/PDL1.115T.bindingRes.cl2.scaffold.pdb
+--inputScaff example/exampleResults/PDL1.115T.bindingRes.cl1.scaffold.pdb example/exampleResults/PDL1.115T.bindingRes.cl2.scaffold.pdb`
 
 #### Output files
 The log files containing the binding affities for the top
