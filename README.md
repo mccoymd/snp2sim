@@ -104,23 +104,44 @@ in the example directory for the format.
 
 #### Command line options
 
-`python snp2sim.py --mode varScaffold --protein PDL1 --newScaff example/pdl1ScaffConfig.0.7.txt --scaffID bindingRes `
+`python snp2sim.py --mode varScaffold --protein PDL1 --varResID 115 --varAA T  --newScaff example/pdl1ScaffConfig.0.7.txt --scaffID bindingRes `
 
 #### Output files
 
 The output files include a representative PDB for each cluster, 
 as well as a log file with the cluster assignments for all 
 trajectory structures are stored in the 
-"variantSimulations/PROTEIN/VARIANT/scaffold"
+"variantSimulations/PROTEIN/VARIANT/scaffold" directory.
 
 ### Generating Small Molecule Docking Results using drugSearch
+The drugSearch module requires the most user preparation,
+specifically using AutoDockTools to define the search space
+on a reference structure (typically the initial structure 
+used to generate the variant scaffolds.)
 
 #### Input Files
+The drugSearch module takes a list of PDB formatted structures, 
+as well as a reference structure used to define the search space 
+location and dimensions (provided in the config). The user can also specify 
+residues to use 
 
 #### Command line options
 
-#### Output files
+`python snp2sim.py --mode drugSearch --protein PDL1 --varResID 115 --varAA T 
+--newScaff example/pdl1ScaffConfig.0.7.txt --scaffID bindingRes
+--bindingTemplate example/PDL1.Vtype --newBindingConfig example/pdl1SearchSpace.txt 
+--flexBinding example/pdl1FlexRes.txt --drugLibrary pdl1-SMI 
+--inputScaff example/exampleResults/PDL1.115T.bindingRes.cl1.scaffold.pdb example/exampleResults/PDL1.115T.bindingRes.cl2.scaffold.pdb
 
+#### Output files
+The log files containing the binding affities for the top
+ligand poses, as well as the PDBQT files that contain the 
+coordinates of the ligand and flexable residues are depositied in the 
+"variantSimulations/PROTEIN/results/VARIANT/drugBinding" directory.
+
+Additionally, the PDBQT files used for the AutoDock Vina
+simulations can be found in the 
+"variantSimulations/PROTEIN/results/VARIANT/scaffold" directory.
   
 ## Command Line Options:
 ### General:
