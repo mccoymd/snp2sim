@@ -30,8 +30,9 @@ class argParse():
 			assert (hasattr(self, "scaffID") and getattr(self, "scaffID")), "no scaff ID - exiting"
 
 	def setDefault(self):
-		self.runDIR = os.path.abspath(__file__)
-		self.runDIR = os.path.dirname(self.runDIR)
+		#self.runDIR = os.path.abspath(__file__)
+		#self.runDIR = os.path.dirname(self.runDIR)
+		self.runDIR = "/opt/snp2sim_results"
 		print(self.runDIR)
 
 		print(self.protein)
