@@ -18,8 +18,7 @@ class argParse():
 		self.requiredArgs = ['protein', 'mode']
 		self.commandargs = _parseCommandLine()
 		self.__dict__.update(self.commandargs.__dict__)
-		print("sup") 
-		if (self.config)
+		if (self.config):
 			self.args = yaml.load(open('/opt/snp2sim_input/config.yaml'))
 			self.__dict__.update(self.args)
 	def checkRequiredArgs(self):
