@@ -7,6 +7,7 @@ import copy
 import random
 import multiprocessing
 import yaml
+import shutil
 
 #now unneccesary because mdtraj not used
 #import mdtraj as md
@@ -316,6 +317,10 @@ def _parseCommandLine():
         )
 	parser.add_argument("--bindSingleVar",
 						help="only bind single variant scaffolds",
+						action="store_true",
+						)
+	parser.add_argument("--clean",
+						help="remove all files from previous run with same protein name",
 						action="store_true",
 						)
 	
@@ -919,9 +924,12 @@ def genVinaConfig(parameters):
 def runVarMDsim(parameters):
 	print("Performing varMDsim")
 	if parameters.newStruct:
-		if os.path.isdir("%s/variantSimulations/%s" % (parameters.runDIR,parameters.protein)):
-			print("ERROR - %s is already created... resubmit with new protein name")
+		if os.path.isdir("%s/variantSimulations/%s" % (parameters.runDIR,parameters.protein)) and not parameters.clean:
+			print("ERROR - %s is already created... resubmit with new protein name" %parameters.protein)
 			sys.exit()
+		if parameters.clean:
+			shutil.rmtree('%s/variantSimulations/%s' %(parameters.runDIR,parameters.protein))
+			os.makedirs("%s/variantSimulations/%s" % (parameters.runDIR,parameters.protein))
 		os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
 		os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
 				  % (parameters.newStruct,parameters.runDIR,
