@@ -33,6 +33,8 @@ class argParse():
 		#self.runDIR = os.path.abspath(__file__)
 		#self.runDIR = os.path.dirname(self.runDIR)
 		self.runDIR = "/opt/snp2sim_results"
+		if not os.path.isdir(self.runDIR):
+				os.makedirs(self.runDIR)
 		print(self.runDIR)
 
 		print(self.protein)
