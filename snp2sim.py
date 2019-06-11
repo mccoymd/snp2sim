@@ -64,7 +64,7 @@ class argParse():
 			
 		self.simTopology = ("%s/simParameters/top_all36_prot.rtf" % self.programDIR,
 								  "%s/simParameters/toppar_water_ions_namd.str" % self.programDIR)
-		self.simParameters = ("%s/simParameters/par_all36_prot.prm" % self.runDIR,
+		self.simParameters = ("%s/simParameters/par_all36_prot.prm" % self.programDIR,
 									"%s/simParameters/toppar_water_ions_namd.str" %self.programDIR)
 
 		if not self.simProc:
