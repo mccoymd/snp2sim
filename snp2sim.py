@@ -31,8 +31,8 @@ class argParse():
 			assert (hasattr(self, "scaffID") and getattr(self, "scaffID")), "no scaff ID - exiting"
 
 	def setDefault(self):
-		#self.runDIR = os.path.abspath(__file__)
-		#self.runDIR = os.path.dirname(self.runDIR)
+		self.programDIR = os.path.abspath(__file__)
+		self.programDIR = os.path.dirname(self.programDIR)
 		self.runDIR = "/opt/snp2sim_results"
 		if not os.path.isdir(self.runDIR):
 				os.makedirs(self.runDIR)
@@ -62,10 +62,10 @@ class argParse():
 
 
 			
-		self.simTopology = ("%s/simParameters/top_all36_prot.rtf" % self.runDIR,
-								  "%s/simParameters/toppar_water_ions_namd.str" % self.runDIR)
+		self.simTopology = ("%s/simParameters/top_all36_prot.rtf" % self.programDIR,
+								  "%s/simParameters/toppar_water_ions_namd.str" % self.programDIR)
 		self.simParameters = ("%s/simParameters/par_all36_prot.prm" % self.runDIR,
-									"%s/simParameters/toppar_water_ions_namd.str" %self.runDIR)
+									"%s/simParameters/toppar_water_ions_namd.str" %self.programDIR)
 
 		if not self.simProc:
 			self.simProc = multiprocessing.cpu_count()    
@@ -402,7 +402,7 @@ def genSolvTCL(parameters):
 
 def runNAMD(parameters):
 	if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
-		os.makedirs("./variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
+		os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
 
 
 	if os.path.isfile(parameters.solvBoundary):
