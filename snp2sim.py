@@ -37,7 +37,7 @@ class argParse():
 		if not os.path.isdir(self.runDIR):
 				os.makedirs(self.runDIR)
 		print(self.runDIR)
-
+		print(self.programDIR)
 		print(self.protein)
 		if not self.VMDpath:
 			self.VMDpath = "vmd"
