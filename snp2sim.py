@@ -18,8 +18,10 @@ class argParse():
 		self.requiredArgs = ['protein', 'mode']
 		self.commandargs = _parseCommandLine()
 		self.__dict__.update(self.commandargs.__dict__)
-		#self.args = yaml.load(open('config.yaml'))
-		#self.__dict__.update(self.args)
+		print("sup") 
+		if (self.config)
+			self.args = yaml.load(open('/opt/snp2sim_input/config.yaml'))
+			self.__dict__.update(self.args)
 	def checkRequiredArgs(self):
 		for arg in self.requiredArgs:
 			assert (hasattr(self, arg) and getattr(self, arg)), arg + " not specified! " + arg + " is required."
@@ -321,6 +323,10 @@ def _parseCommandLine():
 						)
 	parser.add_argument("--clean",
 						help="remove all files from previous run with same protein name",
+						action="store_true",
+						)
+	parser.add_argument("--config",
+						help="use parameters from config.yaml. OVERWRITES command line parameters",
 						action="store_true",
 						)
 	
