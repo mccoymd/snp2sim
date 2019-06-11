@@ -54,7 +54,7 @@ class argParse():
 			self.VINApath = "vina"
 
 		if self.varResID and self.varAA:
-			self.variant = self.varResID + self.varAA
+			self.variant = str(self.varResID) + self.varAA
 		else:
 			print("varResID and varAA not specified")
 			print("Using WT structure for simulation")
