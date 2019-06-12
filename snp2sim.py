@@ -52,8 +52,11 @@ class argParse():
 			self.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
 		if not self.VINApath:
 			self.VINApath = "vina"
-
-		if self.varResID and self.varAA:
+		if isinstance(self.varAA,list):
+			if len(self.varAA) == len(self.varResID):
+				self.variant = [str(self.varResID[x]) + self.varAA[x] for x in range(len(self.varAA))]
+				self.variant = "_".join(self.variant)
+		elif self.varResID and self.varAA:
 			self.variant = str(self.varResID) + self.varAA
 		else:
 			print("varResID and varAA not specified")
@@ -375,14 +378,16 @@ def genStructTCL(parameters):
 	structFile.write("writepdb %s\n" % parameters.wtPDB)
 	structFile.write("writepsf %s\n" % parameters.wtPSF)
 	if not parameters.variant == "wt":
+		variants = parameters.variant.split("_")
 		longAA = { "G":"GLY","A":"ALA","L":"LEU","M":"MET","F":"PHE",
 				   "W":"TRP","K":"LYS","Q":"GLN","E":"GLU","S":"SER",
 				   "P":"PRO","V":"VAL","I":"ILE","C":"CYS","Y":"TYR",
 				   "H":"HSE","R":"ARG","N":"ASN","D":"ASP","T":"THR"}
 		structFile.write("package require mutator\n")
-		structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
-						 % (parameters.wtPSF, parameters.wtPDB, \
-							parameters.varPrefix, parameters.varResID, longAA.get(parameters.varAA)))
+		for varAA in variants:
+			structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
+						 	% (parameters.wtPSF, parameters.wtPDB, \
+								parameters.varPrefix, parameters.varResID, longAA.get(varAA)))
 	
 	structFile.write("quit\n")
 
