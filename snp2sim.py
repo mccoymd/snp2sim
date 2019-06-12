@@ -20,6 +20,7 @@ class argParse():
 		self.__dict__.update(self.commandargs.__dict__)
 		if (self.config):
 			self.args = yaml.load(open('/opt/snp2sim_input/config.yaml'))
+			self.args = {k: v for k, v in self.args.items() if v is not None}
 			self.__dict__.update(self.args)
 	def checkRequiredArgs(self):
 		for arg in self.requiredArgs:
