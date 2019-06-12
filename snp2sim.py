@@ -395,7 +395,7 @@ def genStructTCL(parameters):
 		else:
 			structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
 					 		% (parameters.wtPSF, parameters.wtPDB, \
-								parameters.varPrefix, parameters.varResID, longAA.get(varAA)))
+								parameters.varPrefix, parameters.varResID, longAA.get(parameters.varAA)))
 	
 	structFile.write("quit\n")
 
