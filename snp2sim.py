@@ -52,10 +52,14 @@ class argParse():
 			self.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
 		if not self.VINApath:
 			self.VINApath = "vina"
-		if isinstance(self.varAA,list):
+		if isinstance(self.varAA,list) and isinstance(self.varResID,list):
 			if len(self.varAA) == len(self.varResID):
 				self.variant = [str(self.varResID[x]) + self.varAA[x] for x in range(len(self.varAA))]
 				self.variant = "_".join(self.variant)
+			else:
+				print("number of ResIDs does not match number of variant AAs.")
+				print("Using WT structure for simulation")
+				self.variant = "wt"
 		elif self.varResID and self.varAA:
 			self.variant = str(self.varResID) + self.varAA
 		else:
@@ -378,15 +382,19 @@ def genStructTCL(parameters):
 	structFile.write("writepdb %s\n" % parameters.wtPDB)
 	structFile.write("writepsf %s\n" % parameters.wtPSF)
 	if not parameters.variant == "wt":
-		variants = parameters.variant.split("_")
 		longAA = { "G":"GLY","A":"ALA","L":"LEU","M":"MET","F":"PHE",
 				   "W":"TRP","K":"LYS","Q":"GLN","E":"GLU","S":"SER",
 				   "P":"PRO","V":"VAL","I":"ILE","C":"CYS","Y":"TYR",
 				   "H":"HSE","R":"ARG","N":"ASN","D":"ASP","T":"THR"}
 		structFile.write("package require mutator\n")
-		for varAA in variants:
+		if (isinstance(parameters.varAA, list) and isinstance(parameters.varResID, list)):
+			for x in range(len(varAA)):
+				structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
+						 		% (parameters.wtPSF, parameters.wtPDB, \
+									parameters.varPrefix, parameters.varResID[x], longAA.get(parameters.varAA[x])))
+		else:
 			structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
-						 	% (parameters.wtPSF, parameters.wtPDB, \
+					 		% (parameters.wtPSF, parameters.wtPDB, \
 								parameters.varPrefix, parameters.varResID, longAA.get(varAA)))
 	
 	structFile.write("quit\n")
