@@ -767,31 +767,31 @@ def sortPDBclusters(parameters):
 	#    scaffNum += 1 
 
 
-def genScaffoldTCL(parameters):
+# def genScaffoldTCL(parameters):
 	
-	scaffParameters = open(parameters.scaffParams,"r")
-	scaffLines = scaffParameters.readlines()
+# 	scaffParameters = open(parameters.scaffParams,"r")
+# 	scaffLines = scaffParameters.readlines()
 
-	alignmentRes = scaffLines[0]
-	alignmentRes = alignmentRes.rstrip()
-	alignmentRes = alignmentRes.replace("alignmentRes ","")
+# 	alignmentRes = scaffLines[0]
+# 	alignmentRes = alignmentRes.rstrip()
+# 	alignmentRes = alignmentRes.replace("alignmentRes ","")
 
-	scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
-	genScaff = open(parameters.clusterTCL, "w+")
-	for tFile in os.listdir(scaffDIR):
-		if tFile.endswith(".pdb"):
-			if "cluster" in tFile:
-				pdbClustFile = scaffDIR + tFile
-				pdbScaffFile = pdbClustFile
-				pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
-				genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
-#                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
-				genScaff.write("set domain [atomselect top all]\n")
-				genScaff.write("set avePos [measure avpos $domain]\n")
-				genScaff.write("$domain set {x y z} $avePos\n")
-				genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
+# 	scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
+# 	genScaff = open(parameters.clusterTCL, "w+")
+# 	for tFile in os.listdir(scaffDIR):
+# 		if tFile.endswith(".pdb"):
+# 			if "cluster" in tFile:
+# 				pdbClustFile = scaffDIR + tFile
+# 				pdbScaffFile = pdbClustFile
+# 				pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
+# 				genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
+# #                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
+# 				genScaff.write("set domain [atomselect top all]\n")
+# 				genScaff.write("set avePos [measure avpos $domain]\n")
+# 				genScaff.write("$domain set {x y z} $avePos\n")
+# 				genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
 				
-	genScaff.write("quit\n")
+# 	genScaff.write("quit\n")
 
 #now defunct because no longer using mdtraj
 
