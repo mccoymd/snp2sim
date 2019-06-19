@@ -41,12 +41,12 @@ class argParse():
 			self.NAMDpath = "namd2"
 		if not self.PYTHONSHpath:
 		   #make sure pythonsh (from AutoDockTools) has been added to path
-			self.PYTHONSHpath = "pythonsh"
+			self.PYTHONSHpath = "/opt/mgltools_x86_64Linux2_1.5.6/bin/pythonsh"
 		if not self.ADTpath:
 			#must have path for "prepare_xxx.py" scripts from autodock tools
 			self.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
 		if not self.VINApath:
-			self.VINApath = "vina"
+			self.VINApath = "/opt/vina/autodock_vina_1_1_2_linux_x86/bin/vina"
 
 		if self.varResID and self.varAA:
 			self.variant = self.varResID + self.varAA
@@ -1184,6 +1184,7 @@ def runDrugSearch(parameters):
                                                             parameters.ADTpath,
                                                             currScaffPath,
                                                             parameters.scaff1out)
+                                        print(prepBaseScaff)
 					os.system(prepBaseScaff)
 
 					if os.path.isfile(parameters.flexConfig):
