@@ -604,8 +604,9 @@ def runClusterTCL(parameters):
 #                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
 #            }
 	
-	vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-	os.system(vmdClustCommand)
+#	vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+#        print("got here %s" % vmdClustCommand)
+#	os.system(vmdClustCommand)
 
 def runPDBclustTCL(parameters):
 	scaffParameters = open(parameters.scaffParams,"r")
@@ -1022,8 +1023,8 @@ def runVarScaffold(parameters):
 											  (parameters.runDIR, parameters.protein,
 											   parameters.protein, parameters.variant, parameters.scaffID)
 					runPDBclustTCL(parameters)
-	                                vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-	                                os.system(vmdClustCommand)  
+	                        vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
+	                        os.system(vmdClustCommand)  
 
 					
 
