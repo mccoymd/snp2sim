@@ -1090,14 +1090,16 @@ def runDrugSearch(parameters):
 							 (parameters.runDIR,parameters.protein)):
 			os.makedirs("%s/variantSimulations/%s/config" % \
 						(parameters.runDIR,parameters.protein))
-			
+
 		
+		#TODO... possibly check and use previous file.. or rename smartly
 		if not os.path.isfile(parameters.flexConfig):
 			os.system("cp %s %s" \
 					  % (parameters.flexBinding, parameters.flexConfig))
 		else:
-			print("%s already exists - remove or choose new bindingID" % parameters.flexConfig)
-			sys.exit()
+			print("WARNING %s already exists - overwriting with new flex config" % parameters.flexConfig)
+                        os.system("cp %s %s" % (parameters.flexBinding, parameters.flexConfig))	
+ 			#sys.exit()
 
 	if parameters.inputScaff:
 		print("using input scaffolds")
