@@ -674,7 +674,7 @@ def runPDBclustTCL(parameters):
 
 			
 	clustTCL = open(parameters.scaffoldTCL,"w+")
-	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory"
 	if not os.path.exists(variantDIR):
 		os.makedirs(variantDIR)
 		
