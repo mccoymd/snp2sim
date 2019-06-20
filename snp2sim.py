@@ -682,6 +682,7 @@ def runPDBclustTCL(parameters):
 		if trajFile.endswith(".pdb"):
 			pdbFile = variantDIR + "/" + trajFile
 			clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
+	clustTCL.write("require package csv\n")
 	clustTCL.write("set nf [molinfo top get numframes]\n")
 	clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
 	clustTCL.write("set refStruct [atomselect top all frame 0]\n")
@@ -693,9 +694,10 @@ def runPDBclustTCL(parameters):
 	clustTCL.write("}\n")
 	clustTCL.write("set output [open %s w]\n" % scaffLOG)
 	clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
-	clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
-	clustTCL.write("puts $output [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
+	#clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
+	clustTCL.write("set clust [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
 				   % rmsdThresh)
+	clustTCL.write("puts $output [::csv::joinlist $clust]\n")
 	clustTCL.write("close $output\n")
 
 
@@ -732,20 +734,15 @@ def sortPDBclusters(parameters):
 	
 	scaffLOG = parameters.scaffBASE + ".log"    
 	clustLogfile = open(scaffLOG, "r")
-	clustLogLines = clustLogfile.readlines()
-	clusterMembership = clustLogLines[1]
-	clusterMembership = clusterMembership.rstrip()
-	clusterMembership = clusterMembership.replace("} {","_")
-	clusterMembership = clusterMembership.replace("{","")
-	clusterMembership = clusterMembership.replace("}","")
-	clusterMembership = clusterMembership.split("_")
+	clusterMembership = [x.split(",") for x in clustLogfile.readlines()]
+	clusterMembership = [x for x in clusterMembership if x]
 	#remove "unclustered struct"
 	del clusterMembership[-1]
 	scaffNum = 1;
 	#print(traj.n_frames)
 	print(len(indPDB))
 	for indCluster in clusterMembership:
-		repStructIndex = int(indCluster.split(" ")[0])
+		repStructIndex = int(indCluster[0])
 		#if len(indCluster.split(" ")) > parameters.clustThresh*traj.n_frames:
 		#    repStruct = traj[repStructIndex]
 		#    scaffFileName = parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb"
