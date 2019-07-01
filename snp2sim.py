@@ -553,6 +553,8 @@ def genSingleRunTCL(parameters):
 	
 	os.system(genPDBcommand)
 
+
+# Changing the method of clustering - VS
 def runClusterTCL(parameters):
 #TODO - currently config must be formated as:
 #NOTE:: 3 lines, CASE SPECIFIC, NEEDS IMPROVEMENT
@@ -560,6 +562,8 @@ def runClusterTCL(parameters):
 #clusterRes "(atomselection)"
 #rmsdThresh (num)
 	
+
+
 	scaffParameters = open(parameters.scaffParams,"r")
 	scaffLines = scaffParameters.readlines()
 
@@ -682,7 +686,7 @@ def runPDBclustTCL(parameters):
 		if trajFile.endswith(".pdb"):
 			pdbFile = variantDIR + "/" + trajFile
 			clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
-	clustTCL.write("require package csv\n")
+	clustTCL.write("package require csv\n")
 	clustTCL.write("set nf [molinfo top get numframes]\n")
 	clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
 	clustTCL.write("set refStruct [atomselect top all frame 0]\n")
