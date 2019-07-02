@@ -1,0 +1,122 @@
+ # YAML
+
+ ################################################################
+ #NOTE: All paths must be absolute from the input mapped volume #
+ ################################################################
+
+
+# General options
+#################
+ # varMDsim, varScaffold, drugSearch, or varAnalysis
+mode: varScaffold
+
+ #Name of protein system
+protein: PDL1
+
+ #if Run is on CGC platform, move pdb and log to snp2sim root for processing
+cgcRun:
+
+runDIR: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/snp2simresults
+
+
+# Mode specific options
+
+# varMDsim options
+##################
+
+ #Variant as "wt" or "x###x"
+variant: wt
+
+#varResID + varAA override variant field. If one is filled, the other must be filled, or variant field used
+ #variant residue ID from PDB template
+varResID:
+
+ #amino acid to change
+varAA:
+
+#Overwrite previous run with same protein name.
+clean: 
+
+
+ #path to cleaned PDB file (protein structure w/ cannonical aa)
+newStruct: /opt/snp2sim_input/example/PDL1.Vtype.pdb
+
+ #varTraj simulation length in ns
+simLength: .05
+
+ #amino acid to change
+simID:
+
+ #number of processors to run simulation
+simProc:
+
+ #output summary PDB trajectory only
+singleRun:
+
+
+#Paths to executables. Ignore if using Docker.
+
+ #path to VMD executable
+VMDpath: /Applications/VMD\ 1.9.3.app/Contents/Resources/VMD.app/Contents/MacOS/VMD
+
+ #path to AutoDock Vina executable
+VINApath:
+
+ #path to NAMD executable
+NAMDpath:
+
+ #path to autodock tools python executable
+PYTHONSHpath:
+
+ #path to autodock utilities directory
+ADTpath:
+
+
+
+# varScaffold
+#############
+
+ #path to scaffold config (search RMSD and # iterations, alignment aa, clusteraa
+scaffID: test
+
+ #Use PDB trajectories (possibly from singleCGC runs)
+clustPDBtraj: true
+
+ #pdb trajectory files to import, list one after another
+loadPDBtraj:
+
+#Cluster Parameters - follow VMD atomselection format
+#Residues to superimpose trajectory 
+alignmentResidues: backbone and resid 19 to 131
+#Residues to consider when clustering trajectory
+clusterResidues: backbone and resid 19 20 54 56 66 68 115 116 117 121 122 123 124 125
+
+# drugSearch
+############
+
+ #path to PDB file used to create search space to align scaffold
+bindingTemplate:
+
+ #exhaustiveness parameter of autodock vina
+vinaExh:
+
+ #name for autodock template config (search space and alignment res)
+bindingID:
+
+ #path to new binding config file
+newBindingConfig:
+
+ #path to file with flex residue numbers
+flexBinding:
+
+ #name of snp2sim drug library
+drugLibrary:
+
+ #path to single drug PDBQT
+singleDrug:
+
+ #pdb scaffold files to import, list one after another
+inputScaff:
+
+ #only bind single variant scaffolds
+bindSingleVar:
