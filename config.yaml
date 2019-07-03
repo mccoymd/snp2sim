@@ -25,21 +25,21 @@ runDIR: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/snp2simresul
 ##################
 
  #Variant as "wt" or "x###x"
-variant: wt
+variant: 
 
 #varResID + varAA override variant field. If one is filled, the other must be filled, or variant field used
  #variant residue ID from PDB template
-varResID:
+varResID: 95
 
  #amino acid to change
-varAA:
+varAA: R
 
 #Overwrite previous run with same protein name.
 clean: 
 
 
  #path to cleaned PDB file (protein structure w/ cannonical aa)
-newStruct: /opt/snp2sim_input/example/PDL1.Vtype.pdb
+newStruct: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/input/PDL1.Vtype.pdb
 
  #varTraj simulation length in ns
 simLength: .05
@@ -52,6 +52,9 @@ simProc:
 
  #output summary PDB trajectory only
 singleRun:
+
+ #Only generate initial structures, without MD simulation
+genStructures:
 
 
 #Paths to executables. Ignore if using Docker.

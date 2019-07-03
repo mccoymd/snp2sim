@@ -1119,14 +1119,15 @@ def genVinaConfig(parameters):
 def runVarMDsim(parameters):
 	print("Performing varMDsim")
 	if parameters.newStruct:
-		if os.path.isdir("%s/variantSimulations/%s" % (parameters.runDIR,parameters.protein)) and not parameters.clean:
-			print("ERROR - %s is already created... resubmit with new protein name" %parameters.protein)
+		if os.path.isdir("%s/variantSimulations/%s/results/%s" % (parameters.runDIR,parameters.protein, parameters.variant)) and not parameters.clean and not parameters.genStructures:
+			print("ERROR - %s-%s is already created... resubmit with new protein/variant combination" %(parameters.protein, parameters.variant))
 			sys.exit()
 		if parameters.clean:
-			shutil.rmtree('%s/variantSimulations/%s' %(parameters.runDIR,parameters.protein))
-			os.makedirs("%s/variantSimulations/%s" % (parameters.runDIR,parameters.protein))
-		os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
-		os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
+			shutil.rmtree('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant))
+			os.makedirs('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant))
+		if not os.path.isdir("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein)):
+			os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
+			os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
 				  % (parameters.newStruct,parameters.runDIR,
 					 parameters.protein, parameters.protein)) 
 
@@ -1144,7 +1145,8 @@ def runVarMDsim(parameters):
 		print("%s does not exist" % parameters.simPDB)
 		print("generating new pdb and psf for simulation")
 		genNAMDstructFiles(parameters)
-
+	if parameters.genStructures:
+		return
 	if parameters.simLength:
 		print("Performing Variant %.3f ns Simulation" % parameters.simLength)
 		
