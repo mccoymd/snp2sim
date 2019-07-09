@@ -43,7 +43,6 @@ pamk <- pamk(pca_vals[,c(1:numpca)], krange = 3:10, usepam = FALSE)
 pca_vals$pamk <- as.factor(pamk$pamobject$clustering)
 #pca_vals$k <- as.factor(k$cluster)
 
-
 #see top contributors to variance
 #sort(abs(pca$rotation[,1]), decreasing = TRUE)[1:10]
 #sort(abs(pca$rotation[,2]), decreasing = TRUE)[1:10]
