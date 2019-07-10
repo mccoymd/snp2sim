@@ -25,14 +25,14 @@ runDIR: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/snp2simresul
 ##################
 
  #Variant as "wt" or "x###x"
-variant: 
+variant: wt
 
 #varResID + varAA override variant field. If one is filled, the other must be filled, or variant field used
  #variant residue ID from PDB template
-varResID: 95
+varResID:
 
  #amino acid to change
-varAA: R
+varAA:
 
 #Overwrite previous run with same protein name.
 clean: 
@@ -93,6 +93,12 @@ loadPDBtraj:
 alignmentResidues: backbone and resid 19 to 131
 #Residues to consider when clustering trajectory
 clusterResidues: backbone and resid 19 20 54 56 66 68 115 116 117 121 122 123 124 125
+
+featureTableMethod: true
+#if mds method used
+PairwiseRMSD: 
+
+colorTrajectory:
 
 # drugSearch
 ############

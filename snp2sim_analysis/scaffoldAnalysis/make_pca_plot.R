@@ -1,6 +1,5 @@
 library(data.table)
 library(ggplot2)
-library(Rtsne)
 library(plotly)
 library(htmlwidgets)
 library(fpc)
@@ -42,6 +41,7 @@ numpca <- length(cumsum[cumsum<.9])
 pamk <- pamk(pca_vals[,c(1:numpca)], krange = 3:10, usepam = FALSE)
 pca_vals$pamk <- as.factor(pamk$pamobject$clustering)
 #pca_vals$k <- as.factor(k$cluster)
+
 
 #see top contributors to variance
 #sort(abs(pca$rotation[,1]), decreasing = TRUE)[1:10]
@@ -98,6 +98,10 @@ weakcluster <- which(unname(apply(trans$standardError, 1, function(x){sum(x>.1)}
 sink(paste(outputDir,"weak_clusters.txt", sep = ""))
 cat(paste(weakcluster,collapse=","))
 sink()
+
+clusters <- data.frame(frame = c(1:length(pamk$pamobject$clustering)), cluster = pamk$pamobject$clustering)
+write.csv(clusters, paste(outputDir,"../cluster_by_frame.csv", sep = ""), row.names = FALSE, quote = FALSE, eol = "\n")
+
 ###extra
 # tsne <- Rtsne(X = table[,-1], dims = 2, perplexity=50, verbose=TRUE, max_iter = 850, initial_dims = numpca)
 # tsne_vals <- as.data.frame(tsne$Y)
