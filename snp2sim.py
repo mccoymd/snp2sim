@@ -1686,17 +1686,21 @@ def runAnalysis(parameters):
 		os.makedirs(curAnalysisDir)
 
 	if hasattr(parameters, "analysisDrugLibrary"):
+		if not isinstance(parameters.analysisDrugLibrary, list):
+			parameters.analysisDrugLibrary = [parameters.analysisDrugLibrary]
 		for v in variantList:
 			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
 				if scaff.endswith(".pdbqt"):
-					if scaff.split(".")[3] == parameters.analysisDrugLibrary:
+					if scaff.split(".")[3] in parameters.analysisDrugLibrary:
 						path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
 						os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))	
 	elif hasattr(parameters, "analysisDrug"):
+		if not isinstance(parameters.analysisDrug, list):
+			parameters.analysisDrug = [parameters.analysisDrug]
 		for v in variantList:
 			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
 				if scaff.endswith(".pdbqt"):
-					if scaff.split(".")[4] == parameters.analysisDrug:
+					if scaff.split(".")[4] in parameters.analysisDrug:
 						path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
 						os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))
 	else:	
