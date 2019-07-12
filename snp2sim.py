@@ -9,6 +9,7 @@ import multiprocessing
 import yaml
 import shutil
 import subprocess
+import csv
 
 #now unneccesary because mdtraj not used
 #import mdtraj as md
@@ -32,6 +33,9 @@ class argParse():
 				self.simID = str(random.randint(1,1000))
 		if self.mode == "varScaffold":
 			assert (hasattr(self, "scaffID") and getattr(self, "scaffID")), "no scaff ID - exiting"
+
+		if self.mode == "varAnalysis":
+			assert hasattr(self, "analysisVariants") and self.analysisVariants, "No variants listed for analysis - exiting"
 
 	def setDefault(self):
 		self.programDIR = os.path.abspath(__file__)
@@ -1345,6 +1349,8 @@ def runVarScaffold(parameters):
 		else:
 			print("generating all Variant Scaffolds")
 			variantList = os.listdir(parameters.resultsDIR)
+			if "analysis" in variantList:
+				variantList.remove("analysis")
 
 ## TODO include option to analyze trajectory clusters to determine rmsd threshold
 		for varSimResult in variantList:
@@ -1438,6 +1444,9 @@ def runVarScaffold(parameters):
 def runDrugSearch(parameters):
 
 	print("Performing drugSearch")
+
+	#copy over the binding config with the search coords
+	#drugBindConfig is the location of the bidning config
 	if parameters.newBindingConfig:
 		if not os.path.isfile(parameters.drugBindConfig):            
 			print("using new config %s" % parameters.newBindingConfig)
@@ -1452,6 +1461,7 @@ def runDrugSearch(parameters):
 			print("%s already exists - remove or choose new bindingID" % parameters.drugBindConfig)
 			sys.exit()
 
+
 	if os.path.isfile(parameters.drugBindConfig):
 		parseADconfig(parameters)
 	else:
@@ -1465,7 +1475,7 @@ def runDrugSearch(parameters):
 	if not os.path.isdir(parameters.vinaOutDir):
 		os.makedirs(parameters.vinaOutDir)
 
-		
+	#copying over the flex config with residue numbers	
 	parameters.flexConfig = "%s/variantSimulations/%s/config/%s.flex" % \
 							(parameters.runDIR,parameters.protein,parameters.bindingID)
 
@@ -1490,7 +1500,7 @@ def runDrugSearch(parameters):
 		#    os.makedirs(variantDIR)
 		os.makedirs(variantDIR)
 		inputCount = 1
-		for pdbFile in parameters.inputScaff:
+		for pdbFile in os.listdir(parameters.inputScaff):
 #            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
 #            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
 			inputID = "input%s" % str(inputCount)
@@ -1505,11 +1515,10 @@ def runDrugSearch(parameters):
 		if parameters.singleDrug:
 			#todo - add single drug binding
 			print("binding single drug %s" % parameters.singleDrug)
-                        if not os.path.isdir(parameters.drugLibPath):
-			        print("drug library does not exist! Creating it!")
-			        os.makedirs(parameters.drugLibPath)
-                        os.system("cp %s %s" % (parameters.singleDrug,
-                                                parameters.drugLibPath))
+			if not os.path.isdir(parameters.drugLibPath):
+				print("drug library does not exist! Creating it!")
+		        os.makedirs(parameters.drugLibPath)
+		        os.system("cp %s %s" % (parameters.singleDrug, parameters.drugLibPath))
 			print("using small molecules in %s" % parameters.drugLibPath)
 
 		else:
@@ -1546,6 +1555,8 @@ def runDrugSearch(parameters):
 			bindingVar = [parameters.variant,]
 		else:
 			bindingVar = os.listdir(parameters.resultsDIR)
+			if "analysis" in variantList:
+				variantList.remove("analysis")
 			
 		for var in bindingVar:
 			#regenerate pdbqt for all scaffold.pdb files
@@ -1638,6 +1649,114 @@ def runDrugSearch(parameters):
 	# - - bind drug to single scaffold
 	# - - - build config - need search space 
 
+#Runs analysis scripts - VS
+def runAnalysis(parameters):
+	print("Performing analysis")
+
+	# if parameters.variant == "wt" and not hasattr(parameters, "varAA") and not hasattr(parameters, "varResID"):
+	# 	print("generating figures for all Variant Scaffolds")
+	# 	variantList = os.listdir(parameters.resultsDIR)
+	# elif (isinstance(parameters.varAA, list) and isinstance(parameters.varResID, list)):
+	# 	print("generating figures for variants: %s" % (parameters.variant))
+	# 	variantList = [str(self.varResID[x]) + self.varAA[x] for x in range(len(self.varAA))]
+	# 	print("generating figures for variants: %s" % (", ".join(variantList)))
+	# else:
+	# 	print("generating figures for %s ONLY" %parameters.variant)
+	# 	variantList = (parameters.variant, )
+
+
+	variantList = parameters.analysisVariants
+	print("Running analysis on variants: " + ", ".join(variantList))
+
+	for v in variantList:
+		if v not in os.listdir(parameters.resultsDIR):
+			print("variant " + v + " not in results directory! Aborting.")
+			return
+
+	
+
+	analysisVars = "_".join(variantList)
+	if hasattr(parameters, "analysisDrugLibrary"):
+		analysisVars = parameters.analysisDrugLibrary + "_" + analysisVars
+	elif hasattr(parameters, "analysisDrug"):
+		analysisVars = parameters.analysisDrug + "_" + analysisVars
+	curAnalysisDir = "%s/analysis/%s/binding_structures" % \
+											(parameters.resultsDIR, analysisVars)
+	if not os.path.isdir(curAnalysisDir):
+		os.makedirs(curAnalysisDir)
+
+	if hasattr(parameters, "analysisDrugLibrary"):
+		for v in variantList:
+			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
+				if scaff.endswith(".pdbqt"):
+					if scaff.split(".")[3] == parameters.analysisDrugLibrary:
+						path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
+						os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))	
+	elif hasattr(parameters, "analysisDrug"):
+		for v in variantList:
+			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
+				if scaff.endswith(".pdbqt"):
+					if scaff.split(".")[4] == parameters.analysisDrug:
+						path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
+						os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))
+	else:	
+		for v in variantList:
+			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
+				if scaff.endswith(".pdbqt"):
+					path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
+					os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))	
+	
+	os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults.sh %s %s/analysis/%s" \
+				%(parameters.programDIR, curAnalysisDir, parameters.resultsDIR, analysisVars))
+
+
+	#r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations.R %s/analysis/%s/vinaSummary_%s.txt" % (parameters.programDIR, 
+	#											parameters.resultsDIR, analysisVars, parameters.protein), shell = True)
+	#print(r_out)
+
+	summary = "%s/analysis/%s/vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein)
+	summary = open(summary, "r")
+	summary = [x.split() for x in summary.readlines()]
+
+
+	for v in variantList:
+		if os.path.isfile("%s/%s/scaffold/%s.%s.bindingRes.log" % (parameters.resultsDIR, v, parameters.protein, v)):
+			os.system("cp " + ("%s/%s/scaffold/%s.%s.bindingRes.log" % (parameters.resultsDIR, v, parameters.protein, v)) + 
+								" %s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v))
+
+			scaffLOG = "%s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v)
+			clustLogfile = open(scaffLOG, "r")
+			clusterMembership = [x.split(",") for x in clustLogfile.read().splitlines()]
+			total_frames = sum(len(x) for x in clusterMembership)
+			del clusterMembership[-1]
+			clusterMembership = [x for x in clusterMembership if x and len(x) > .09 * total_frames]
+			total_frames = sum(len(x) for x in clusterMembership)
+			propMem = [len(x)*1.0/total_frames for x in clusterMembership]
+
+			for row in summary[1:]:
+				if row[4] == v:
+					clust = int(row[5][5:]) - 1
+					row.append(float(row[6]) * propMem[clust])
+		else:
+			print("%s/%s/scaffold/%s.%s.bindingRes.log does not exist" % (parameters.resultsDIR, v, parameters.protein, parameters.variant))
+	summary[0].append("weighted_affinity")
+
+	with open("%s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein),"w") as tsv:
+		csvWriter = csv.writer(tsv, delimiter='\t')
+   		csvWriter.writerows(summary)
+
+   	curAnalysisDir = "%s/analysis/%s/figures" % \
+											(parameters.resultsDIR, analysisVars)
+	if not os.path.isdir(curAnalysisDir):
+		os.makedirs(curAnalysisDir)
+
+   	r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations_weighted.R %s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.programDIR, 
+												parameters.resultsDIR, analysisVars, parameters.protein), shell = True)
+	print(r_out)
+
+	with open("%s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars), 'w') as shiny:
+		shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/app.R %s/analysis/%s/weighted_vinaSummary_%s.txt" %(parameters.programDIR, parameters.resultsDIR, analysisVars, parameters.protein))
+	os.system("chmod +x %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
 def main():
 
 	parameters = argParse()
@@ -1653,6 +1772,9 @@ def main():
 	elif parameters.mode == "drugSearch":
 		runDrugSearch(parameters)
 		print("Drug binding simulation finished!")
+	elif parameters.mode == "varAnalysis":
+		runAnalysis(parameters)
+		print("Analysis completed!")
 	else:
 		print("invalid mode selected")
 	

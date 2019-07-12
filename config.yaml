@@ -8,7 +8,7 @@
 # General options
 #################
  # varMDsim, varScaffold, drugSearch, or varAnalysis
-mode: varScaffold
+mode: varAnalysis
 
  #Name of protein system
 protein: PDL1
@@ -17,6 +17,9 @@ protein: PDL1
 cgcRun:
 
 runDIR: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/snp2simresults
+
+
+
 
 
 # Mode specific options
@@ -100,6 +103,8 @@ PairwiseRMSD:
 
 colorTrajectory:
 
+
+
 # drugSearch
 ############
 
@@ -129,3 +134,26 @@ inputScaff:
 
  #only bind single variant scaffolds
 bindSingleVar:
+
+
+
+# varAnalysis
+############
+
+ #Variants to be used in variants (must have a results/variant/drugBinding directory with .pdbqt results)
+ #Format ###AA (### = residue number and AA = variant amino acid) or wt
+ #must include wt
+analysisVariants: 
+  - 53P
+  - 68L
+  - 86W
+  - 94M
+  - 95R
+  - 97V
+  - 115T
+  - wt
+
+analysisDrugLibrary: 
+
+analysisDrug:
+
