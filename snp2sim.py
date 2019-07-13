@@ -1510,17 +1510,17 @@ def runVarMDsim(parameters):
 					  parameters.repConfig, parameters.NAMDout)
 			os.system(runNAMDcommand)
 			if not os.path.isfile("%s.dcd" % parameters.NAMDout):
-			print("NAMD run failed")
-			sys.exit()
+				print("NAMD run failed")
+				sys.exit()
 		else:
 			runNAMD(parameters)
-					runNAMDcommand = "%s +p%i %s > %s.log" % \
+			runNAMDcommand = "%s +p%i %s > %s.log" % \
 						 (parameters.NAMDpath, parameters.simProc,
 						  parameters.NAMDconfig, parameters.NAMDout)
-				os.system(runNAMDcommand)
-					if not os.path.isfile("%s.dcd" % parameters.NAMDout):
-							print("NAMD run failed")
-							sys.exit()
+			os.system(runNAMDcommand)
+			if not os.path.isfile("%s.dcd" % parameters.NAMDout):
+				print("NAMD run failed")
+				sys.exit()
 		if parameters.singleRun:
 			genSingleRunTCL(parameters)
 			if parameters.cgcRun:
