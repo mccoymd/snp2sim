@@ -165,7 +165,7 @@ class argParse():
 		self.drugLibPath = "%s/drugLibraries/%s/" % \
 				   (self.programDIR, self.drugLibrary)
 
-                
+				
 		#hardcoding bindingID as drugLibrary
 		#TODO - refactor to remove "bindingID"
 		self.bindingID = self.drugLibrary
@@ -223,9 +223,9 @@ def _parseCommandLine():
 						action="store_true",
 						)
 	parser.add_argument("--cgcRun",
-                        help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
-			    		action="store_true",
-        				)
+						help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
+						action="store_true",
+						)
 
 	#VarMDsim options
 
@@ -450,11 +450,11 @@ def genStructTCL(parameters):
 		if (isinstance(parameters.varAA, list) and isinstance(parameters.varResID, list)):
 			for x in range(len(parameters.varAA)):
 				structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
-						 		% (parameters.wtPSF, parameters.wtPDB, \
+								% (parameters.wtPSF, parameters.wtPDB, \
 									parameters.varPrefix, parameters.varResID[x], longAA.get(parameters.varAA[x])))
 		else:
 			structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
-					 		% (parameters.wtPSF, parameters.wtPDB, \
+							% (parameters.wtPSF, parameters.wtPDB, \
 								parameters.varPrefix, parameters.varResID, longAA.get(parameters.varAA)))
 	
 	structFile.write("quit\n")
@@ -715,7 +715,7 @@ def runNAMD_replicaExchange(parameters):
 
 
 
-                
+				
 #if running in CGC, prepares the results of MD sim as PDB file to export
 def genSingleRunTCL(parameters):
 	print("generating %s" % parameters.singleRunTCL)
@@ -1505,22 +1505,22 @@ def runVarMDsim(parameters):
 		print("Performing Variant %.3f ns Simulation" % parameters.simLength)
 		if hasattr(parameters, "replica") and parameters.replica:
 			runNAMD_replicaExchange(parameters)
-                runNAMDcommand = "mpirun %s +p%i +replicas 8 %s > %s.log" % \
-			         (parameters.NAMDpath, parameters.simProc,
-			          parameters.repConfig, parameters.NAMDout)
-	        os.system(runNAMDcommand)
-                if not os.path.isfile("%s.dcd" % parameters.NAMDout):
-                        print("NAMD run failed")
-                        sys.exit()
-        else:
+				runNAMDcommand = "mpirun %s +p%i +replicas 8 %s > %s.log" % \
+					 (parameters.NAMDpath, parameters.simProc,
+					  parameters.repConfig, parameters.NAMDout)
+			os.system(runNAMDcommand)
+				if not os.path.isfile("%s.dcd" % parameters.NAMDout):
+						print("NAMD run failed")
+						sys.exit()
+		else:
 			runNAMD(parameters)
-	                runNAMDcommand = "%s +p%i %s > %s.log" % \
-				         (parameters.NAMDpath, parameters.simProc,
-				          parameters.NAMDconfig, parameters.NAMDout)
-		        os.system(runNAMDcommand)
-	                if not os.path.isfile("%s.dcd" % parameters.NAMDout):
-	                        print("NAMD run failed")
-	                        sys.exit()
+					runNAMDcommand = "%s +p%i %s > %s.log" % \
+						 (parameters.NAMDpath, parameters.simProc,
+						  parameters.NAMDconfig, parameters.NAMDout)
+				os.system(runNAMDcommand)
+					if not os.path.isfile("%s.dcd" % parameters.NAMDout):
+							print("NAMD run failed")
+							sys.exit()
 		if parameters.singleRun:
 			genSingleRunTCL(parameters)
 			if parameters.cgcRun:
@@ -1739,16 +1739,16 @@ def runDrugSearch(parameters):
 			print("binding single drug %s" % parameters.singleDrug)
 			if not os.path.isdir(parameters.drugLibPath):
 				print("drug library does not exist! Creating it!")
-		        os.makedirs(parameters.drugLibPath)
-		        os.system("cp %s %s" % (parameters.singleDrug, parameters.drugLibPath))
+				os.makedirs(parameters.drugLibPath)
+				os.system("cp %s %s" % (parameters.singleDrug, parameters.drugLibPath))
 			print("using small molecules in %s" % parameters.drugLibPath)
 
 		else:
-		        if not os.path.isdir(parameters.drugLibPath):
-			        print("drug library does not exist ")
-			        sys.exit()
-		        else:
-			        print("using small molecules in %s" % parameters.drugLibPath)
+				if not os.path.isdir(parameters.drugLibPath):
+					print("drug library does not exist ")
+					sys.exit()
+				else:
+					print("using small molecules in %s" % parameters.drugLibPath)
 
 			
 							
@@ -1797,10 +1797,10 @@ def runDrugSearch(parameters):
 					parameters.scaff1out = scaffBase + ".pdbqt"
 					#prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
 					prepBaseScaff =  "%s %s/prepare_receptor4.py -r %s -o %s" \
-                                                         % (parameters.PYTHONSHpath,
-                                                            parameters.ADTpath,
-                                                            currScaffPath,
-                                                            parameters.scaff1out)
+														 % (parameters.PYTHONSHpath,
+															parameters.ADTpath,
+															currScaffPath,
+															parameters.scaff1out)
 					os.system(prepBaseScaff)
 
 					if os.path.isfile(parameters.flexConfig):
@@ -1830,8 +1830,8 @@ def runDrugSearch(parameters):
 													 parameters.vinaBase)
 
 							genVinaConfig(parameters)
-                                                        vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
-	                                                os.system(vinaCommand)
+														vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+													os.system(vinaCommand)
 
 						
 					if parameters.cgcRun:
@@ -1969,14 +1969,14 @@ def runAnalysis(parameters):
 
 	with open("%s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein),"w") as tsv:
 		csvWriter = csv.writer(tsv, delimiter='\t')
-   		csvWriter.writerows(summary)
+		csvWriter.writerows(summary)
 
-   	curAnalysisDir = "%s/analysis/%s/figures" % \
+	curAnalysisDir = "%s/analysis/%s/figures" % \
 											(parameters.resultsDIR, analysisVars)
 	if not os.path.isdir(curAnalysisDir):
 		os.makedirs(curAnalysisDir)
 
-   	r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations_weighted.R %s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.programDIR, 
+	r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations_weighted.R %s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.programDIR, 
 												parameters.resultsDIR, analysisVars, parameters.protein), shell = True)
 	print(r_out)
 
