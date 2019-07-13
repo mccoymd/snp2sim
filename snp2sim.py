@@ -626,7 +626,7 @@ def runNAMD_replicaExchange(parameters):
 	repConfig.write("set min_temp 300\n")
 	repConfig.write("set max_temp 600\n")
 	repConfig.write("set steps_per_run 1000\n")
-	repConfig.write("set num_runs %s\n" %(int(parameters.simLength*500)))s
+	repConfig.write("set num_runs %s\n" %(int(parameters.simLength*500)))
 	repConfig.write("set runs_per_frame 5\n")
 	repConfig.write("set frames_per_restart 2\n")
 	repConfig.write("set namd_config_file \"%s\"\n" %parameters.NAMDconfig)
