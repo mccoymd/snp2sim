@@ -1830,8 +1830,8 @@ def runDrugSearch(parameters):
 													 parameters.vinaBase)
 
 							genVinaConfig(parameters)
-														vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
-													os.system(vinaCommand)
+							vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+							os.system(vinaCommand)
 
 						
 					if parameters.cgcRun:
