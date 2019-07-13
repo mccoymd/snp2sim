@@ -1521,7 +1521,6 @@ def runVarMDsim(parameters):
 	                if not os.path.isfile("%s.dcd" % parameters.NAMDout):
 	                        print("NAMD run failed")
 	                        sys.exit()
-		
 		if parameters.singleRun:
 			genSingleRunTCL(parameters)
 			if parameters.cgcRun:
