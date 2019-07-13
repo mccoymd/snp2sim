@@ -1506,7 +1506,7 @@ def runVarMDsim(parameters):
 		print("Performing Variant %.3f ns Simulation" % parameters.simLength)
 		if hasattr(parameters, "replica") and parameters.replica:
 			runNAMD_replicaExchange(parameters)
-			runNAMDcommand = "mpirun %s +p%i +replicas 8 %s > %s.log" % \
+			runNAMDcommand = "mpirun --allow-run-as-root %s +p%i +replicas 8 %s > %s.log" % \
 					 (parameters.NAMDpath, parameters.simProc,
 					  parameters.repConfig, parameters.NAMDout)
 			os.system(runNAMDcommand)
