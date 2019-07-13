@@ -1585,6 +1585,17 @@ def runDrugSearch(parameters):
 			os.system("cp %s %s" % (pdbFile,pdbNewLoc))
 
 
+	if hasattr(parameters, "ligandPDB") and parameters.ligandPDB:
+		library = parameters.programDIR + "/drugLibraries/" + basename(parameters.ligandPDB)
+		if not os.path.isdir(library):
+			os.makedirs(library)
+		for file in os.listdir(parameters.ligandPDB):
+			prepLigand = "%s %s/prepare_ligand4.py -l %s" \
+										 % (parameters.PYTHONSHpath, parameters.ADTpath,
+											file)
+			os.system(prepLigand)
+			os.system("cp %sqt %s/%sqt" % (file, library, file))
+		parameters.drugLibPath = library
 	if parameters.drugLibrary:
 		if parameters.singleDrug:
 			#todo - add single drug binding
