@@ -11,11 +11,11 @@ import shutil
 import subprocess
 import csv
 
-#now unneccesary because mdtraj not used
-#import mdtraj as md
-#import numpy as np
-
+#Class that parses the command line and Yaml Config arguments
 class argParse():
+	#reads command line args, then config args
+	#Config args supercede in case of conflict
+	#Args are added to argParse parameters
 	def __init__(self):
 		self.requiredArgs = ['protein', 'mode']
 		self.commandargs = _parseCommandLine()
@@ -24,6 +24,9 @@ class argParse():
 			self.args = yaml.load(open(self.config))
 			self.args = {k: v for k, v in self.args.items() if v is not None}
 			self.__dict__.update(self.args)
+
+	#Verifies all required general and module-specific args are provided
+	#Throws assertionError if required parameter is not provided
 	def checkRequiredArgs(self):
 		for arg in self.requiredArgs:
 			assert (hasattr(self, arg) and getattr(self, arg)), arg + " not specified! " + arg + " is required."
@@ -37,16 +40,24 @@ class argParse():
 		if self.mode == "varAnalysis":
 			assert hasattr(self, "analysisVariants") and self.analysisVariants, "No variants listed for analysis - exiting"
 
+	#Sets the defaults for all other parameters, and initializes any other variables needed for the workflow.
 	def setDefault(self):
+
+		#programDir is the path for the main script and analysis scripts
+		#as well as topology files and other supllemental files
 		self.programDIR = os.path.abspath(__file__)
 		self.programDIR = os.path.dirname(self.programDIR)
-		if not hasattr(self, "runDIR"):
+
+		#runDir is the path to save all results, and reference previous results or modules
+		if not self.runDIR:
 			self.runDIR = "/opt/snp2sim_results"
 		if not os.path.isdir(self.runDIR):
 				os.makedirs(self.runDIR)
 		print(self.runDIR)
 		print(self.programDIR)
 		print(self.protein)
+
+		#set paths for tools
 		if not self.VMDpath:
 			self.VMDpath = "vmd"
 		if not self.NAMDpath:
@@ -59,6 +70,10 @@ class argParse():
 			self.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
 		if not self.VINApath:
 			self.VINApath = "vina"
+
+		#Creates the variant parameter, a string that contains a unique ID for the variants used in the run
+		#Covers the cases of the variants being provided as a list of AA and residue numbers
+		#Defaults to WT if not variant provided
 		if isinstance(self.varAA,list) and isinstance(self.varResID,list):
 			if len(self.varAA) == len(self.varResID):
 				self.variant = [str(self.varResID[x]) + self.varAA[x] for x in range(len(self.varAA))]
@@ -76,15 +91,18 @@ class argParse():
 
 
 
-			
+		#Points to the supplemental files needed to create the starter files for the MD sim.
 		self.simTopology = ("%s/simParameters/top_all36_prot.rtf" % self.programDIR,
 								  "%s/simParameters/toppar_water_ions_namd.str" % self.programDIR)
 		self.simParameters = ("%s/simParameters/par_all36_prot.prm" % self.programDIR,
 									"%s/simParameters/toppar_water_ions_namd.str" %self.programDIR)
 
+		#by default uses all cores
 		if not self.simProc:
 			self.simProc = multiprocessing.cpu_count()    
 		
+
+		#creates paths to all the structures used in the prep for MD sim
 		self.simPDB = "%s/variantSimulations/%s/structures/%s.%s.pdb" \
 							% (self.runDIR,self.protein,
 							   self.protein,self.variant)
@@ -109,6 +127,8 @@ class argParse():
 		self.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
 							% (self.runDIR,self.protein,
 							   self.protein, self.variant)
+
+		#paths to the TCL scripts used to generate the starter structures
 		self.wtStructTCL = "%s/variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
 								 % (self.runDIR,self.protein, self.protein)
 		self.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
@@ -126,30 +146,37 @@ class argParse():
 		self.structPrefix = "%s/variantSimulations/%s/structures/%s.%s" \
 								  % (self.runDIR,self.protein,
 									 self.protein, self.variant)
+
+		#path to NAMD parameters
 		self.NAMDconfig = "%s/variantSimulations/%s/config/%s.%s.%s.NAMD" \
 								% (self.runDIR, self.protein, self.protein,
 								   self.variant, self.simID)
 		self.NAMDout = "%s/variantSimulations/%s/results/%s/trajectory/%s.%s.%s" \
 							 % (self.runDIR, self.protein, self.variant,
 								self.protein, self.variant, self.simID)
+
+		#path to results dir, where all module results are stored and read.
 		self.resultsDIR =  "%s/variantSimulations/%s/results" % \
 								 (self.runDIR, self.protein)
 		self.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
 							 % (self.runDIR, self.protein, self.variant)
 
+		#path to the drug libraries in the program directory
 		self.drugLibPath = "%s/drugLibraries/%s/" % \
-				   (self.runDIR, self.drugLibrary)
+				   (self.programDIR, self.drugLibrary)
 
                 
 		#hardcoding bindingID as drugLibrary
 		#TODO - refactor to remove "bindingID"
 		self.bindingID = self.drugLibrary
 		
+		#Autodock config
 		if self.bindingID:
 			self.drugBindConfig = "%s/variantSimulations/%s/config/%s.autodock" \
 										% (self.runDIR, self.protein, self.bindingID)
 		
 
+		#allows user to input trajectories in PDB format from external source
 		if self.loadPDBtraj:
 			variantDIR = self.resultsDIR + "/" + self.variant + "/trajectory/"
 			if not os.path.exists(variantDIR):
@@ -159,12 +186,6 @@ class argParse():
 				pdbNewLoc = self.trajDIR + os.path.basename(pdbFile)
 				print(pdbNewLoc)
 				os.system("cp %s %s" % (pdbFile,pdbNewLoc))
-		
-		if self.newScaff:
-			if not os.path.isdir("%s/variantSimulations/%s/config" % \
-								 (self.runDIR,self.protein)):
-				os.makedirs("%s/variantSimulations/%s/config" % \
-							(self.runDIR,self.protein))
 
 
 def _parseCommandLine():
@@ -175,6 +196,8 @@ def _parseCommandLine():
 		epilog="written by Matthew McCoy, mdm299@georgetown.edu"
 	)
 
+
+	#general parameters
 	parser.add_argument("--mode",
 						help="varMDsim, varScaffold, drugSearch, or varAnalysis",
 						action="store",
@@ -190,6 +213,22 @@ def _parseCommandLine():
 						action="store",
 						type=str,
 						)
+	parser.add_argument("--runDIR",
+						help="path to directory to store results",
+						action="store",
+						type=str,
+						)
+	parser.add_argument("--clean",
+						help="remove all files from previous run with same protein name",
+						action="store_true",
+						)
+	parser.add_argument("--cgcRun",
+                        help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
+			    		action="store_true",
+        				)
+
+	#VarMDsim options
+
 	parser.add_argument("--newStruct",
 						help="path to cleaned PDB file (protein structure w/ cannonical aa)",
 						action="store",
@@ -200,12 +239,6 @@ def _parseCommandLine():
 						action="store",
 						type=str,
 						)
-	parser.add_argument("--newScaff",
-						help="path to scaffold config (search RMSD and # iterations, alignment aa, clusteraa",
-						action="store",
-						type=str,
-						)
-	
 	parser.add_argument("--simLength",
 						help="varTraj simulation length in ns",
 						action="store",
@@ -221,30 +254,8 @@ def _parseCommandLine():
 						action="store",
 						type=str,
 						)
-	parser.add_argument("--vinaExh",
-						help="exhaustiveness parameter of autodock vina",
-						action="store",
-						default="50",
-						type=str,
-						)
-	parser.add_argument("--clustThresh",
-						help="exhaustiveness parameter of autodock vina",
-						action="store",
-						default="0.09",
-						type=float,
-						)
 	parser.add_argument("--simID",
-						help="amino acid to change",
-						action="store",
-						type=str,
-						)
-	parser.add_argument("--bindingID",
-						help="name for autodock template config (search space and alignment res)",
-						action="store",
-						type=str,
-						)
-	parser.add_argument("--scaffID",
-						help="name of scaffolding parameters set",
+						help="ID number for the MD sim run",
 						action="store",
 						type=str,
 						)
@@ -253,13 +264,73 @@ def _parseCommandLine():
 						action="store",
 						type=str,
 						)
-	parser.add_argument("--VINApath",
-						help="path to AutoDock Vina executable",
+	parser.add_argument("--NAMDpath",
+						help="path to NAMD executable",
 						action="store",
 						type=str,
 						)
-	parser.add_argument("--NAMDpath",
-						help="path to NAMD executable",
+	parser.add_argument("--simProc",
+						help="number of processors to run simulation",
+						action="store",
+						type=int,
+						)
+	parser.add_argument("--singleRun",
+						help="output summary PDB trajectory only",
+						action="store_true",
+						)
+	parser.add_argument("--genStructures",
+						help="only generate initial structures",
+						action="store_true",
+						)
+	
+
+	#varScaff options
+	parser.add_argument("--scaffID",
+						help="ID for the Scaffolding run",
+						action="store",
+						type=str,
+						)
+	parser.add_argument("--clustPDBtraj",
+						help="cluster results from multiple varScafold singleRun",
+						action="store_true",
+						)
+	parser.add_argument("--loadPDBtraj", nargs='+',
+						help="pdb trajectory files to import, list one after another",
+						action="store",
+						)
+	parser.add_argument("--alignmentResidues",
+						help="residue numbers used to align trajectory for clustering",
+						action="store",
+						type=str,
+						)
+	parser.add_argument("--clusterResidues",
+						help="residue numbers to consider when clustering",
+						action="store",
+						type=str,
+						)
+	parser.add_argument("--featureTableMethod",
+						help="use the feature table method, otherwise RMSD method is used",
+						action="store_true",
+						)
+	parser.add_argument("--PairwiseRMSD",
+						help="if RMSD method is used, pass in already created PairwiseRMSD matrix",
+						action="store",
+						type=str,
+						)
+	parser.add_argument("--colorTrajectory",
+						help="create a full trajectory PDB file where each frame is colored by cluster",
+						action="store_true",
+						)
+
+	#drugBinding options
+	parser.add_argument("--vinaExh",
+						help="exhaustiveness parameter of autodock vina",
+						action="store",
+						default="50",
+						type=str,
+						)
+	parser.add_argument("--VINApath",
+						help="path to AutoDock Vina executable",
 						action="store",
 						type=str,
 						)
@@ -293,58 +364,47 @@ def _parseCommandLine():
 						action="store",
 						type=str,
 						)
-
-	parser.add_argument("--simProc",
-						help="number of processors to run simulation",
-						action="store",
-						type=int,
-						)
-	parser.add_argument("--singleRun",
-						help="output summary PDB trajectory only",
-						action="store_true",
-						)
-	parser.add_argument("--clustPDBtraj",
-						help="cluster results from multiple varScafold singleRun",
-						action="store_true",
-						)
-	parser.add_argument("--loadPDBtraj", nargs='+',
-						help="pdb trajectory files to import, list one after another",
-						action="store",
-						)
 	parser.add_argument("--inputScaff", nargs='+',
 						help="pdb scaffold files to import, list one after another",
 						action="store",
 						)
-	parser.add_argument("--cgcRun",
-                            help="if Run is on CGC platform, move pdb and log to snp2sim root for processing",
-			    action="store_true",
-        )
 	parser.add_argument("--bindSingleVar",
 						help="only bind single variant scaffolds",
 						action="store_true",
 						)
-	parser.add_argument("--clean",
-						help="remove all files from previous run with same protein name",
-						action="store_true",
+	parser.add_argument("--ligandPDB",
+						help="path to dir with ligand PDBs",
+						action="store",
+						type=str,
 						)
+
+
 	parser.add_argument("--config",
 						help="use parameters from config.yaml. OVERWRITES command line parameters",
 						action="store",
 						)
 	
-
+	#parses command line args
 	cmdlineparameters, unknownparams = parser.parse_known_args()
 	parameters = copy.copy(cmdlineparameters)
 
 	return parameters
 
+
+
+
+#creates unsolvated PDB and PSF files
+#solvates the struct files
 def genNAMDstructFiles(parameters):
 	if not os.path.exists("%s/variantSimulations/%s/bin/" % (parameters.runDIR,parameters.protein)):
 		os.makedirs("%s/variantSimulations/%s/bin/" % (parameters.runDIR,parameters.protein))
+
 	if os.path.isfile(parameters.templatePDB):
 		print("generating solvated/ionized PDB and PSF from %s" \
 			% parameters.templatePDB)
 
+		#creates the unsolvated PDB and PSF files if not already present
+		#also mutates if necessary
 		if os.path.isfile(parameters.varPDB) and os.path.isfile(parameters.varPSF):
 			print("unsolvated PDB and PSF exist")
 		else:
@@ -352,6 +412,7 @@ def genNAMDstructFiles(parameters):
 			genStructCommand = "%s -e %s" % (parameters.VMDpath, parameters.varStructTCL)
 			os.system(genStructCommand)
 
+		#Solvates the structure files with a water box for simulation
 		genSolvTCL(parameters)
 		genSolvCommand = "%s -e %s" % (parameters.VMDpath, parameters.solvTCL)
 		if not os.path.exists("%s/variantSimulations/%s/config/" % \
@@ -360,10 +421,13 @@ def genNAMDstructFiles(parameters):
 		os.system(genSolvCommand)
 	else:
 		print("no template exists")
-		print("use --new to specify clean PDB (only cannonical aa) ")
+		print("use --newStruct to specify clean PDB (only cannonical aa) ")
 		sys.exit()
 
 
+#Creates a TCL script for VMD
+#uses Topology files with template PDB to make PDB and PSF files
+#mutates with all variants
 def genStructTCL(parameters):
 	print("generating struct files")
 	structFile = open(parameters.varStructTCL,"w+")
@@ -395,7 +459,8 @@ def genStructTCL(parameters):
 	
 	structFile.write("quit\n")
 
-
+#Solvates and ionizes the structure with water box
+#measures center and dimensions of structure
 def genSolvTCL(parameters):
 	#todo - adjustable solvation/ionization parameters
 	print("generating solvated/ionized pdb and psf files")
@@ -414,11 +479,13 @@ def genSolvTCL(parameters):
 	solvFile.write("close $output\n")
 	solvFile.write("quit")
 
+
+#Runs NAMD for MD simulation using structures and options
 def runNAMD(parameters):
 	if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
 		os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
 
-
+	#parses the dimensions of the solvated structure
 	if os.path.isfile(parameters.solvBoundary):
 		boundaryFile = open(parameters.solvBoundary,"r")        
 		bLines = boundaryFile.readlines()
@@ -442,7 +509,8 @@ def runNAMD(parameters):
 		print("boundary file does not exist")
 		print("remove solvated/ionized PDB and PSF and resubmit")
 		sys.exit()
-		
+
+	#creates the NAMD config file and populates it with default options	
 	configFile = open(parameters.NAMDconfig,"w+")
 	configFile.write("structure          %s\n" % parameters.simPSF)
 	configFile.write("coordinates        %s\n" % parameters.simPDB)
@@ -517,18 +585,16 @@ def runNAMD(parameters):
 
 	print("running NAMD with %i processors" % parameters.simProc)
 
-#moving to runVarMDsim
-#        runNAMDcommand = "%s +p%i %s > %s.log" % \
-#			 (parameters.NAMDpath, parameters.simProc,
-#			  parameters.NAMDconfig, parameters.NAMDout)
-#	os.system(runNAMDcommand)
-                
 
+                
+#if running in CGC, prepares the results of MD sim as PDB file to export
 def genSingleRunTCL(parameters):
 	print("generating %s" % parameters.singleRunTCL)
 	pdbTCL = open(parameters.singleRunTCL,"w+")
 	pdbTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+
+	#loads DCD files from the results into VMD
 	print("using DCD files in %s" % variantDIR)
 	for tFile in os.listdir(variantDIR):
 		if tFile.endswith(".dcd"):
@@ -538,6 +604,7 @@ def genSingleRunTCL(parameters):
 	pdbTCL.write("package require pbctools\n")
 	pdbTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
 
+	#writes the trajectory as a PDB file instead of DCD for CGC runs
 	allPDBoutput = "%s/%s.%s.%s.pdb" % (variantDIR, parameters.protein,
 										parameters.variant, parameters.simID)
 	pdbTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
@@ -548,8 +615,10 @@ def genSingleRunTCL(parameters):
 	
 	os.system(genPDBcommand)
 
+#Creates a pairwise RMSD matrix of the trajectory frames for use in multidimensional scaling method
 def calcPairwiseRMSD(parameters):
 
+	#only calculated RMSD based on clusterResidues and aligns frames by alignmentResidues
 	alignmentRes = parameters.alignmentResidues
 	clusterRes = parameters.clusterResidues
 
@@ -564,7 +633,7 @@ def calcPairwiseRMSD(parameters):
 	if os.path.isfile(scaffLOG):
 		print("%s exists. Remove to recalculate Scaffolds" % scaffLOG)
 		return
-		
+	#loads in the DCD files of the trajectory	
 	print("generating %s" % parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
@@ -575,6 +644,8 @@ def calcPairwiseRMSD(parameters):
 		if tFile.endswith(".dcd"):
 			dcdFile = variantDIR + tFile
 			clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
+
+	#aligns the frames to the first frame
 	clustTCL.write("set nf [molinfo top get numframes]\n")
 	clustTCL.write("set refRes [atomselect top \""+alignmentRes+"\" frame 0]\n")
 	clustTCL.write("set refStruct [atomselect top all frame 0]\n")
@@ -589,11 +660,13 @@ def calcPairwiseRMSD(parameters):
 	clustTCL.write("set back [atomselect top \""+clusterRes+"\"]\n")
 	clustTCL.write("set refclustRes [atomselect top \""+clusterRes+"\" frame 0]\n")
 
+	#Makes the matrix square by padding with 0s to avoid calculating RMSD between pairs twice
 	clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
 	clustTCL.write("set row {}\n")
 	clustTCL.write("for {set pad 0} {$pad <= $i} {incr pad} {\n")
 	clustTCL.write("lappend row 0}\n")
 
+	#calculates RMSD and writes to a file
 	clustTCL.write("for {set j [expr $i + 1]} {$j < $nf} {incr j} {\n")
 	clustTCL.write("$refclustRes frame $i \n")
 	clustTCL.write("$back frame $j \n")
@@ -609,6 +682,7 @@ def calcPairwiseRMSD(parameters):
 	makeTableCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
 	os.system(makeTableCommand) 
 
+#Same function as calcPairwaiseRMSD(), but used a PDB format as input trajectory
 def calcPairwiseRMSD_PDB(parameters):
 
 	alignmentRes = parameters.alignmentResidues
@@ -1044,7 +1118,7 @@ def sortPDBclusters(parameters):
 		clustTCL.write("$cur writepdb " + parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb\n" )
 		scaffNum += 1
 
-	if hasattr(parameters, "colorTrajectory") and parameters.colorTrajectory:
+	if parameters.colorTrajectory:
 		colorTrajectory()
 	clustTCL.write("quit")
 	clustTCL.close()

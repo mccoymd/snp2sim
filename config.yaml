@@ -18,7 +18,8 @@ cgcRun:
 
 runDIR: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/snp2simresults
 
-
+#Overwrite previous run with same protein name.
+clean: 
 
 
 
@@ -36,10 +37,6 @@ varResID:
 
  #amino acid to change
 varAA:
-
-#Overwrite previous run with same protein name.
-clean: 
-
 
  #path to cleaned PDB file (protein structure w/ cannonical aa)
 newStruct: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/input/PDL1.Vtype.pdb
@@ -114,9 +111,6 @@ bindingTemplate:
  #exhaustiveness parameter of autodock vina
 vinaExh:
 
- #name for autodock template config (search space and alignment res)
-bindingID:
-
  #path to new binding config file
 newBindingConfig:
 
@@ -135,7 +129,8 @@ inputScaff:
  #only bind single variant scaffolds
 bindSingleVar:
 
-
+ #path to dir with ligand PDBs, which will be converted to drug library
+ligandPDB:
 
 # varAnalysis
 ############
