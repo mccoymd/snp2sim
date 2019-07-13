@@ -586,6 +586,135 @@ def runNAMD(parameters):
 	print("running NAMD with %i processors" % parameters.simProc)
 
 
+
+#Runs NAMD for MD simulation using structures and options
+def runNAMD_replicaExchange(parameters):
+	if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
+		os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
+
+	#parses the dimensions of the solvated structure
+	if os.path.isfile(parameters.solvBoundary):
+		boundaryFile = open(parameters.solvBoundary,"r")        
+		bLines = boundaryFile.readlines()
+
+		center = bLines[0]
+		center = center.rstrip()
+		center = center.split(" ")
+		center = [float(i) for i in center]
+		
+		minmax = bLines[1]
+		minmax = minmax.rstrip()
+		minmax = minmax.translate(None,"{}")
+		minmax = minmax.split(" ")
+		minmax = [float(i) for i in minmax]
+
+		parameters.dimX = minmax[3] - minmax[0] + 0.1
+		parameters.dimY = minmax[4] - minmax[1] + 0.1
+		parameters.dimZ = minmax[5] - minmax[2] + 0.1
+
+	else:
+		print("boundary file does not exist")
+		print("remove solvated/ionized PDB and PSF and resubmit")
+		sys.exit()
+
+	parameters.repConfig = "%s/variantSimulations/%s/config/replica_s%s.%s.%s.conf" \
+								% (parameters.runDIR, parameters.protein, parameters.protein,
+								   parameters.variant, parameters.simID)
+	repConfig = open(parameters.repConfig, "w+")
+
+	repConfig.write("set num_replicas 8\n")
+	repConfig.write("set min_temp 300\n")
+	repConfig.write("set max_temp 600\n")
+	repConfig.write("set steps_per_run 1000\n")
+	repConfig.write("set num_runs %s\n" %(parameters.simLength*500))
+	repConfig.write("set runs_per_frame 5\n")
+	repConfig.write("set frames_per_restart 2\n")
+	repConfig.write("set namd_config_file \"%s\"\n" %parameters.NAMDconfig)
+	repConfig.write("set output_root \"%s\"\n" %parameters.NAMDout)
+
+	repConfig.write("set psf_file \"%s\"\n" %parameters.simPSF)
+	repConfig.write("set initial_pdb_file \"%s\"\n" %parameters.simPDB)
+	repConfig.write("set fit_pdb_file \"%s\"\n" %parameters.templatePDB)
+
+
+	#creates the NAMD config file and populates it with default options	
+	configFile = open(parameters.NAMDconfig,"w+")
+	configFile.write("structure          %s\n" % parameters.simPSF)
+	configFile.write("coordinates        %s\n" % parameters.simPDB)
+	#configFile.write("set outputname     %s\n" % parameters.NAMDout)
+	configFile.write("paraTypeCharmm on\n")
+	for pFile in parameters.simParameters:
+		configFile.write("parameters %s\n" % pFile)
+	configFile.write("mergeCrossterms yes\n")
+	#configFile.write("set temperature    310\n")
+	configFile.write("firsttimestep      0\n")
+	configFile.write("\n")
+	#configFile.write("temperature         $temperature\n")
+	configFile.write("\n")
+	configFile.write("\n")
+	configFile.write("# Force-Field Parameters\n")
+	configFile.write("exclude             scaled1-4\n")
+	configFile.write("1-4scaling          1.0\n")
+	configFile.write("cutoff              12.0\n")
+	configFile.write("switching           on\n")
+	configFile.write("switchdist          10.0\n")
+	configFile.write("pairlistdist        14.0\n")
+	configFile.write("\n")
+	configFile.write("# Integrator Parameters\n")
+	configFile.write("timestep            2.0  ;# 2fs/step\n")
+	configFile.write("rigidBonds          all  ;# needed for 2fs steps\n")
+	configFile.write("nonbondedFreq       1\n")
+	configFile.write("fullElectFrequency  2\n")
+	configFile.write("stepspercycle       10\n")
+	configFile.write("\n")
+	configFile.write("# Constant Temperature Control\n")
+	#configFile.write("langevin            on    ;# do langevin dynamics\n")
+	# configFile.write("langevinDamping     1     ;# damping coefficient (gamma) of 1/ps\n")
+	#configFile.write("langevinTemp        $temperature\n")
+	# configFile.write("langevinHydrogen    off    ;# don't couple langevin bath to hydrogens\n\n")
+	configFile.write("#Periodic Boundary Conditions\n")
+	configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
+	configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
+	configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
+	configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
+					 (center[0], center[1], center[0]))
+	configFile.write("margin 1.0\n\n")
+	configFile.write("wrapAll on\n\n")
+	configFile.write("# PME (for full-system periodic electrostatics)\n")
+	configFile.write("PME                 yes\n")
+	configFile.write("PMEGridSpacing      1.0\n")
+	configFile.write("# Constant Pressure Control (variable volume)\n")
+	configFile.write("useGroupPressure      yes ;# needed for rigidBonds\n")
+	configFile.write("useFlexibleCell       no\n")
+	configFile.write("useConstantArea       no\n")
+	# configFile.write("langevinPiston        on\n")
+	# configFile.write("langevinPistonTarget  1.01325 ;#  in bar -> 1 atm\n")
+	# configFile.write("langevinPistonPeriod  100.0\n")
+	# configFile.write("langevinPistonDecay   50.0\n")
+	# configFile.write("langevinPistonTemp    $temperature\n")
+	configFile.write("# Output\n")
+	#configFile.write("outputName          $outputname\n")
+	#todo - configure output options i.e. freq of output)
+	configFile.write("restartfreq         10000     ;# 500steps = every 1ps\n")
+	#configFile.write("dcdfreq             5000\n")
+	configFile.write("xstFreq             5000\n")
+	#configFile.write("outputEnergies      5000\n")
+	configFile.write("outputPressure      5000\n")
+	configFile.write("# Minimization\n")
+	configFile.write("minimize            1000\n")
+	#configFile.write("reinitvels          $temperature\n\n")
+	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
+					 
+	if not os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory/" \
+						 % (parameters.runDIR, parameters.protein, parameters.variant)):
+		os.makedirs("%s/variantSimulations/%s/results/%s/trajectory/" \
+						 % (parameters.runDIR, parameters.protein, parameters.variant))
+
+	print("running NAMD with %i processors" % parameters.simProc)
+
+
+
+
                 
 #if running in CGC, prepares the results of MD sim as PDB file to export
 def genSingleRunTCL(parameters):
@@ -1374,15 +1503,24 @@ def runVarMDsim(parameters):
 		return
 	if parameters.simLength:
 		print("Performing Variant %.3f ns Simulation" % parameters.simLength)
-		
-		runNAMD(parameters)
-                runNAMDcommand = "%s +p%i %s > %s.log" % \
+		if hasattr(parameters, "replica") and parameters.replica:
+			runNAMD_replicaExchange(parameters)
+                runNAMDcommand = "mpirun %s +p%i +replicas 8 %s > %s.log" % \
 			         (parameters.NAMDpath, parameters.simProc,
-			          parameters.NAMDconfig, parameters.NAMDout)
+			          parameters.repConfig, parameters.NAMDout)
 	        os.system(runNAMDcommand)
                 if not os.path.isfile("%s.dcd" % parameters.NAMDout):
                         print("NAMD run failed")
                         sys.exit()
+        else:
+			runNAMD(parameters)
+	                runNAMDcommand = "%s +p%i %s > %s.log" % \
+				         (parameters.NAMDpath, parameters.simProc,
+				          parameters.NAMDconfig, parameters.NAMDout)
+		        os.system(runNAMDcommand)
+	                if not os.path.isfile("%s.dcd" % parameters.NAMDout):
+	                        print("NAMD run failed")
+	                        sys.exit()
 		
 		if parameters.singleRun:
 			genSingleRunTCL(parameters)
