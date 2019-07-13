@@ -1477,7 +1477,7 @@ def runVarMDsim(parameters):
 			print("ERROR - %s-%s is already created... resubmit with new protein/variant combination" %(parameters.protein, parameters.variant))
 			sys.exit()
 		if hasattr(parameters, "clean") and parameters.clean:
-			if os.isdir('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant)):
+			if os.path.isdir('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant)):
 				shutil.rmtree('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant))
 			os.makedirs('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant))
 		if not os.path.isdir("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein)):
