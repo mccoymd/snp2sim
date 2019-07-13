@@ -39,7 +39,7 @@ varResID:
 varAA:
 
  #path to cleaned PDB file (protein structure w/ cannonical aa)
-newStruct: /opt/snp2sim/example/PDL1.Vtype.pdb
+newStruct:
 
  #varTraj simulation length in ns
 simLength: .05
