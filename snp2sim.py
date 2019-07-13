@@ -1505,13 +1505,13 @@ def runVarMDsim(parameters):
 		print("Performing Variant %.3f ns Simulation" % parameters.simLength)
 		if hasattr(parameters, "replica") and parameters.replica:
 			runNAMD_replicaExchange(parameters)
-				runNAMDcommand = "mpirun %s +p%i +replicas 8 %s > %s.log" % \
+			runNAMDcommand = "mpirun %s +p%i +replicas 8 %s > %s.log" % \
 					 (parameters.NAMDpath, parameters.simProc,
 					  parameters.repConfig, parameters.NAMDout)
 			os.system(runNAMDcommand)
-				if not os.path.isfile("%s.dcd" % parameters.NAMDout):
-						print("NAMD run failed")
-						sys.exit()
+			if not os.path.isfile("%s.dcd" % parameters.NAMDout):
+			print("NAMD run failed")
+			sys.exit()
 		else:
 			runNAMD(parameters)
 					runNAMDcommand = "%s +p%i %s > %s.log" % \
