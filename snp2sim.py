@@ -1219,19 +1219,28 @@ def clusterTrajectory(parameters):
 def sortPDBclusters(parameters):
 
 	def colorTrajectory():
-		clustTCL.write("package require csv\n")
-		clustTCL.write("set cur [atomselect top all]\n")
+		parameters.colorTraj = "%s/variantSimulations/%s/results/%s/scaffold/colorTraj.tcl" % \
+								   (parameters.runDIR, parameters.protein,parameters.variant)
+		clustTCL = open(parameters.colorTraj, "w")
+		allPDBoutput = parameters.scaffBASE + ".all.pdb"
+		clustTCL.write("mol new %s waitfor all\n" %allPDBoutput)
+		clustTCL.write("set cur [atomselect top \"%s\"]\n" %parameters.clusterResidues)
 		clustTCL.write("set colorinput [open %s/variantSimulations/%s/results/%s/scaffold/cluster_by_frame.csv r]\n" % \
 											(parameters.runDIR, parameters.protein, parameters.variant))
 		clustTCL.write("gets $colorinput line\n")
+		clustTCL.write("set clustMax 0\n")
 		clustTCL.write("while {[gets $colorinput line]>=0} {\n\
 						set fields [split $line \",\"]\n\
+						animate goto [lindex $fields 0]\n\
 						$cur frame [lindex $fields 0]\n\
-						$cur set {user} [lindex $fields 1]\n\
+						$cur set user [lindex $fields 1]\n\
+						set clustMax [expr max($clustMax, [lindex $fields 1])]\n\
 						}\n")
-		allPDBoutput = parameters.scaffBASE + ".all.pdb"
-		clustTCL.write("animate write pdb %s beg 0 end -1 sel $cur\n" \
-					   % allPDBoutput)
+		
+
+		clustTCL.write("mol modcolor 0 0 User\n")
+		clustTCL.write("mol colupdate 0 0 1\n")
+		clustTCL.write("mol scaleminmax 0 0 0.0 $clustMax\n")
 
 	clustTCL = open(parameters.createClustPDB,"w+")
 	scaffLOG = parameters.scaffBASE + ".log"
@@ -1261,6 +1270,9 @@ def sortPDBclusters(parameters):
 		scaffNum += 1
 
 	if parameters.colorTrajectory:
+		allPDBoutput = parameters.scaffBASE + ".all.pdb"
+		clustTCL.write("animate write pdb %s beg 0 end -1 sel $cur\n" \
+					   % allPDBoutput)
 		colorTrajectory()
 	clustTCL.write("quit")
 	clustTCL.close()

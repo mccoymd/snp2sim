@@ -8,15 +8,25 @@
 # General options
 #################
  # varMDsim, varScaffold, drugSearch, or varAnalysis
-mode: varMDsim
+mode: varScaffold
 
  #Name of protein system
 protein: PDL1
 
+ #Variant as "wt" or "x###x"
+variant: wt
+
+#varResID + varAA override variant field. If one is filled, the other must be filled, or variant field used
+ #variant residue ID from PDB template
+varResID: 
+
+ #amino acid to change
+varAA: 
+
  #if Run is on CGC platform, move pdb and log to snp2sim root for processing
 cgcRun:
 
-runDIR: 
+runDIR: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/snp2simresults
 
 #Overwrite previous run with same protein name.
 clean: 
@@ -27,16 +37,6 @@ clean:
 
 # varMDsim options
 ##################
-
- #Variant as "wt" or "x###x"
-variant: wt
-
-#varResID + varAA override variant field. If one is filled, the other must be filled, or variant field used
- #variant residue ID from PDB template
-varResID:
-
- #amino acid to change
-varAA:
 
  #path to cleaned PDB file (protein structure w/ cannonical aa)
 newStruct:
@@ -61,7 +61,7 @@ replica: true
 #Paths to executables. Ignore if using Docker.
 
  #path to VMD executable
-VMDpath:
+VMDpath: /Applications/VMD\ 1.9.3.app/Contents/Resources/VMD.app/Contents/MacOS/VMD
 
  #path to AutoDock Vina executable
 VINApath:
@@ -80,7 +80,7 @@ ADTpath:
 # varScaffold
 #############
 
- #path to scaffold config (search RMSD and # iterations, alignment aa, clusteraa
+ #unique identifier for run
 scaffID: test
 
  #Use PDB trajectories (possibly from singleCGC runs)
@@ -99,7 +99,7 @@ featureTableMethod: true
 #if mds method used
 PairwiseRMSD: 
 
-colorTrajectory:
+colorTrajectory: true
 
 
 
@@ -115,7 +115,7 @@ vinaExh:
  #path to new binding config file
 newBindingConfig:
 
- #path to file with flex residue numbers
+ #list of residue numbers in flexible binding pocket, e.i 22 21 19 103 113 125
 flexBinding:
 
  #name of snp2sim drug library
@@ -135,6 +135,9 @@ ligandPDB:
 
  #path to dir with ligand PDBs, which will be converted to drug library
 autoSearchSpace: 
+
+ #list of residues that comprise the search space if autoSearchSpace is true
+searchResidues:
 
 # varAnalysis
 ############
@@ -156,3 +159,4 @@ analysisDrugLibrary:
 
 analysisDrug:
 
+legacyScaff:
