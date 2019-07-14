@@ -1383,7 +1383,41 @@ def sortPDBclusters(parameters):
 # 				print(index)
 # 				#centroid = repSet[index]
 # 				#centroid.save(pdbScaffFile)
-				
+		
+def calcSearchSpace(parameters):
+	out = parameters.drugBindConfig
+	scaffRes = " ".join(parameters.flexBinding)
+	parameters.boxTCL = "%s/variantSimulations/%s/bin/%s_%s_%s_generateSearchSpace.tcl" % \
+								   (parameters.protein, parameters.variant, parameters.bindingID, parameters.runDIR, parameters.protein)
+	templatePDB = parameters.templatePDB
+	clustTCL = open(parameters.boxTCL,"w+")
+	clustTCL.write("set output [open %s w]\n" % out)
+
+	clustTCL.write("mol new %s\n" % templatePDB)
+	clustTCL.write("set pocket [atomselect top \"resid "+scaffRes+"\"]\n")
+	clustTCL.write("set cen [measure center $pocket]\n")
+	clustTCL.write("set bound [measure minmax $pocket]\n")
+
+	clustTCL.write("puts -nonewline $output \"center_x = \"\n")
+	clustTCL.write("puts $output [lindex $cen 0]\n")
+	clustTCL.write("puts -nonewline $output \"center_y = \"\n")
+	clustTCL.write("puts $output [lindex $cen 1]\n")
+	clustTCL.write("puts -nonewline $output \"center_z = \"\n")
+	clustTCL.write("puts $output [lindex $cen 2]\n")
+
+	clustTCL.write("puts -nonewline $output \"size_x = \"\n")
+	clustTCL.write("puts $output [expr abs([lindex [lindex $bound 1] 0] - [lindex [lindex $bound 0] 0])]\n")
+	clustTCL.write("puts -nonewline $output \"size_y = \"\n")
+	clustTCL.write("puts $output [expr abs([lindex [lindex $bound 1] 1] - [lindex [lindex $bound 0] 1])]\n")
+	clustTCL.write("puts -nonewline $output \"size_z = \"\n")
+	clustTCL.write("puts $output [expr abs([lindex [lindex $bound 1] 2] - [lindex [lindex $bound 0] 2])]\n")
+
+	clustTCL.write("close $output\n")
+	clustTCL.write("quit\n")
+	clustTCL.close()
+
+	vmdCommand = "%s -e box.tcl" % (parameters.VMDpath)
+	os.system(vmdCommand)  
 
 def parseADconfig(parameters):
 	paramFile = "%s/variantSimulations/%s/config/%s.autodock" % \
@@ -1397,24 +1431,9 @@ def parseADconfig(parameters):
 								paramData.pop(0).rstrip(),
 								paramData.pop(0).rstrip()]
 
-#Function not used?
-# def parseFlexConfig(parameters):
-#     #TODO input from config folder
-#     parameters.flexRes = paramData.pop(0)
-#     parameters.flexRes = parameters.flexRes.rstrip()
-#     parameters.flexRes = parameters.flexRes.split(" ")
-
-
-def getFlexRes(pdbFile,flexRes):
-	flexConfig = open(flexRes, "r").readlines()
-	flexRes = flexConfig.pop(0)
-	flexRes = flexRes.rstrip()
-	flexRes = flexRes.split(" ")
-	
-	
+def getFlexRes(pdbFile,flexRes):	
 	currScaff = open(pdbFile,"r").readlines()
 	currScaff.pop(0)
-	flexRes = [int(x) for x in flexRes]
 	flexRes.sort()
 	flexResNum = flexRes.pop(0)
 	flexResID = ""
@@ -1462,7 +1481,7 @@ def alignScaff(parameters, currScaff):
 
 def genVinaConfig(parameters):
 	vinaConfig = open(parameters.vinaConfig,"w+")
-	if not os.path.isfile(parameters.flexConfig):
+	if not parameters.flexBinding:
 		vinaConfig.write("receptor = %s\n" % parameters.scaff1out)
 	else:
 		vinaConfig.write("receptor = %s\n" % parameters.scaffRigid)
@@ -1675,6 +1694,14 @@ def runDrugSearch(parameters):
 
 	#copy over the binding config with the search coords
 	#drugBindConfig is the location of the bidning config
+
+	if hasattr(parameters.autoSearchSpace) and parameters.autoSearchSpace:
+		if hasattr(parameters.searchResidues) and parameters.searchResidues:
+			calcSearchSpace(parameters)
+		else:
+			print "search residues required for autoSearchSpace"
+			sys.exit()
+
 	if parameters.newBindingConfig:
 		if not os.path.isfile(parameters.drugBindConfig):            
 			print("using new config %s" % parameters.newBindingConfig)
@@ -1704,22 +1731,12 @@ def runDrugSearch(parameters):
 		os.makedirs(parameters.vinaOutDir)
 
 	#copying over the flex config with residue numbers	
-	parameters.flexConfig = "%s/variantSimulations/%s/config/%s.flex" % \
-							(parameters.runDIR,parameters.protein,parameters.bindingID)
+
 
 	if parameters.flexBinding:
-		if not os.path.isdir("%s/variantSimulations/%s/config" % \
-							 (parameters.runDIR,parameters.protein)):
-			os.makedirs("%s/variantSimulations/%s/config" % \
-						(parameters.runDIR,parameters.protein))
-			
-		
-		if not os.path.isfile(parameters.flexConfig):
-			os.system("cp %s %s" \
-					  % (parameters.flexBinding, parameters.flexConfig))
-		else:
-			print("%s already exists - remove or choose new bindingID" % parameters.flexConfig)
-			sys.exit()
+		parameters.flexBinding = parameters.flexBinding.rstrip().split(" ")
+		parameters.flexBinding = [int(x) for x in parameters.flexBinding]
+
 
 	if parameters.inputScaff:
 		print("using input scaffolds")
@@ -1820,10 +1837,10 @@ def runDrugSearch(parameters):
 															parameters.scaff1out)
 					os.system(prepBaseScaff)
 
-					if os.path.isfile(parameters.flexConfig):
+					if parameters.flexBinding:
 						print("Found Flex Config: performing flexable residue binding")
 						
-						scaffFlexRes = getFlexRes(currScaffPath,parameters.flexConfig)
+						scaffFlexRes = getFlexRes(currScaffPath,parameters.flexBinding)
 						print(scaffFlexRes)
 						parameters.scaffFlex = scaffBase + ".flex.pdbqt"
 						parameters.scaffRigid = scaffBase + ".rigid.pdbqt"

@@ -133,6 +133,9 @@ bindSingleVar:
  #path to dir with ligand PDBs, which will be converted to drug library
 ligandPDB:
 
+ #path to dir with ligand PDBs, which will be converted to drug library
+autoSearchSpace: 
+
 # varAnalysis
 ############
 
