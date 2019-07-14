@@ -1985,6 +1985,8 @@ def runAnalysis(parameters):
 								" %s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v))
 
 			scaffLOG = "%s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v)
+			if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
+				os.system("%s/snp2sim_analysis/scaffoldAnalysis/legacy_scaffold.sh %s" %(parameters.programDIR, scaffLOG))
 			clustLogfile = open(scaffLOG, "r")
 			clusterMembership = [x.split(",") for x in clustLogfile.read().splitlines()]
 			total_frames = sum(len(x) for x in clusterMembership)
