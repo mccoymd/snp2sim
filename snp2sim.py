@@ -636,6 +636,19 @@ def runNAMD_replicaExchange(parameters):
 	repConfig.write("set initial_pdb_file \"%s\"\n" %parameters.simPDB)
 	repConfig.write("set fit_pdb_file \"%s\"\n" %parameters.templatePDB)
 
+	parameters.jobConfig = "%s/variantSimulations/%s/config/job_s%s.%s.%s.conf" \
+								% (parameters.runDIR, parameters.protein, parameters.protein,
+								   parameters.variant, parameters.simID)
+	jobConfig = open(parameters.jobConfig, "w+")
+
+	jobConfig.write("source %s\n" %parameters.repConfig)
+	if parameters.NAMDpath:
+		jobConfig.write("if { ! [catch numPes] } { cd $(echo $(dirname %s)\"/lib/replica\") \nsource /replica.namd }\n")
+	else:
+		jobConfig.write("if { ! [catch numPes] } { cd $(echo $(dirname $(which namd2))\"/lib/replica\") \nsource /replica.namd }\n")
+
+
+
 
 	#creates the NAMD config file and populates it with default options	
 	configFile = open(parameters.NAMDconfig,"w+")
@@ -1508,7 +1521,7 @@ def runVarMDsim(parameters):
 			runNAMD_replicaExchange(parameters)
 			runNAMDcommand = "mpirun --allow-run-as-root %s +p%i +replicas 8 %s > %s.log" % \
 					 (parameters.NAMDpath, parameters.simProc,
-					  parameters.repConfig, parameters.NAMDout)
+					  parameters.jobConfig, parameters.NAMDout)
 			os.system(runNAMDcommand)
 			if not os.path.isfile("%s.dcd" % parameters.NAMDout):
 				print("NAMD run failed")
