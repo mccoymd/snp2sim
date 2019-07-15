@@ -8,7 +8,7 @@
 # General options
 #################
  # varMDsim, varScaffold, drugSearch, or varAnalysis
-mode: varScaffold
+mode: varAnalysis
 
  #Name of protein system
 protein: PDL1

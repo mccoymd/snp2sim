@@ -2001,9 +2001,9 @@ def runAnalysis(parameters):
 				os.system("%s/snp2sim_analysis/scaffoldAnalysis/legacy_scaffold.sh %s" %(parameters.programDIR, scaffLOG))
 			clustLogfile = open(scaffLOG, "r")
 			clusterMembership = [x.split(",") for x in clustLogfile.read().splitlines()]
-			total_frames = sum(len(x) for x in clusterMembership)
-			del clusterMembership[-1]
-			clusterMembership = [x for x in clusterMembership if x and len(x) > .09 * total_frames]
+			if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
+				del clusterMembership[-1]
+				clusterMembership = [x for x in clusterMembership if x and len(x) > .09 * total_frames]
 			total_frames = sum(len(x) for x in clusterMembership)
 			propMem = [len(x)*1.0/total_frames for x in clusterMembership]
 

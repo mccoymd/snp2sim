@@ -1,5 +1,7 @@
 library(shiny)
 library(ggplot2)
+library(highcharter)
+library(viridis)
 
 args = commandArgs(trailingOnly = TRUE)
 table <- read.table(args[1], header = TRUE, sep = "")
@@ -56,14 +58,27 @@ ui <- fluidPage(
                   choices = c("None", "ligand", "variant", "library"),
                   selected = ""
       ),
+      selectInput('bargene', "Variant:",
+                  choices = unique(fulldata$variant), 
+                  multiple=TRUE, 
+                  selectize=TRUE,
+                  selected =unique(fulldata$variant)),
+      selectInput('barlig', "Ligand:",
+                  choices = unique(fulldata$ligand), 
+                  multiple=TRUE, 
+                  selectize=TRUE,
+                  selected =unique(fulldata$ligand)),
       uiOutput('numgraphsrow'),
-      checkboxInput('circle', label = "Circularize?", value = FALSE),
       downloadButton('download', 'Download figure')
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("plot")
+      tabsetPanel(
+        id = "drugbinding_plots",
+        tabPanel("Barchart",plotOutput("plot")),
+        tabPanel("Heatmap",highchartOutput("heat"))
+      )
     )
   )
 )
@@ -81,18 +96,22 @@ server <- function(input, output) {
                   step = 1)
     }
   })
-  
+  output$heat <- renderHighchart({
+    h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
+      hc_colorAxis(stops = color_stops(40, inferno(40))) %>% 
+      hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
+  })
   output$plot <- renderPlot({
+    part <- fulldata[fulldata$variant %in% input$bargene && fulldata$ligand %in% input$barlig,]
     if (input$fill != "None"){
-      plot <- ggplot(fulldata, aes_string(input$x, input$y, fill = input$fill)) +
+      plot <- ggplot(part, aes_string(input$x, input$y, fill = input$fill)) +
         theme_light() +
         theme(text=element_text(size=15)) +
         geom_bar(stat="identity",position=position_dodge()) + 
-        labs(y="Binding Affinity Relative to WT (kcal/mol)") +
         theme(axis.text.x = element_text(angle = 90))
     }
     else{
-      plot <- ggplot(fulldata, aes_string(input$x, input$y)) +
+      plot <- ggplot(part, aes_string(input$x, input$y)) +
         theme_light() +
         theme(text=element_text(size=15)) +
         geom_bar(stat="identity",position=position_dodge()) + 
@@ -100,13 +119,13 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle = 90))
     }
     if (input$facety != "None"){
-      plots$plot <- plot + facet_wrap(. ~ get(input$facety), ncol = input$numgraphsrow, scales="free_x")
+      plot <- plot + facet_wrap(. ~ get(input$facety), ncol = input$numgraphsrow, scales="free_x")
     }
-    else{
-      plots$plot <- plot 
+    if (input$y == "relEnergy") {
+      plots$plot = plot + labs(y="Binding Energy Relative to WT (kcal/mol)")
     }
-    if (input$circle) {
-      plots$plot <- plots$plot + coord_polar()
+    else if (input$y == "perChange") {
+      plots$plot = plot + labs(y="Percent Change in Binding Energy (%)")
     }
     
     plots$plot

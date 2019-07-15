@@ -1,7 +1,9 @@
 #! /usr/local/bin/Rscript
 
 library(ggplot2)
-
+library(htmlwidgets)
+library(highcharter)
+library(viridis)
 args = commandArgs(trailingOnly = TRUE)
 path = paste0(dirname(args[1]), "/figures/")
 table <- read.table(args[1], header = TRUE, sep = "")
@@ -58,9 +60,15 @@ ggsave(
     theme_light() +
     theme(text = element_text(size = 15)) +
     geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Relative to WT (kcal/mol)") +
+    labs(y = "Binding Energy Relative to WT (kcal/mol)") +
     theme(axis.text.x = element_text(angle = 90)) +
-    facet_grid(. ~ variant)
+    facet_grid(. ~ variant) +
+    geom_hline(
+      yintercept = 0,
+      color = "black",
+      size = 1.3
+    )
+    
 )
 
 #variant vs relative energy, split by ligand
@@ -68,16 +76,16 @@ ggsave(
   paste0(path, "variant_relEnergy.jpg"),
   ggplot(plotdata, aes(variant, relEnergy, fill = variant)) +
     theme_light() +
+    theme(text = element_text(size = 15)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+    theme(axis.text.x = element_text(angle = 90)) +
+    facet_grid(. ~ ligand) +
     geom_hline(
       yintercept = 0,
       color = "black",
       size = 1.3
-    ) +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Relative to WT (kcal/mol)") +
-    theme(axis.text.x = element_text(angle = 90)) +
-    facet_grid(. ~ ligand)
+    )
 )
 
 #ligand vs percent change, split by variant
@@ -87,9 +95,14 @@ ggsave(
     theme_light() +
     theme(text = element_text(size = 15)) +
     geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Percent Change (%)") +
+    labs(y = "Percent Change in Binding Energy (%)") +
     theme(axis.text.x = element_text(angle = 90)) +
-    facet_grid(. ~ variant)
+    facet_grid(. ~ variant) +
+    geom_hline(
+      yintercept = 0,
+      color = "black",
+      size = 1.3
+    )
 )
 
 #variant vs percent change, split by ligand, colored by variant
@@ -97,18 +110,23 @@ ggsave(
   paste0(path, "variant_relEnergy_2.jpg"),
   ggplot(plotdata, aes(variant, perChange, fill = variant)) +
     theme_light() +
+    theme(text = element_text(size = 15)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(y = "Percent Change in Binding Energy (%)") +
+    theme(axis.text.x = element_blank()) +
+    facet_grid(. ~ ligand) +
     geom_hline(
       yintercept = 0,
       color = "black",
       size = 1.3
-    ) +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Percent Change (%)") +
-    theme(axis.text.x = element_blank()) +
-    facet_grid(. ~ ligand)
+    )
 )
 
+h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
+  hc_colorAxis(stops = color_stops(40, inferno(40))) %>% 
+  hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
+
+htmlwidgets::saveWidget(h, paste0(path, "heatmap.html"), selfcontained = FALSE)
 # empty_bar=20
 # to_add = data.frame( matrix(NA, empty_bar*length(unique(plotdata$variant)), ncol(plotdata)) )
 # colnames(to_add) = colnames(plotdata)
