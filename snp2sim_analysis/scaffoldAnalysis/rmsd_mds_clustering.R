@@ -27,7 +27,7 @@ if (length(args) > 0) {
 
 fit <- cmdscale(as.dist(table), 25, eig = TRUE)
 
-pamk <- pamk(fit$points, krange = 3:10, usepam = FALSE)
+pamk <- pamk(fit$points, krange = 1:10, usepam = FALSE)
 
 x <- pamk$pamobject$clustering
 trans <- markovchainFit(x)

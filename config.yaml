@@ -13,7 +13,7 @@ mode: varAnalysis
  #Name of protein system
 protein: PDL1
 
- #Variant as "wt" or "x###x"
+ #Variant as "wt" or "x###x" - (OPTIONAL for varAnalysis)
 variant: wt
 
 #varResID + varAA override variant field. If one is filled, the other must be filled, or variant field used
@@ -99,7 +99,7 @@ featureTableMethod: true
 #if mds method used
 PairwiseRMSD: 
 
-colorTrajectory: true
+colorTrajectory: 
 
 
 
@@ -139,6 +139,8 @@ autoSearchSpace:
  #list of residues that comprise the search space if autoSearchSpace is true
 searchResidues:
 
+numTrials: 6
+
 # varAnalysis
 ############
 
@@ -160,3 +162,5 @@ analysisDrugLibrary:
 analysisDrug:
 
 legacyScaff:
+
+customScaff: 

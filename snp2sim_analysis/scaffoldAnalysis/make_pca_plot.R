@@ -38,7 +38,7 @@ numpca <- length(cumsum[cumsum<.9])
 
 #run k means on the 90% pcas and plot
 #k <- kmeans(pca_vals[,c(1:numpca)], 3, nstart=25, iter.max=1000)
-pamk <- pamk(pca_vals[,c(1:numpca)], krange = 3:10, usepam = FALSE)
+pamk <- pamk(pca_vals[,c(1:numpca)], krange = 1:10, usepam = FALSE)
 pca_vals$pamk <- as.factor(pamk$pamobject$clustering)
 #pca_vals$k <- as.factor(k$cluster)
 

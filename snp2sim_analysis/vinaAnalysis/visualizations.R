@@ -1,9 +1,12 @@
 #! /usr/local/bin/Rscript
 
 library(ggplot2)
+library(htmlwidgets)
+library(highcharter)
+library(viridis)
 
 args = commandArgs(trailingOnly = TRUE)
-path = paste0(dirname(args[1]), "/")
+path = paste0(dirname(args[1]), "/figures/")
 table <- read.table(args[1], header = TRUE, sep = "")
 pdbSet <- unique(table$scaffold)
 ligSet <- unique(table$ligand)
@@ -35,136 +38,157 @@ colnames(fulldata)[colnames(fulldata) == "affinity.x"] <-
 colnames(fulldata)[colnames(fulldata) == "affinity.y"] <-
   "wtAffinity"
 
-#ligand vs relative energy, split by variant
-ggsave(
-  paste0(path, "lig_relEnergy.jpg"),
-  ggplot(fulldata, aes(ligand, relEnergy, fill = scaffold)) +
-    theme_light() +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Relative to WT (kcal/mol)") +
-    theme(axis.text.x = element_text(angle = 90)) +
-    facet_grid(. ~ variant)
-)
-
-#variant vs relative energy, split by variant and ligand
-ggsave(
-  paste0(path, "variant_relEnergy.jpg"),
-  ggplot(fulldata, aes(variant, relEnergy, fill = scaffold)) +
-    theme_light() +
-    geom_hline(
-      yintercept = 0,
-      color = "black",
-      size = 1.3
-    ) +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Relative to WT (kcal/mol)") +
-    theme(axis.text.x = element_blank()) +
-    facet_grid(variant ~ ligand)
-)
-
-#variant vs relative energy, split by ligand
-ggsave(
-  paste0(path, "variant_relEnergy_ligandsplit.jpg"),
-  ggplot(fulldata, aes(variant, relEnergy, fill = scaffold)) +
-    theme_light() +
-    geom_hline(
-      yintercept = 0,
-      color = "black",
-      size = 1.3
-    ) +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Relative to WT (kcal/mol)") +
-    theme(axis.text.x = element_blank()) +
-    facet_grid(. ~ ligand)
-)
-
 fulldata$perChange <-
-  (fulldata$relEnergy / fulldata$wtAffinity) * 100
+  (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
 
-#ligand vs percent change, split by variant
-ggsave(
-  paste0(path, "lig_perChange.jpg"),
-  ggplot(fulldata, aes(ligand, perChange, fill = scaffold)) +
+if(args[2] == "True"){
+  error <- aggregate(absAffinity ~ ligand + variant, fulldata, sd)
+  colnames(error)[colnames(error) == "absAffinity"] <- "std_dev"
+  fulldata <- merge(fulldata, error, by = c("ligand", "variant"))
+  meanval <- aggregate(absAffinity ~ ligand + variant, fulldata, mean)
+  colnames(meanval)[colnames(meanval) == "absAffinity"] <- "meanAffinity"
+  fulldata <- merge(fulldata, meanval,  by = c("ligand", "variant"))
+  
+  fulldata <- fulldata[!duplicated(fulldata[,c("ligand", "variant", "meanAffinity")]),]
+  fulldata$relEnergy <- fulldata$meanAffinity-fulldata$wtAffinity
+  fulldata$perChange <- (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
+  fulldata$perSD <- sqrt((fulldata$std_dev^2 / abs(fulldata$wtAffinity^2)) * 10000)
+  fulldata <- subset(fulldata, select = -c(rank, rmsd_ub, rmsd_lb, absAffinity, scaffold, trial))
+}
+
+old_path <- path
+for(lib in unique(fulldata$library)) {
+  plotdata <- fulldata[fulldata$library == lib,]
+  path <- paste0(old_path, lib, "/")
+  if(!dir.exists(path)) {
+    dir.create(path)
+  }
+  
+#ligand vs relative energy, split by variant
+  cur <- ggplot(plotdata, aes(ligand, relEnergy, fill = ligand, width = .5)) +
     theme_light() +
     theme(text = element_text(size = 15)) +
     geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Percent Change (%)") +
+    labs(y = "Binding Energy Relative to WT (kcal/mol)") +
     theme(axis.text.x = element_text(angle = 90)) +
-    facet_grid(. ~ variant)
-)
-
-#variant vs percent change, split by variant and ligand, colored by scaffold
-ggsave(
-  paste0(path, "variant_relEnergy.jpg"),
-  ggplot(fulldata, aes(variant, perChange, fill = scaffold)) +
-    theme_light() +
+    facet_wrap(. ~ variant) +
     geom_hline(
       yintercept = 0,
       color = "black",
       size = 1.3
-    ) +
+    )
+  if(args[2] == "True"){
+    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev))
+  }
+  ggsave(
+    paste0(path, "lig_relEnergy.jpg"),
+    cur, width = 20
+  )
+  
+  #variant vs relative energy, split by ligand
+  cur <- ggplot(plotdata, aes(variant, relEnergy, fill = variant)) +
+    theme_light() +
     theme(text = element_text(size = 15)) +
     geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Percent Change (%)") +
+    labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+    theme(axis.text.x = element_text(angle = 90)) +
+    facet_wrap(. ~ ligand) +
+    geom_hline(
+      yintercept = 0,
+      color = "black",
+      size = 1.3
+    ) 
+  
+  if(args[2] == "True"){
+    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev))
+  }
+  
+  
+  ggsave(
+    paste0(path, "variant_relEnergy.jpg"),
+    cur, width = 20
+  )
+  
+  #ligand vs percent change, split by variant
+  cur <- ggplot(plotdata, aes(ligand, perChange, fill = ligand)) +
+    theme_light() +
+    theme(text = element_text(size = 15)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(y = "Percent Change in Binding Energy (%)") +
+    theme(axis.text.x = element_text(angle = 90)) +
+    facet_wrap(. ~ variant) +
+    geom_hline(
+      yintercept = 0,
+      color = "black",
+      size = 1.3
+    )
+  if(args[2] == "True"){
+    cur <- cur + geom_errorbar(aes(ymin=perChange-perSD, ymax=perChange+perSD))
+  }
+  ggsave(
+    paste0(path, "lig_perChange.jpg"),
+    cur, width = 20
+  )
+  
+  #variant vs percent change, split by ligand, colored by variant
+  cur <- ggplot(plotdata, aes(variant, perChange, fill = variant)) +
+    theme_light() +
+    theme(text = element_text(size = 15)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(y = "Percent Change in Binding Energy (%)") +
     theme(axis.text.x = element_blank()) +
-    facet_grid(variant ~ ligand)
-)
-
-#variant vs percent change, split by ligand, colored by variant
-ggsave(
-  paste0(path, "variant_relEnergy_2.jpg"),
-  ggplot(fulldata, aes(variant, perChange, fill = variant)) +
-    theme_light() +
+    facet_wrap(. ~ ligand) +
     geom_hline(
       yintercept = 0,
       color = "black",
       size = 1.3
-    ) +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Binding Affinity Percent Change (%)") +
-    theme(axis.text.x = element_blank()) +
-    facet_grid(. ~ ligand)
-)
-
-#To do: instead of average, use scaffold representation as weighting
-a <- aggregate(relEnergy ~ variant + ligand, fulldata, mean)
-fulldata <- merge(fulldata, a, by = c("ligand", "variant"))
-colnames(fulldata)[length(fulldata)] <- "averageEnergy"
-colnames(fulldata)[colnames(fulldata) == "relEnergy.x"] <-
-  "relEnergy"
-#variant vs average energy (over scaffolds), split by ligand
-ggsave(
-  paste0(path, "variant_avgEnergy.jpg"), 
-  ggplot(fulldata, aes(variant, averageEnergy, fill = variant)) +
-    theme_light() +
-    geom_hline(
-      yintercept = 0,
-      color = "black",
-      size = 1.3
-    ) +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Average Binding Affinity Relative to WT (kcal/mol)") +
-    theme(axis.text.x = element_blank()) +
-    facet_grid(. ~ ligand)
-)
-
-#variant vs average energy (over scaffold), no split
-ggsave(
-  paste0(path, "variant_avgEnergy_2.jpg"),
-  ggplot(fulldata, aes(variant, averageEnergy, fill = ligand)) +
-    theme_light() +
-    geom_hline(
-      yintercept = 0,
-      color = "black",
-      size = 1.3
-    ) +
-    theme(text = element_text(size = 15)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    labs(y = "Average Binding Affinity Relative to WT (kcal/mol)")
-)
-
+    )
+  if(args[2] == "True"){
+    cur <- cur + geom_errorbar(aes(ymin=perChange-perSD, ymax=perChange+perSD))
+  }
+  ggsave(
+    paste0(path, "variant_perChange.jpg"),
+    cur, width = 20
+  )
+  
+  if(args[2] == "True"){
+    
+  ggsave(
+    paste0(path, "ribbon_by_variant.jpg"),
+    ggplot(plotdata, aes(ligand, group = variant, fill = variant)) +
+      theme_light() +
+      theme(text = element_text(size = 15)) +
+      geom_ribbon(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev)) +
+      geom_line(aes(y = relEnergy)) +
+      labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+      theme(axis.text.x = element_text(angle = 90)) +
+      facet_wrap(. ~ variant) +
+      geom_hline(
+        yintercept = 0,
+        color = "black",
+        size = 1.3
+      ), width = 20
+  )
+  ggsave(
+    paste0(path, "ribbon_by_ligand.jpg"),
+    ggplot(plotdata, aes(variant, group = ligand, fill = ligand)) +
+      theme_light() +
+      theme(text = element_text(size = 15)) +
+      geom_ribbon(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev)) +
+      geom_line(aes(y = relEnergy)) +
+      labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+      theme(axis.text.x = element_text(angle = 90)) +
+      facet_wrap(. ~ ligand) +
+      geom_hline(
+        yintercept = 0,
+        color = "black",
+        size = 1.3
+      ), width = 20
+  )
+  }
+  h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
+    hc_colorAxis(stops = color_stops(40, inferno(40))) %>% 
+    hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
+  
+  htmlwidgets::saveWidget(h, paste0(path, "heatmap.html"), selfcontained = FALSE)
+}

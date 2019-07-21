@@ -56,7 +56,8 @@ class argParse():
 		print(self.runDIR)
 		print(self.programDIR)
 		print(self.protein)
-
+		if self.protein.contains("."):
+			self.protein.replace(".", "_")
 		#set paths for tools
 		if not self.VMDpath:
 			self.VMDpath = "vmd"
@@ -1492,6 +1493,22 @@ def alignScaff(parameters, currScaff):
 	os.system(alignmentCommand)
 
 def genVinaConfig(parameters):
+	if hasattr(parameters, "numTrials") and parameters.numTrials:
+		for x in range(parameters.numTrials):
+			vinaConfig = open(parameters.vinaConfigFolder+"/run%d.vina" %x,"w+")
+			if not parameters.flexBinding:
+				vinaConfig.write("receptor = %s\n" % parameters.scaff1out)
+			else:
+				vinaConfig.write("receptor = %s\n" % parameters.scaffRigid)
+				vinaConfig.write("flex = %s\n" % parameters.scaffFlex)
+			vinaConfig.write("ligand = %s\n" % parameters.currDrugPath)
+			vinaConfig.write("out = %s/%s.%d.pdbqt\n" % (parameters.vinaOutDir, parameters.vinaBase, x))
+			vinaConfig.write("log = %s/%s.%d.log\n" % (parameters.vinaOutDir, parameters.vinaBase, x))
+			vinaConfig.write("exhaustiveness = %s\n" % parameters.vinaExh)
+			for searchParam in parameters.ADsearchSpace:
+				vinaConfig.write("%s\n" % searchParam)
+			vinaConfig.close()
+
 	vinaConfig = open(parameters.vinaConfig,"w+")
 	if not parameters.flexBinding:
 		vinaConfig.write("receptor = %s\n" % parameters.scaff1out)
@@ -1769,7 +1786,7 @@ def runDrugSearch(parameters):
 
 
 	if hasattr(parameters, "ligandPDB") and parameters.ligandPDB:
-		library = parameters.programDIR + "/drugLibraries/" + basename(parameters.ligandPDB)
+		library = parameters.programDIR + "/drugLibraries/" + os.path.basename(parameters.ligandPDB)
 		if not os.path.isdir(library):
 			os.makedirs(library)
 		for file in os.listdir(parameters.ligandPDB):
@@ -1870,14 +1887,27 @@ def runDrugSearch(parameters):
 							parameters.vinaBase = os.path.basename("%s.%s.%s" % \
 																   (scaffBase,parameters.bindingID,
 																	parameters.drugBase))
-							parameters.vinaConfig = "%s/variantSimulations/%s/config/%s.vina" % \
+
+							if hasattr(parameters, "numTrials") and parameters.numTrials:
+								parameters.vinaConfigFolder = "%s/variantSimulations/%s/config/%s" % \
 													(parameters.runDIR,
 													 parameters.protein,
 													 parameters.vinaBase)
+								if not os.path.exists(parameters.vinaConfigFolder):
+									os.makedirs(parameters.vinaConfigFolder)
+								genVinaConfig(parameters)
+								for config in os.listdir(parameters.vinaConfigFolder):
+									vinaCommand = "%s --config %s" % (parameters.VINApath, config)
+									os.system(vinaCommand)
+							else:		
+								parameters.vinaConfig = "%s/variantSimulations/%s/config/%s.vina" % \
+														(parameters.runDIR,
+														 parameters.protein,
+														 parameters.vinaBase)
 
-							genVinaConfig(parameters)
-							vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
-							os.system(vinaCommand)
+								genVinaConfig(parameters)
+								vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
+								os.system(vinaCommand)
 
 						
 					if parameters.cgcRun:
@@ -1977,8 +2007,19 @@ def runAnalysis(parameters):
 				if scaff.endswith(".pdbqt"):
 					path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
 					os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))	
-	
-	os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults.sh %s %s/analysis/%s" \
+
+	files = [len(file.split(".")) for file in os.listdir(curAnalysisDir)]
+	if not len(set(files)) <= 1:
+		print("Some files are from multiple trial runs and others from single trial runs.")
+		print("Run varAnalysis on only a single type of run results")
+		sys.exit(0)
+	if files[0] == 7:
+		parameters.mulTrials = True
+		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults_mulTrials.sh %s %s/analysis/%s" \
+				%(parameters.programDIR, curAnalysisDir, parameters.resultsDIR, analysisVars))
+	else:
+		parameters.mulTrials = False
+		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults.sh %s %s/analysis/%s" \
 				%(parameters.programDIR, curAnalysisDir, parameters.resultsDIR, analysisVars))
 
 
@@ -1986,51 +2027,64 @@ def runAnalysis(parameters):
 	#											parameters.resultsDIR, analysisVars, parameters.protein), shell = True)
 	#print(r_out)
 
-	summary = "%s/analysis/%s/vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein)
-	summary = open(summary, "r")
-	summary = [x.split() for x in summary.readlines()]
+	if not hasattr(parameters, "customScaff") or not parameters.customScaff:
+		summary = "%s/analysis/%s/vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein)
+		summary = open(summary, "r")
+		summary = [x.split() for x in summary.readlines()]
 
 
-	for v in variantList:
-		if os.path.isfile("%s/%s/scaffold/%s.%s.bindingRes.log" % (parameters.resultsDIR, v, parameters.protein, v)):
-			os.system("cp " + ("%s/%s/scaffold/%s.%s.bindingRes.log" % (parameters.resultsDIR, v, parameters.protein, v)) + 
-								" %s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v))
+		for v in variantList:
+			if os.path.isfile("%s/%s/scaffold/%s.%s.bindingRes.log" % (parameters.resultsDIR, v, parameters.protein, v)):
+				os.system("cp " + ("%s/%s/scaffold/%s.%s.bindingRes.log" % (parameters.resultsDIR, v, parameters.protein, v)) + 
+									" %s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v))
 
-			scaffLOG = "%s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v)
-			if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
-				os.system("%s/snp2sim_analysis/scaffoldAnalysis/legacy_scaffold.sh %s" %(parameters.programDIR, scaffLOG))
-			clustLogfile = open(scaffLOG, "r")
-			clusterMembership = [x.split(",") for x in clustLogfile.read().splitlines()]
-			if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
-				del clusterMembership[-1]
-				clusterMembership = [x for x in clusterMembership if x and len(x) > .09 * total_frames]
-			total_frames = sum(len(x) for x in clusterMembership)
-			propMem = [len(x)*1.0/total_frames for x in clusterMembership]
+				scaffLOG = "%s/analysis/%s/%s.%s.bindingRes.log" %(parameters.resultsDIR, analysisVars, parameters.protein, v)
+				if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
+					os.system("%s/snp2sim_analysis/scaffoldAnalysis/legacy_scaffold.sh %s" %(parameters.programDIR, scaffLOG))
+				clustLogfile = open(scaffLOG, "r")
+				clusterMembership = [x.split(",") for x in clustLogfile.read().splitlines()]
+				if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
+					del clusterMembership[-1]
+					clusterMembership = [x for x in clusterMembership if x and len(x) > .09 * total_frames]
+				total_frames = sum(len(x) for x in clusterMembership)
+				propMem = [len(x)*1.0/total_frames for x in clusterMembership]
 
-			for row in summary[1:]:
-				if row[4] == v:
-					clust = int(row[5][5:]) - 1
-					row.append(float(row[6]) * propMem[clust])
-		else:
-			print("%s/%s/scaffold/%s.%s.bindingRes.log does not exist" % (parameters.resultsDIR, v, parameters.protein, parameters.variant))
-	summary[0].append("weighted_affinity")
+				for row in summary[1:]:
+					if row[4] == v:
+						clust = int(row[5][5:]) - 1
+						row.append(propMem[clust])
+			else:
+				print("%s/%s/scaffold/%s.%s.bindingRes.log does not exist" % (parameters.resultsDIR, v, parameters.protein, parameters.variant))
+		summary[0].append("weight")
 
-	with open("%s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein),"w") as tsv:
-		csvWriter = csv.writer(tsv, delimiter='\t')
-		csvWriter.writerows(summary)
+		with open("%s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein),"w") as tsv:
+			csvWriter = csv.writer(tsv, delimiter='\t')
+			csvWriter.writerows(summary)
 
-	curAnalysisDir = "%s/analysis/%s/figures" % \
-											(parameters.resultsDIR, analysisVars)
-	if not os.path.isdir(curAnalysisDir):
-		os.makedirs(curAnalysisDir)
+		curAnalysisDir = "%s/analysis/%s/figures" % \
+												(parameters.resultsDIR, analysisVars)
+		if not os.path.isdir(curAnalysisDir):
+			os.makedirs(curAnalysisDir)
 
-	r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations_weighted.R %s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.programDIR, 
-												parameters.resultsDIR, analysisVars, parameters.protein), shell = True)
-	print(r_out)
+		r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations_weighted.R %s/analysis/%s/weighted_vinaSummary_%s.txt %s" % (parameters.programDIR, 
+													parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials), shell = True)
+		print(r_out)
 
-	with open("%s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars), 'w') as shiny:
-		shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/app.R %s/analysis/%s/weighted_vinaSummary_%s.txt" %(parameters.programDIR, parameters.resultsDIR, analysisVars, parameters.protein))
-	os.system("chmod +x %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
+		with open("%s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars), 'w') as shiny:
+			shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/weighted_app.R %s/analysis/%s/weighted_vinaSummary_%s.txt %s" %(parameters.programDIR, parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials))
+		os.system("chmod +x %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
+	else:
+		curAnalysisDir = "%s/analysis/%s/figures" % \
+												(parameters.resultsDIR, analysisVars)
+		if not os.path.isdir(curAnalysisDir):
+			os.makedirs(curAnalysisDir)
+		r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations.R %s/analysis/%s/vinaSummary_%s.txt %s" % (parameters.programDIR, 
+													parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials), shell = True)
+		print(r_out)
+
+		with open("%s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars), 'w') as shiny:
+			shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/unweighted_app.R %s/analysis/%s/vinaSummary_%s.txt %s" %(parameters.programDIR, parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials))
+		os.system("chmod +x %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
 def main():
 
 	parameters = argParse()
