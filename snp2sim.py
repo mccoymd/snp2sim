@@ -65,12 +65,12 @@ class argParse():
 			self.NAMDpath = "namd2"
 		if not self.PYTHONSHpath:
 		   #make sure pythonsh (from AutoDockTools) has been added to path
-			self.PYTHONSHpath = "pythonsh"
+			self.PYTHONSHpath = "/opt/mgltools_x86_64Linux2_1.5.6/bin/pythonsh"
 		if not self.ADTpath:
 			#must have path for "prepare_xxx.py" scripts from autodock tools
 			self.ADTpath = "/opt/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
 		if not self.VINApath:
-			self.VINApath = "vina"
+			self.VINApath = "/opt/vina/autodock_vina_1_1_2_linux_x86/bin/vina"
 
 		#Creates the variant parameter, a string that contains a unique ID for the variants used in the run
 		#Covers the cases of the variants being provided as a list of AA and residue numbers
