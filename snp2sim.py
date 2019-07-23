@@ -170,6 +170,9 @@ class argParse():
 		#hardcoding bindingID as drugLibrary
 		#TODO - refactor to remove "bindingID"
 		self.bindingID = self.drugLibrary
+
+		if isinstance(self.vinaExh, int):
+			self.vinaExh = 50
 		
 		#Autodock config
 		if self.bindingID:
@@ -1399,7 +1402,7 @@ def sortPDBclusters(parameters):
 		
 def calcSearchSpace(parameters):
 	out = parameters.drugBindConfig
-	scaffRes = " ".join(parameters.flexBinding)
+	scaffRes = " ".join(parameters.searchResidues)
 	parameters.boxTCL = "%s/variantSimulations/%s/bin/%s_%s_%s_generateSearchSpace.tcl" % \
 								   (parameters.protein, parameters.variant, parameters.bindingID, parameters.runDIR, parameters.protein)
 	templatePDB = parameters.templatePDB
@@ -1724,26 +1727,22 @@ def runDrugSearch(parameters):
 	#copy over the binding config with the search coords
 	#drugBindConfig is the location of the bidning config
 
-	if hasattr(parameters.autoSearchSpace) and parameters.autoSearchSpace:
-		if hasattr(parameters.searchResidues) and parameters.searchResidues:
-			calcSearchSpace(parameters)
-		else:
-			print "search residues required for autoSearchSpace"
-			sys.exit()
-
-	if parameters.newBindingConfig:
-		if not os.path.isfile(parameters.drugBindConfig):            
-			print("using new config %s" % parameters.newBindingConfig)
-			configDIR = "%s/variantSimulations/%s/config" % \
-						(parameters.runDIR,parameters.protein)
-			if not os.path.isdir(configDIR):
-				os.makedirs(configDIR)
-				
-			os.system("cp %s %s/%s.autodock" % (parameters.newBindingConfig, configDIR,
-												parameters.bindingID))
-		else:
-			print("%s already exists - remove or choose new bindingID" % parameters.drugBindConfig)
-			sys.exit()
+	if hasattr(parameters.searchResidues) and parameters.searchResidues:
+		calcSearchSpace(parameters)
+	else:
+		if parameters.newBindingConfig:
+			if not os.path.isfile(parameters.drugBindConfig):            
+				print("using new config %s" % parameters.newBindingConfig)
+				configDIR = "%s/variantSimulations/%s/config" % \
+							(parameters.runDIR,parameters.protein)
+				if not os.path.isdir(configDIR):
+					os.makedirs(configDIR)
+					
+				os.system("cp %s %s/%s.autodock" % (parameters.newBindingConfig, configDIR,
+													parameters.bindingID))
+			else:
+				print("%s already exists - remove or choose new bindingID" % parameters.drugBindConfig)
+				sys.exit()
 
 
 	if os.path.isfile(parameters.drugBindConfig):

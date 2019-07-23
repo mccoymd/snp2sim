@@ -55,7 +55,7 @@ Usage:python snp2sim.py ""options""
 The workflow is configured to store intermediate files and
 results in a predefined directory structure. If the required
 trajectory/scaffold files are not present in the snp2sim directory,
-they must be speficied through the command line.
+they must be specified through the command line.
   
 The files used to run a case study using PD-L1 are provided
 in the "example" directory.
@@ -73,6 +73,69 @@ the --newStruct option is not necessary and the workflow will utilize the
 configureation files that have been previously generated. 
 
 `python snp2sim.py --mode varMDsim --protein PDL1 --varResID 115 --varAA T  --newStruct example/PDL1.Vtype.pdb --simLength 0.1`
+
+
+#### Config file options
+
+General options:
+
+```
+# General options
+#################
+ # varMDsim, varScaffold, drugSearch, or varAnalysis
+mode: varMDsim
+
+ #Name of protein system
+protein: PDL1
+
+ #Variant as "wt" or "x###x" - (OPTIONAL for varAnalysis)
+variant: 
+
+#varResID + varAA override variant field. If one is filled, the other must be filled, or variant field used
+ #variant residue ID from PDB template
+varResID: 115
+
+ #amino acid to change
+varAA: T
+
+ #if Run is on CGC platform, move pdb and log to snp2sim root for processing
+cgcRun:
+
+runDIR: /Path/To/SNP2SIM/Working/Dir/
+
+#Overwrite previous run with same protein name.
+clean: 
+
+
+```
+
+varMDsim specific options:
+
+```
+# Mode specific options
+
+# varMDsim options
+##################
+
+ #path to cleaned PDB file (protein structure w/ cannonical aa)
+newStruct: example/PDL1.Vtype.pdb
+
+ #varTraj simulation length in ns
+simLength: 0.1
+
+ #amino acid to change
+simID:
+
+ #number of processors to run simulation
+simProc:
+
+ #output summary PDB trajectory only
+singleRun:
+
+ #Only generate initial structures, without MD simulation
+genStructures:
+```
+
 
 #### Output files
 

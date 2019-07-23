@@ -56,7 +56,6 @@ singleRun:
  #Only generate initial structures, without MD simulation
 genStructures:
 
-replica: true
 
 #Paths to executables. Ignore if using Docker.
 
@@ -115,6 +114,12 @@ vinaExh:
  #path to new binding config file
 newBindingConfig:
 
+ #Automatically determine the search box based on the 
+autoSearchSpace: 
+
+ #list of residues that comprise the search space if autoSearchSpace is true, e.i 22 21 19 103 113 125
+searchResidues:
+
  #list of residue numbers in flexible binding pocket, e.i 22 21 19 103 113 125
 flexBinding:
 
@@ -133,12 +138,7 @@ bindSingleVar:
  #path to dir with ligand PDBs, which will be converted to drug library
 ligandPDB:
 
- #path to dir with ligand PDBs, which will be converted to drug library
-autoSearchSpace: 
-
- #list of residues that comprise the search space if autoSearchSpace is true
-searchResidues:
-
+ #number of times to run the docking simulation, to get an uncertainty measurement of the binding energy
 numTrials: 6
 
 # varAnalysis
@@ -157,10 +157,14 @@ analysisVariants:
   - 115T
   - wt
 
+ #Analyze results from specific drug libraries
 analysisDrugLibrary: 
 
+ #Analyze results from a specific ligand
 analysisDrug:
 
+ #Enable if using scaffolding results from old versions of SNP2SIM
 legacyScaff:
 
+ #Enable if using drugBinding results from custom PDB proteins, and not varScaffold results
 customScaff: 
