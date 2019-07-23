@@ -80,24 +80,26 @@ ADTpath:
 #############
 
  #unique identifier for run
-scaffID: test
+scaffID: pdl_scaff_1
 
  #Use PDB trajectories (possibly from singleCGC runs)
-clustPDBtraj: true
+clustPDBtraj:
 
  #pdb trajectory files to import, list one after another
 loadPDBtraj:
 
 #Cluster Parameters - follow VMD atomselection format
-#Residues to superimpose trajectory 
+ #Residues to superimpose trajectory 
 alignmentResidues: backbone and resid 19 to 131
-#Residues to consider when clustering trajectory
+ #Residues to consider when clustering trajectory
 clusterResidues: backbone and resid 19 20 54 56 66 68 115 116 117 121 122 123 124 125
 
+ #use a table of structural features to perform clustering, otherwise use a pairwise distance matrix
 featureTableMethod: true
-#if mds method used
+ #if mds method used, path to pairwise RMSD table, otherwise automatically generated
 PairwiseRMSD: 
 
+ #create a script that colors the cluster residues in VMD by cluster
 colorTrajectory: 
 
 
