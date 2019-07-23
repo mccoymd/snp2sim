@@ -56,7 +56,7 @@ class argParse():
 		print(self.runDIR)
 		print(self.programDIR)
 		print(self.protein)
-		if self.protein.contains("."):
+		if "." in self.protein:
 			self.protein.replace(".", "_")
 		#set paths for tools
 		if not self.VMDpath:

@@ -4,6 +4,7 @@ library(ggplot2)
 library(htmlwidgets)
 library(highcharter)
 library(viridis)
+library(webshot)
 args = commandArgs(trailingOnly = TRUE)
 path = paste0(dirname(args[1]), "/figures/")
 table <- read.table(args[1], header = TRUE, sep = "")
@@ -206,10 +207,12 @@ if(args[2] == "True"){
 }
 
 h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
-  hc_colorAxis(stops = color_stops(40, inferno(40))) %>% 
+  hc_colorAxis(stops = color_stops(40, inferno(40)), min = -25, max = 25) %>% 
   hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
 
 htmlwidgets::saveWidget(h, paste0(path, "heatmap.html"), selfcontained = FALSE)
+webshot(paste0(path, "heatmap.html"), file = paste0(path, "heatmap.png"), vwidth = 1000, vheight = 1000, zoom = 10)
+
 # empty_bar=20
 # to_add = data.frame( matrix(NA, empty_bar*length(unique(plotdata$variant)), ncol(plotdata)) )
 # colnames(to_add) = colnames(plotdata)

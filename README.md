@@ -49,6 +49,14 @@ can be specified using the `--PYTHONSHpath "path to pythonsh"` command line opti
 and the lovation of the Ulititys24 folder included with the AutoDock Tools distribution
 can be specified with the `--ADTpath "path to Utilities24 directory` command line option.
 
+### R dependencies
+The varScaffold module and varAnalysis modules use R scripts to generate visualizations and cluster MD tracjectories.
+Along with the base installation of R, the following packages are necessary dependencies for the modules:
+
+varScaffold dependencies: data.table, ggplot2, plotly, htmlwidgets, fpc, markovchain
+
+varAnalysis dependencies: shiny, ggplot2, highcharter, viridis, plotly, webshot
+
 ## Example Usage
 Usage:python snp2sim.py ""options""
 
