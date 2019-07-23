@@ -289,7 +289,7 @@ clean:
 
 ```
 
-varScaffold specific options:
+drugBinding specific options:
 
 ```
 # drugSearch
@@ -344,6 +344,71 @@ Additionally, the PDBQT files used for the AutoDock Vina
 simulations can be found in the 
 "variantSimulations/PROTEIN/results/VARIANT/scaffold" directory.
   
+
+### Analyzing the results of the workflow
+
+#### Input Files
+
+Results of drugBinding are searched in the drugBinding results directory for each variant, along with scaffold results.
+
+#### Config file options
+
+General options:
+
+```
+# General options
+#################
+ # varMDsim, varScaffold, drugSearch, or varAnalysis
+mode: varAnalysis
+
+ #Name of protein system
+protein: PDL1
+
+runDIR: /Path/To/SNP2SIM/Working/Dir/
+
+#Overwrite previous run with same protein name.
+clean: 
+```
+
+varAnalysis specific options:
+
+```
+# varAnalysis
+############
+
+ #Variants to be used in variants (must have a results/variant/drugBinding directory with .pdbqt results)
+ #Format ###AA (### = residue number and AA = variant amino acid) or wt
+ #must include wt
+analysisVariants: 
+  - 53P
+  - 68L
+  - 86W
+  - 94M
+  - 95R
+  - 97V
+  - 115T
+  - wt
+
+ #Analyze results from specific drug libraries
+analysisDrugLibrary: pdl1-LMW
+
+ #Analyze results from a specific ligand
+analysisDrug:
+
+ #Enable if using scaffolding results from old versions of SNP2SIM
+legacyScaff:
+
+ #Enable if using drugBinding results from custom PDB proteins, and not varScaffold results
+customScaff: 
+
+```
+#### Output files
+
+The output files can be found in "variantSimulations/PROTEIN/results/analysis/list_of_variants_and_drugs". 
+The results include a summary file with the drug binding results in tsv format. 
+Select plots of the results are included in the Figures folder of the analysis directory, along with a script `interactive_visualize.sh` which starts an RShiny app with the drugBinding results loaded to viusalize interactively.
+
+
 ## Command Line and Config Options:
 ### General:
 --mode "string"
