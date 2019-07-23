@@ -476,27 +476,14 @@ genStructures:
 ```
 
 ### varScaffold:
-  Usage Notes
-  The imput config file specifies the alignment and clustering parameters
-  It is recommend that multiple itterations with different RMSD thresholds
-  are run to determine the value which optimizes the number of variant scaffolds.
-  
-  Text file formatted as:
-  "alignementRes """VMD atomselect command"""
-  "clusterRes """VMD atomselect command"""
-  "rmsdThresh ""real number""
+  Usage Notes:
+  The config file specifies the alignment and clustering parameters
 
   Module Options
-    --newScaff "file path"
-      path to config file with alignment and clustering parameters (see above)
-      
+  
     --scaffID "string"
       Specifies naming of scaffolding output logfile containing
       cluster assignements for alignment and clustering parameters
-
-    --clustThresh "real number" (optional - default 0.09)
-      The minimum porportion of the trajectory population required
-      for scaffold identification
 
     --clustPDBtraj (optional)
       if PDB clusters generated from varMDsim --singleRun are used as input
@@ -537,16 +524,26 @@ colorTrajectory:
 
 ### drugSearch:
   Usage Notes:
-  This module requires the input of the search space parameters provided to --newBindingConfig
+  This module can use a manually defined search space provided to --newBindingConfig
   defined in reference to a template structure (original input PDB)
-  Values can be determines using methods specified in the AutoDock Tutorial
+  Values can be determined using methods specified in the AutoDock Tutorial
+
   Binding Config:
+
   "center_x = ""x coordinate""
+
   "center_y = ""y coordinate""
+
   "center_z = ""z coordinate""
+
   "size_x = ""dimension of x""
+
   "size_y = ""dimension of y""
+
   "size_z = ""dimension of z""
+
+  This search space can also be automatically determined given a list of residues to include in the search space.
+  
 
   Additionally, the flexable residues can be supplied to --flexBinding as
   a sting of integers corresponding to the numeric residue ID of
@@ -619,4 +616,34 @@ ligandPDB:
 numTrials:
 ```
 
+### varAnalysis:
+  Usage Notes: The input to the analysis module is a list of variants to analyze, as well as optionally specific drugs or drug libraries to include.
+  
+#### Config template
+
+```
+# varAnalysis
+############
+
+ #Variants to be used in variants (must have a results/variant/drugBinding directory with .pdbqt results)
+ #Format ###AA (### = residue number and AA = variant amino acid) or wt
+ #must include wt
+analysisVariants: 
+  - list
+  - of
+  - variants
+
+ #Analyze results from specific drug libraries
+analysisDrugLibrary: 
+
+ #Analyze results from a specific ligand
+analysisDrug:
+
+ #Enable if using scaffolding results from old versions of SNP2SIM
+legacyScaff:
+
+ #Enable if using drugBinding results from custom PDB proteins, and not varScaffold results
+customScaff: 
+
+```
 
