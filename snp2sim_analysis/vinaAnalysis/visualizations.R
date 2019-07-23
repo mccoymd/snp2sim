@@ -42,8 +42,9 @@ fulldata$perChange <-
   (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
 
 if(args[2] == "True"){
-  error <- aggregate(absAffinity ~ ligand + variant, fulldata, sd)
-  colnames(error)[colnames(error) == "absAffinity"] <- "std_dev"
+  error <- aggregate(absAffinity ~ ligand + variant, fulldata, 
+                     function(x) {qt(.975, length(x) - 1) * sd(x)/sqrt(length(x))})
+  colnames(error)[colnames(error) == "absAffinity"] <- "std_err"
   fulldata <- merge(fulldata, error, by = c("ligand", "variant"))
   meanval <- aggregate(absAffinity ~ ligand + variant, fulldata, mean)
   colnames(meanval)[colnames(meanval) == "absAffinity"] <- "meanAffinity"
@@ -52,7 +53,7 @@ if(args[2] == "True"){
   fulldata <- fulldata[!duplicated(fulldata[,c("ligand", "variant", "meanAffinity")]),]
   fulldata$relEnergy <- fulldata$meanAffinity-fulldata$wtAffinity
   fulldata$perChange <- (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
-  fulldata$perSD <- sqrt((fulldata$std_dev^2 / abs(fulldata$wtAffinity^2)) * 10000)
+  fulldata$perSD <- (fulldata$std_err / abs(fulldata$wtAffinity)) * 100
   fulldata <- subset(fulldata, select = -c(rank, rmsd_ub, rmsd_lb, absAffinity, scaffold, trial))
 }
 
@@ -78,7 +79,7 @@ for(lib in unique(fulldata$library)) {
       size = 1.3
     )
   if(args[2] == "True"){
-    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev))
+    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err), position = position_dodge())
   }
   ggsave(
     paste0(path, "lig_relEnergy.jpg"),
@@ -100,7 +101,7 @@ for(lib in unique(fulldata$library)) {
     ) 
   
   if(args[2] == "True"){
-    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev))
+    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err), position = position_dodge())
   }
   
   
@@ -123,7 +124,7 @@ for(lib in unique(fulldata$library)) {
       size = 1.3
     )
   if(args[2] == "True"){
-    cur <- cur + geom_errorbar(aes(ymin=perChange-perSD, ymax=perChange+perSD))
+    cur <- cur + geom_errorbar(aes(ymin=perChange-perSD, ymax=perChange+perSD), position = position_dodge())
   }
   ggsave(
     paste0(path, "lig_perChange.jpg"),
@@ -144,11 +145,11 @@ for(lib in unique(fulldata$library)) {
       size = 1.3
     )
   if(args[2] == "True"){
-    cur <- cur + geom_errorbar(aes(ymin=perChange-perSD, ymax=perChange+perSD))
+    cur <- cur + geom_errorbar(aes(ymin=perChange-perSD, ymax=perChange+perSD), position = position_dodge())
   }
   ggsave(
     paste0(path, "variant_perChange.jpg"),
-    cur, width = 20
+    cur, width = 20, height = 40
   )
   
   if(args[2] == "True"){
@@ -158,7 +159,7 @@ for(lib in unique(fulldata$library)) {
     ggplot(plotdata, aes(ligand, group = variant, fill = variant)) +
       theme_light() +
       theme(text = element_text(size = 15)) +
-      geom_ribbon(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev)) +
+      geom_ribbon(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err)) +
       geom_line(aes(y = relEnergy)) +
       labs(y = "Binding Energy Relative to WT (kcal/mol)") +
       theme(axis.text.x = element_text(angle = 90)) +
@@ -174,7 +175,7 @@ for(lib in unique(fulldata$library)) {
     ggplot(plotdata, aes(variant, group = ligand, fill = ligand)) +
       theme_light() +
       theme(text = element_text(size = 15)) +
-      geom_ribbon(aes(ymin=relEnergy-std_dev, ymax=relEnergy+std_dev)) +
+      geom_ribbon(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err)) +
       geom_line(aes(y = relEnergy)) +
       labs(y = "Binding Energy Relative to WT (kcal/mol)") +
       theme(axis.text.x = element_text(angle = 90)) +
@@ -187,7 +188,7 @@ for(lib in unique(fulldata$library)) {
   )
   }
   h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
-    hc_colorAxis(stops = color_stops(40, inferno(40))) %>% 
+    hc_colorAxis(stops = color_stops(4, inferno(4))) %>% 
     hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
   
   htmlwidgets::saveWidget(h, paste0(path, "heatmap.html"), selfcontained = FALSE)

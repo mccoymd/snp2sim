@@ -124,10 +124,22 @@ server <- function(input, output) {
   
   output$numgraphsrow <- renderUI({
     if(input$facety != "None") {
-      sliderInput('numgraphsrow', label = "Number of charts per row",
-                  min = 1, max = length(unique(fulldata[,input$facety])),
-                  value = length(unique(fulldata[,input$facety])),
-                  step = 1)
+      if (input$facety == "ligand"){
+        sliderInput('numgraphsrow', label = "Number of charts per row",
+                    min = 1, max = length(input$barlig),
+                    value = length(unique(fulldata[,input$facety])),
+                    step = 1)
+      } else if(input$facety == "variant"){
+        sliderInput('numgraphsrow', label = "Number of charts per row",
+                    min = 1, max = length(input$bargene),
+                    value = length(unique(fulldata[,input$facety])),
+                    step = 1)
+      } else {
+        sliderInput('numgraphsrow', label = "Number of charts per row",
+                    min = 1, max = length(unique(fulldata[,input$facety])),
+                    value = length(unique(fulldata[,input$facety])),
+                    step = 1)
+      }
     }
   })
   
