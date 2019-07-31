@@ -10,6 +10,7 @@ import yaml
 import shutil
 import subprocess
 import csv
+import time
 
 #Class that parses the command line and Yaml Config arguments
 class argParse():
@@ -19,11 +20,11 @@ class argParse():
 	def __init__(self):
 		self.requiredArgs = ['protein', 'mode']
 		self.commandargs = _parseCommandLine()
-		self.__dict__.update(self.commandargs.__dict__)
 		if (self.config):
 			self.args = yaml.load(open(self.config))
 			self.args = {k: v for k, v in self.args.items() if v is not None}
 			self.__dict__.update(self.args)
+		self.__dict__.update(self.commandargs.__dict__)
 
 	#Verifies all required general and module-specific args are provided
 	#Throws assertionError if required parameter is not provided
@@ -783,7 +784,7 @@ def calcPairwiseRMSD(parameters):
 	print("generating %s" % parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+	clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	print("using DCD files in %s" % variantDIR)
 	for tFile in os.listdir(variantDIR):
@@ -936,7 +937,7 @@ def extractFeatureTable(parameters):
 	print("generating %s" % parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+	clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	print("using DCD files in %s" % variantDIR)
 	for tFile in os.listdir(variantDIR):
@@ -1257,7 +1258,7 @@ def sortPDBclusters(parameters):
 				clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 	else:
 		print("using DCD files in %s" % variantDIR)
-		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
 		for trajFile in sorted(os.listdir(variantDIR)):
 			if trajFile.endswith(".dcd"):
 				dcdFile = variantDIR + trajFile
@@ -1622,22 +1623,20 @@ def runVarScaffold(parameters):
 
 	if hasattr(parameters, "alignmentResidues") and hasattr(parameters, "clusterResidues"):
 		#check if variant specified, otherwise perform clustering for all variants
-		if parameters.variant:
+		if parameters.variant and not isinstance(parameters.varAA, list) and not isinstance(parameters.varResID, list):
 			print("generating Scaffold for %s ONLY" % (parameters.variant))
 			variantList = (parameters.variant,)
 		else:
 			print("generating all Variant Scaffolds")
-			variantList = os.listdir(parameters.resultsDIR)
-			if "analysis" in variantList:
-				variantList.remove("analysis")
+			variantList = ["".join([str(parameters.varResID[x]), str(parameters.varAA[x])]) for x in range(len(parameters.varAA))]
 
 ## TODO include option to analyze trajectory clusters to determine rmsd threshold
 		for varSimResult in variantList:
 			if hasattr(parameters, "clean") and parameters.clean:
 				shutil.rmtree("%s/variantSimulations/%s/results/%s/scaffold" % \
-								   (parameters.runDIR, parameters.protein, parameters.variant))
+								   (parameters.runDIR, parameters.protein, varSimResult))
 				os.makedirs("%s/variantSimulations/%s/results/%s/scaffold" % \
-								   (parameters.runDIR, parameters.protein, parameters.variant))
+								   (parameters.runDIR, parameters.protein, varSimResult))
 			parameters.variant = varSimResult
 			parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
 								% (parameters.runDIR,parameters.protein,
@@ -2042,6 +2041,7 @@ def runAnalysis(parameters):
 					os.system("%s/snp2sim_analysis/scaffoldAnalysis/legacy_scaffold.sh %s" %(parameters.programDIR, scaffLOG))
 				clustLogfile = open(scaffLOG, "r")
 				clusterMembership = [x.split(",") for x in clustLogfile.read().splitlines()]
+				total_frames = sum(len(x) for x in clusterMembership)
 				if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
 					del clusterMembership[-1]
 					clusterMembership = [x for x in clusterMembership if x and len(x) > .09 * total_frames]
@@ -2091,17 +2091,25 @@ def main():
 	parameters.setDefault()
 
 	if parameters.mode == "varMDsim":
+		start = time.time()
 		runVarMDsim(parameters)
-		print("MD Simulation finished!")
+		end = time.time()
+		print("MD Simulation finished in %.3f sec!" %(end-start))
 	elif parameters.mode == "varScaffold":
-		runVarScaffold(parameters)       
-		print("Scaffold clustering finished!")
+		start = time.time()
+		runVarScaffold(parameters)    
+		end = time.time()   
+		print("Scaffold clustering finished in %.3f sec!" %(end-start))
 	elif parameters.mode == "drugSearch":
+		start = time.time()
 		runDrugSearch(parameters)
-		print("Drug binding simulation finished!")
+		end = time.time()
+		print("Drug binding simulation finished in %.3f sec!" %(end-start))
 	elif parameters.mode == "varAnalysis":
+		start = time.time()
 		runAnalysis(parameters)
-		print("Analysis completed!")
+		end = time.time()
+		print("Analysis completed in %.3f sec!" %(end-start))
 	else:
 		print("invalid mode selected")
 	

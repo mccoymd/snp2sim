@@ -30,34 +30,53 @@ fulldata <- data[data$rank == 1, ]
 wtdata <- subset(fulldata, fulldata$variant == "wt")
 fulldata <- fulldata[fulldata$variant != "wt",]
 
-wtdata <- aggregate(affinity ~ ligand, wtdata, min)
-
-fulldata <- merge(fulldata, wtdata, by = "ligand")
-fulldata$relEnergy <- fulldata$affinity.x - fulldata$affinity.y
-colnames(fulldata)[colnames(fulldata) == "affinity.x"] <-
-  "absAffinity"
-colnames(fulldata)[colnames(fulldata) == "affinity.y"] <-
-  "wtAffinity"
-
-fulldata$perChange <-
-  (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
-
 if(args[2] == "True"){
-  error <- aggregate(absAffinity ~ ligand + variant, fulldata, 
-                     function(x) {qt(.975, length(x) - 1) * sd(x)/sqrt(length(x))})
-  colnames(error)[colnames(error) == "absAffinity"] <- "std_err"
+  wtdata.mean <- aggregate(affinity ~ ligand, wtdata, mean)
+  wtdata <- aggregate(affinity ~ ligand, wtdata, sd)
+  
+  wtdata <- merge(wtdata, wtdata.mean, by="ligand")
+  colnames(wtdata)[colnames(wtdata) == "affinity.x"] <-
+    "wtstd"
+  colnames(wtdata)[colnames(wtdata) == "affinity.y"] <-
+    "wtmeanAffinity"
+  
+  fulldata <- merge(fulldata, wtdata, by = "ligand")
+  
+  colnames(fulldata)[colnames(fulldata) == "affinity"] <-
+    "absAffinity"
+  colnames(fulldata)[colnames(fulldata) == "wtmeanAffinity"] <-
+    "wtAffinity"
+
+  error <- aggregate(absAffinity ~ ligand + variant, fulldata, sd)
+  colnames(error)[colnames(error) == "absAffinity"] <- "std"
   fulldata <- merge(fulldata, error, by = c("ligand", "variant"))
   meanval <- aggregate(absAffinity ~ ligand + variant, fulldata, mean)
   colnames(meanval)[colnames(meanval) == "absAffinity"] <- "meanAffinity"
   fulldata <- merge(fulldata, meanval,  by = c("ligand", "variant"))
   
+  
   fulldata <- fulldata[!duplicated(fulldata[,c("ligand", "variant", "meanAffinity")]),]
   fulldata$relEnergy <- fulldata$meanAffinity-fulldata$wtAffinity
+  fulldata$varStd <- fulldata$std
+  fulldata$std <- fulldata$wtstd +fulldata$std
   fulldata$perChange <- (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
-  fulldata$perSD <- (fulldata$std_err / abs(fulldata$wtAffinity)) * 100
+  fulldata$perSD <- (fulldata$std / abs(fulldata$wtAffinity)) * 100
   fulldata <- subset(fulldata, select = -c(rank, rmsd_ub, rmsd_lb, absAffinity, scaffold, trial))
-}
+} else {
+  wtdata <- aggregate(affinity ~ ligand, wtdata, min)
 
+  wtdata <- merge(wtdata, wtdata.mean, by="ligand")
+  
+  fulldata <- merge(fulldata, wtdata, by = "ligand")
+  fulldata$relEnergy <- fulldata$affinity.x - fulldata$affinity.y
+  colnames(fulldata)[colnames(fulldata) == "affinity.x"] <-
+    "absAffinity"
+  colnames(fulldata)[colnames(fulldata) == "affinity.y"] <-
+    "wtAffinity"
+  
+  fulldata$perChange <-
+    (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
+}
 old_path <- path
 for(lib in unique(fulldata$library)) {
   plotdata <- fulldata[fulldata$library == lib,]
@@ -80,7 +99,7 @@ for(lib in unique(fulldata$library)) {
       size = 1.3
     )
   if(args[2] == "True"){
-    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err), position = position_dodge())
+    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std, ymax=relEnergy+std), position = position_dodge())
   }
   ggsave(
     paste0(path, "lig_relEnergy.jpg"),
@@ -102,7 +121,7 @@ for(lib in unique(fulldata$library)) {
     ) 
   
   if(args[2] == "True"){
-    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err), position = position_dodge())
+    cur <- cur + geom_errorbar(aes(ymin=relEnergy-std, ymax=relEnergy+std), position = position_dodge())
   }
   
   
@@ -160,7 +179,7 @@ for(lib in unique(fulldata$library)) {
     ggplot(plotdata, aes(ligand, group = variant, fill = variant)) +
       theme_light() +
       theme(text = element_text(size = 15)) +
-      geom_ribbon(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err)) +
+      geom_ribbon(aes(ymin=relEnergy-std, ymax=relEnergy+std)) +
       geom_line(aes(y = relEnergy)) +
       labs(y = "Binding Energy Relative to WT (kcal/mol)") +
       theme(axis.text.x = element_text(angle = 90)) +
@@ -176,7 +195,7 @@ for(lib in unique(fulldata$library)) {
     ggplot(plotdata, aes(variant, group = ligand, fill = ligand)) +
       theme_light() +
       theme(text = element_text(size = 15)) +
-      geom_ribbon(aes(ymin=relEnergy-std_err, ymax=relEnergy+std_err)) +
+      geom_ribbon(aes(ymin=relEnergy-std, ymax=relEnergy+std)) +
       geom_line(aes(y = relEnergy)) +
       labs(y = "Binding Energy Relative to WT (kcal/mol)") +
       theme(axis.text.x = element_text(angle = 90)) +

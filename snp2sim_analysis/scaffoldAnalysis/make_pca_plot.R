@@ -84,7 +84,7 @@ htmlwidgets::saveWidget(p, paste(outputDir,"clustering_3d.html", sep = ""), self
 #Output data
 clusters <- data.frame()
 write(paste(pamk$pamobject$i.med[1], paste(which(pca_vals$pamk == 1 & !c(1:length(pca_vals$pamk)) %in% pamk$pamobject$i.med), collapse = ","), sep = ","), args[3])
-if (pamk$nc > 2) {
+if (pamk$nc >= 2) {
   for(c in c(2:pamk$nc)) {
     write(paste(pamk$pamobject$i.med[c], paste(which(pca_vals$pamk == c & !c(1:length(pca_vals$pamk)) %in% pamk$pamobject$i.med), collapse = ","), sep = ","), args[3], append = TRUE)
   }
