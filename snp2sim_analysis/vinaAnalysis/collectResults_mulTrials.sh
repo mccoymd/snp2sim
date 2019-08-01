@@ -7,7 +7,7 @@ cd $2
 
 printf "1\n2\n3\n4\n5\n6\n7\n8\n9" > rank.txt
 
-echo -e 'rank\tprotein\tligand\tlibrary\tvariant\tscaffold\taffinity\trmsd_lb\trmsd_ub' > vinaSummary.txt
+echo -e 'rank\tprotein\tligand\tlibrary\tvariant\tscaffold\ttrial\taffinity\trmsd_lb\trmsd_ub' > vinaSummary.txt
 for f in $1/*.pdbqt
 do
     grep RESULT $f > tempResults.txt
@@ -18,8 +18,9 @@ do
     input=$(echo $f | cut -d "." -f3)
     library=$(echo $f | cut -d "." -f4)
     lig=$(echo $f | cut -d "." -f5)
+    trial=$(echo $f | cut -d "." -f6)
 
-    id="$protein $lig $library $variant $input"
+    id="$protein $lig $library $variant $input $trial"
     sed -i -e "s/REMARK VINA RESULT:/\"$id\"/g" tempResults.txt
     sed -i -e "s/\"//g" tempResults.txt
     sed -i -e 's/ \+/\t/g' tempResults.txt
