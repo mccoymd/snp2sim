@@ -46,7 +46,9 @@ if(args[2] == "True"){
     "absAffinity"
   colnames(fulldata)[colnames(fulldata) == "wtmeanAffinity"] <-
     "wtAffinity"
-
+  #for distribution plots
+  fulldata$trialRelEnergy <- fulldata$absAffinity-fulldata$wtAffinity
+  distdata <- fulldata
   error <- aggregate(absAffinity ~ ligand + variant, fulldata, sd)
   colnames(error)[colnames(error) == "absAffinity"] <- "std"
   fulldata <- merge(fulldata, error, by = c("ligand", "variant"))
@@ -206,11 +208,110 @@ for(lib in unique(fulldata$library)) {
         size = 1.3
       ), width = 20
   )
+  distplotdata <- distdata[distdata$library == lib,]
+  ggsave(paste0(path, "lig_violin.png"),
+         ggplot(distplotdata, aes(variant, trialRelEnergy, color = ligand)) +
+           theme_light() +
+           theme(text = element_text(size = 15)) +
+           geom_hline(
+             yintercept = 0,
+             color = "black",
+             size = 1.3
+           ) +
+           geom_violin() +
+           facet_wrap(.~ligand) +
+           labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+           theme(axis.text.x = element_text(angle = 90), legend.position = "none"),
+         width = 10, height = 6.5)
+  
+  ggsave(paste0(path, "lig_dot.png"),
+         ggplot(distplotdata, aes(variant, trialRelEnergy, color = ligand)) +
+           theme_light() +
+           theme(text = element_text(size = 15)) +
+           geom_hline(
+             yintercept = 0,
+             color = "black",
+             size = 1.3
+           ) +
+           geom_dotplot(binaxis='y', 
+                        stackdir='center', 
+                        dotsize = .5) +
+           facet_wrap(.~ligand) +
+           labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+           theme(axis.text.x = element_text(angle = 90), legend.position = "none"),
+         width = 10, height = 6.5)
+  
+  ggsave(paste0(path, "lig_box.png"),
+         ggplot(distplotdata, aes(variant, trialRelEnergy, color = ligand)) +
+           theme_light() +
+           theme(text = element_text(size = 15)) +
+           geom_hline(
+             yintercept = 0,
+             color = "black",
+             size = 1.3
+           ) +
+           geom_boxplot() +
+           facet_wrap(.~ligand) +
+           labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+           theme(axis.text.x = element_text(angle = 90), legend.position = "none"),
+         width = 10, height = 6.5)
+  
+  ggsave(paste0(path, "variant_violin.png"),
+         ggplot(distplotdata, aes(ligand, trialRelEnergy, color = ligand)) +
+           theme_light() +
+           theme(text = element_text(size = 15)) +
+           geom_hline(
+             yintercept = 0,
+             color = "black",
+             size = 1.3
+           ) +
+           geom_violin() +
+           facet_wrap(.~variant) +
+           labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+           theme(axis.text.x = element_text(angle = 90), legend.position = "none"),
+         width = 15, height = 10)
+  
+  ggsave(paste0(path, "variant_dot.png"),
+         ggplot(distplotdata, aes(ligand, trialRelEnergy, color = variant)) +
+           theme_light() +
+           theme(text = element_text(size = 15)) +
+           geom_hline(
+             yintercept = 0,
+             color = "black",
+             size = 1.3
+           ) +
+           geom_dotplot(binaxis='y', 
+                        stackdir='center', 
+                        dotsize = .5) +
+           facet_wrap(.~variant) +
+           labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+           theme(axis.text.x = element_text(angle = 90), legend.position = "none"),
+         width = 15, height = 10)
+  
+  ggsave(paste0(path, "variant_box.png"),
+         ggplot(distplotdata, aes(ligand, trialRelEnergy, color = variant)) +
+           theme_light() +
+           theme(text = element_text(size = 15)) +
+           geom_hline(
+             yintercept = 0,
+             color = "black",
+             size = 1.3
+           ) +
+           geom_boxplot() +
+           facet_wrap(.~variant) +
+           labs(y = "Binding Energy Relative to WT (kcal/mol)") +
+           theme(axis.text.x = element_text(angle = 90), legend.position = "none"),
+         width = 15, height = 10)
   }
+
+  minval <- min(fulldata$perChange)
+  maxval <- max(fulldata$perChange)
+  maxthresh <- max(c(abs(minval),  abs(maxval)))
   h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
-    hc_colorAxis(stops = color_stops(4, inferno(4)), min = -25, max = 25) %>% 
+    hc_colorAxis(stops = color_stops(4, inferno(4)), min = -1*maxthresh, max = maxthresh) %>% 
     hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
   
   htmlwidgets::saveWidget(h, paste0(path, "heatmap.html"), selfcontained = FALSE)
-  webshot(paste0(path, "heatmap.html"), file = "heatmap.png", vwidth = 1000, vheight = 1000, zoom = 10)
+  webshot(paste0(path, "heatmap.html"), file = paste0(path, "heatmap.png"), vwidth = 1000, vheight = 1000, zoom = 10)
 }
+

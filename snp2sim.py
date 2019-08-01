@@ -20,11 +20,11 @@ class argParse():
 	def __init__(self):
 		self.requiredArgs = ['protein', 'mode']
 		self.commandargs = _parseCommandLine()
+		self.__dict__.update(self.commandargs.__dict__)
 		if (self.config):
 			self.args = yaml.load(open(self.config))
 			self.args = {k: v for k, v in self.args.items() if v is not None}
 			self.__dict__.update(self.args)
-		self.__dict__.update(self.commandargs.__dict__)
 
 	#Verifies all required general and module-specific args are provided
 	#Throws assertionError if required parameter is not provided
@@ -427,7 +427,7 @@ def genNAMDstructFiles(parameters):
 	else:
 		print("no template exists")
 		print("use --newStruct to specify clean PDB (only cannonical aa) ")
-		sys.exit()
+		sys.exit(1)
 
 
 #Creates a TCL script for VMD
@@ -487,6 +487,7 @@ def genSolvTCL(parameters):
 
 #Runs NAMD for MD simulation using structures and options
 def runNAMD(parameters):
+
 	if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
 		os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
 
@@ -502,7 +503,8 @@ def runNAMD(parameters):
 		
 		minmax = bLines[1]
 		minmax = minmax.rstrip()
-		minmax = minmax.translate(None,"{}")
+		minmax = minmax.replace("{","")
+		minmax = minmax.replace("}","")
 		minmax = minmax.split(" ")
 		minmax = [float(i) for i in minmax]
 
@@ -513,7 +515,7 @@ def runNAMD(parameters):
 	else:
 		print("boundary file does not exist")
 		print("remove solvated/ionized PDB and PSF and resubmit")
-		sys.exit()
+		sys.exit(1)
 
 	#creates the NAMD config file and populates it with default options	
 	configFile = open(parameters.NAMDconfig,"w+")
@@ -582,7 +584,6 @@ def runNAMD(parameters):
 	configFile.write("minimize            1000\n")
 	configFile.write("reinitvels          $temperature\n\n")
 	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
-					 
 	if not os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory/" \
 						 % (parameters.runDIR, parameters.protein, parameters.variant)):
 		os.makedirs("%s/variantSimulations/%s/results/%s/trajectory/" \
@@ -620,7 +621,7 @@ def runNAMD_replicaExchange(parameters):
 	else:
 		print("boundary file does not exist")
 		print("remove solvated/ionized PDB and PSF and resubmit")
-		sys.exit()
+		sys.exit(1)
 
 	parameters.repConfig = "%s/variantSimulations/%s/config/replica_s%s.%s.%s.conf" \
 								% (parameters.runDIR, parameters.protein, parameters.protein,
@@ -784,7 +785,7 @@ def calcPairwiseRMSD(parameters):
 	print("generating %s" % parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	print("using DCD files in %s" % variantDIR)
 	for tFile in os.listdir(variantDIR):
@@ -937,7 +938,7 @@ def extractFeatureTable(parameters):
 	print("generating %s" % parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	print("using DCD files in %s" % variantDIR)
 	for tFile in os.listdir(variantDIR):
@@ -1258,7 +1259,7 @@ def sortPDBclusters(parameters):
 				clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 	else:
 		print("using DCD files in %s" % variantDIR)
-		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 		for trajFile in sorted(os.listdir(variantDIR)):
 			if trajFile.endswith(".dcd"):
 				dcdFile = variantDIR + trajFile
@@ -1403,9 +1404,9 @@ def sortPDBclusters(parameters):
 		
 def calcSearchSpace(parameters):
 	out = parameters.drugBindConfig
-	scaffRes = " ".join(parameters.searchResidues)
+	scaffRes = parameters.searchResidues
 	parameters.boxTCL = "%s/variantSimulations/%s/bin/%s_%s_%s_generateSearchSpace.tcl" % \
-								   (parameters.protein, parameters.variant, parameters.bindingID, parameters.runDIR, parameters.protein)
+								   (parameters.runDIR, parameters.protein, parameters.protein, parameters.variant, parameters.bindingID)
 	templatePDB = parameters.templatePDB
 	clustTCL = open(parameters.boxTCL,"w+")
 	clustTCL.write("set output [open %s w]\n" % out)
@@ -1433,7 +1434,7 @@ def calcSearchSpace(parameters):
 	clustTCL.write("quit\n")
 	clustTCL.close()
 
-	vmdCommand = "%s -e box.tcl" % (parameters.VMDpath)
+	vmdCommand = "%s -e %s" % (parameters.VMDpath, parameters.boxTCL)
 	os.system(vmdCommand)  
 
 def parseADconfig(parameters):
@@ -1479,15 +1480,15 @@ def alignScaff(parameters, currScaff):
 					 % (parameters.runDIR, parameters.protein))
 
 	
-	alignmentConfig = "%s/variantSimulations/%s/bin/%s.%s.alignStuct.TCL" \
+	alignmentConfig = "%s/variantSimulations/%s/bin/%s.%s.alignStruct.TCL" \
 							% (parameters.runDIR, parameters.protein,
 							   parameters.protein, parameters.variant)
 	alignmentTCL = open(alignmentConfig, "w+")
 	alignmentTCL.write("mol new %s\n" % parameters.templatePDB)
-	alignmentTCL.write("set ref [atomselect top %s]\n" % clusterRes)
+	alignmentTCL.write("set ref [atomselect top \"%s\"]\n" % clusterRes)
 	alignmentTCL.write("mol new %s\n" % currScaff)
-	alignmentTCL.write("set target [atomselect top %s]\n" % clusterRes)
-	alignmentTCL.write("set allP [atomselect top all]\n")
+	alignmentTCL.write("set target [atomselect top \"%s\"]\n" % clusterRes)
+	alignmentTCL.write("set allP [atomselect top \"all\"]\n")
 	alignmentTCL.write("set M [measure fit $target $ref]\n")
 	alignmentTCL.write("$allP move $M\n")
 	alignmentTCL.write("$allP writepdb %s\n" % currScaff)
@@ -1497,7 +1498,7 @@ def alignScaff(parameters, currScaff):
 	os.system(alignmentCommand)
 
 def genVinaConfig(parameters):
-	if hasattr(parameters, "numTrials") and parameters.numTrials:
+	if hasattr(parameters, "numTrials") and parameters.numTrials > 1:
 		for x in range(parameters.numTrials):
 			vinaConfig = open(parameters.vinaConfigFolder+"/run%d.vina" %x,"w+")
 			if not parameters.flexBinding:
@@ -1540,7 +1541,7 @@ def runVarMDsim(parameters):
 	if parameters.newStruct:
 		if os.path.isdir("%s/variantSimulations/%s/results/%s" % (parameters.runDIR,parameters.protein, parameters.variant)) and not parameters.clean and not parameters.genStructures:
 			print("ERROR - %s-%s is already created... resubmit with new protein/variant combination" %(parameters.protein, parameters.variant))
-			sys.exit()
+			sys.exit(1)
 		if hasattr(parameters, "clean") and parameters.clean:
 			if os.path.isdir('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant)):
 				shutil.rmtree('%s/variantSimulations/%s/results/%s' %(parameters.runDIR,parameters.protein, parameters.variant))
@@ -1580,16 +1581,23 @@ def runVarMDsim(parameters):
 			os.system(runNAMDcommand)
 			if not os.path.isfile("%s.dcd" % parameters.NAMDout):
 				print("NAMD run failed")
-				sys.exit()
+				sys.exit(1)
 		else:
 			runNAMD(parameters)
 			runNAMDcommand = "%s +p%i %s > %s.log" % \
 						 (parameters.NAMDpath, parameters.simProc,
 						  parameters.NAMDconfig, parameters.NAMDout)
-			os.system(runNAMDcommand)
+			try:
+				run_out = subprocess.check_output(runNAMDcommand, shell = True)
+				for line in run_out.decode().split("\n"):
+					print(line)
+			except subprocess.CalledProcessError as e:
+				for line in e.output.decode().split("\n"):
+					print(line)
+				sys.exit(1)
 			if not os.path.isfile("%s.dcd" % parameters.NAMDout):
 				print("NAMD run failed")
-				sys.exit()
+				sys.exit(1)
 		if parameters.singleRun:
 			genSingleRunTCL(parameters)
 			if parameters.cgcRun:
@@ -1601,7 +1609,7 @@ def runVarMDsim(parameters):
 
 	else:
 		print("simulation length not specified")        
-		sys.exit()
+		sys.exit(1)
 
 def runVarScaffold(parameters):
 	print("Performing varScaffold")
@@ -1726,7 +1734,7 @@ def runDrugSearch(parameters):
 	#copy over the binding config with the search coords
 	#drugBindConfig is the location of the bidning config
 
-	if hasattr(parameters.searchResidues) and parameters.searchResidues:
+	if hasattr(parameters, "searchResidues") and parameters.searchResidues:
 		calcSearchSpace(parameters)
 	else:
 		if parameters.newBindingConfig:
@@ -1741,14 +1749,14 @@ def runDrugSearch(parameters):
 													parameters.bindingID))
 			else:
 				print("%s already exists - remove or choose new bindingID" % parameters.drugBindConfig)
-				sys.exit()
+				sys.exit(1)
 
 
 	if os.path.isfile(parameters.drugBindConfig):
 		parseADconfig(parameters)
 	else:
 		print("%s does not exist" % parameters.drugBindConfig)
-		sys.exit()
+		sys.exit(1)
 
 	parameters.vinaOutDir = "%s/variantSimulations/%s/results/%s/drugBinding/" % \
 							(parameters.runDIR,
@@ -1807,7 +1815,7 @@ def runDrugSearch(parameters):
 		else:
 				if not os.path.isdir(parameters.drugLibPath):
 					print("drug library does not exist ")
-					sys.exit()
+					sys.exit(1)
 				else:
 					print("using small molecules in %s" % parameters.drugLibPath)
 
@@ -1830,7 +1838,7 @@ def runDrugSearch(parameters):
 							 parameters.protein, parameters.protein))
 			else:
 				print("specify binding template")
-				sys.exit()
+				sys.exit(1)
 
 	   
 				
@@ -1886,7 +1894,7 @@ def runDrugSearch(parameters):
 																   (scaffBase,parameters.bindingID,
 																	parameters.drugBase))
 
-							if hasattr(parameters, "numTrials") and parameters.numTrials:
+							if hasattr(parameters, "numTrials") and parameters.numTrials > 1:
 								parameters.vinaConfigFolder = "%s/variantSimulations/%s/config/%s" % \
 													(parameters.runDIR,
 													 parameters.protein,
@@ -1926,7 +1934,7 @@ def runDrugSearch(parameters):
 					
 	else:
 		print("specify bindingID")
-		sys.exit()
+		sys.exit(1)
 		
 
 	#import new scaffolds - need config defining flex residues
@@ -2010,7 +2018,7 @@ def runAnalysis(parameters):
 	if not len(set(files)) <= 1:
 		print("Some files are from multiple trial runs and others from single trial runs.")
 		print("Run varAnalysis on only a single type of run results")
-		sys.exit(0)
+		sys.exit(1)
 	if files[0] == 7:
 		parameters.mulTrials = True
 		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults_mulTrials.sh %s %s/analysis/%s" \

@@ -32,14 +32,27 @@ pca <- prcomp(table[,c(-1)], scale. = TRUE)
 pca_vals <- as.data.frame(pca$x)
 
 #get 90% variance pca number
-summary <- data.frame(summary(pca)$importance)
-cumsum <- as.vector(summary[3,])
-numpca <- length(cumsum[cumsum<.9])
+if(ncol(pca_vals) > 4) {
+  summary <- data.frame(summary(pca)$importance)
+  cumsum <- as.vector(summary[3,])
+  numpca <- length(cumsum[cumsum<.9])
+} else {
+  numpca <- ncol(pca_vals)
+}
+
 
 #run k means on the 90% pcas and plot
 #k <- kmeans(pca_vals[,c(1:numpca)], 3, nstart=25, iter.max=1000)
-pamk <- pamk(pca_vals[,c(1:numpca)], krange = 1:10, usepam = FALSE)
-pca_vals$pamk <- as.factor(pamk$pamobject$clustering)
+if (nrow(pca_vals) < 3) {
+  pca_vals$pamk <- as.factor(rep(1, nrow(pca_vals)))
+} else if (nrow(pca_vals) < 11) {
+  pamk <- pamk(pca_vals[,c(1:numpca)], krange = 1:(nrow(pca_vals) - 1), usepam = TRUE)
+  pca_vals$pamk <- as.factor(pamk$pamobject$clustering)
+} else {
+  pamk <- pamk(pca_vals[,c(1:numpca)], krange = 1:10, usepam = FALSE)
+  pca_vals$pamk <- as.factor(pamk$pamobject$clustering)
+}
+
 #pca_vals$k <- as.factor(k$cluster)
 
 
@@ -49,7 +62,7 @@ pca_vals$pamk <- as.factor(pamk$pamobject$clustering)
 
 
 
-x <- pamk$pamobject$clustering
+x <- pca_vals$pamk
 trans <- markovchainFit(x)
 #num <- max(x)
 # trans <- matrix(nrow = num, ncol = num, 0)

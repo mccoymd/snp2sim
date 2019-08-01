@@ -44,7 +44,7 @@ newStruct:
  #varTraj simulation length in ns
 simLength: .05
 
- #amino acid to change
+ #ID for simulation (optional)
 simID:
 
  #number of processors to run simulation
