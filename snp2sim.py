@@ -1424,11 +1424,11 @@ def calcSearchSpace(parameters):
 	clustTCL.write("puts $output [lindex $cen 2]\n")
 
 	clustTCL.write("puts -nonewline $output \"size_x = \"\n")
-	clustTCL.write("puts $output [expr abs([lindex [lindex $bound 1] 0] - [lindex [lindex $bound 0] 0])]\n")
+	clustTCL.write("puts $output [expr 1.1 * [expr abs([lindex [lindex $bound 1] 0] - [lindex [lindex $bound 0] 0])]]\n")
 	clustTCL.write("puts -nonewline $output \"size_y = \"\n")
-	clustTCL.write("puts $output [expr abs([lindex [lindex $bound 1] 1] - [lindex [lindex $bound 0] 1])]\n")
+	clustTCL.write("puts $output [expr 1.1 * [[expr abs([lindex [lindex $bound 1] 1] - [lindex [lindex $bound 0] 1])]]\n")
 	clustTCL.write("puts -nonewline $output \"size_z = \"\n")
-	clustTCL.write("puts $output [expr abs([lindex [lindex $bound 1] 2] - [lindex [lindex $bound 0] 2])]\n")
+	clustTCL.write("puts $output [expr 1.1 * [[expr abs([lindex [lindex $bound 1] 2] - [lindex [lindex $bound 0] 2])]]\n")
 
 	clustTCL.write("close $output\n")
 	clustTCL.write("quit\n")
