@@ -172,7 +172,7 @@ class argParse():
 		#TODO - refactor to remove "bindingID"
 		self.bindingID = self.drugLibrary
 
-		if isinstance(self.vinaExh, int):
+		if not self.vinaExh or not isinstance(self.vinaExh, int):
 			self.vinaExh = 50
 		
 		#Autodock config
@@ -1426,9 +1426,9 @@ def calcSearchSpace(parameters):
 	clustTCL.write("puts -nonewline $output \"size_x = \"\n")
 	clustTCL.write("puts $output [expr 1.1 * [expr abs([lindex [lindex $bound 1] 0] - [lindex [lindex $bound 0] 0])]]\n")
 	clustTCL.write("puts -nonewline $output \"size_y = \"\n")
-	clustTCL.write("puts $output [expr 1.1 * [[expr abs([lindex [lindex $bound 1] 1] - [lindex [lindex $bound 0] 1])]]\n")
+	clustTCL.write("puts $output [expr 1.1 * [expr abs([lindex [lindex $bound 1] 1] - [lindex [lindex $bound 0] 1])]]\n")
 	clustTCL.write("puts -nonewline $output \"size_z = \"\n")
-	clustTCL.write("puts $output [expr 1.1 * [[expr abs([lindex [lindex $bound 1] 2] - [lindex [lindex $bound 0] 2])]]\n")
+	clustTCL.write("puts $output [expr 1.1 * [expr abs([lindex [lindex $bound 1] 2] - [lindex [lindex $bound 0] 2])]]\n")
 
 	clustTCL.write("close $output\n")
 	clustTCL.write("quit\n")
@@ -1449,9 +1449,10 @@ def parseADconfig(parameters):
 								paramData.pop(0).rstrip(),
 								paramData.pop(0).rstrip()]
 
-def getFlexRes(pdbFile,flexRes):	
+def getFlexRes(pdbFile,flexResIn):	
 	currScaff = open(pdbFile,"r").readlines()
 	currScaff.pop(0)
+	flexRes = flexResIn.copy()
 	flexRes.sort()
 	flexResNum = flexRes.pop(0)
 	flexResID = ""
@@ -1513,19 +1514,19 @@ def genVinaConfig(parameters):
 			for searchParam in parameters.ADsearchSpace:
 				vinaConfig.write("%s\n" % searchParam)
 			vinaConfig.close()
-
-	vinaConfig = open(parameters.vinaConfig,"w+")
-	if not parameters.flexBinding:
-		vinaConfig.write("receptor = %s\n" % parameters.scaff1out)
 	else:
-		vinaConfig.write("receptor = %s\n" % parameters.scaffRigid)
-		vinaConfig.write("flex = %s\n" % parameters.scaffFlex)
-	vinaConfig.write("ligand = %s\n" % parameters.currDrugPath)
-	vinaConfig.write("out = %s/%s.pdbqt\n" % (parameters.vinaOutDir, parameters.vinaBase))
-	vinaConfig.write("log = %s/%s.log\n" % (parameters.vinaOutDir, parameters.vinaBase))
-	vinaConfig.write("exhaustiveness = %s\n" % parameters.vinaExh)
-	for searchParam in parameters.ADsearchSpace:
-		vinaConfig.write("%s\n" % searchParam)
+		vinaConfig = open(parameters.vinaConfig,"w+")
+		if not parameters.flexBinding:
+			vinaConfig.write("receptor = %s\n" % parameters.scaff1out)
+		else:
+			vinaConfig.write("receptor = %s\n" % parameters.scaffRigid)
+			vinaConfig.write("flex = %s\n" % parameters.scaffFlex)
+		vinaConfig.write("ligand = %s\n" % parameters.currDrugPath)
+		vinaConfig.write("out = %s/%s.pdbqt\n" % (parameters.vinaOutDir, parameters.vinaBase))
+		vinaConfig.write("log = %s/%s.log\n" % (parameters.vinaOutDir, parameters.vinaBase))
+		vinaConfig.write("exhaustiveness = %s\n" % parameters.vinaExh)
+		for searchParam in parameters.ADsearchSpace:
+			vinaConfig.write("%s\n" % searchParam)
 
 #moving to runDrugSearch                
 #	vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
@@ -1733,6 +1734,12 @@ def runDrugSearch(parameters):
 
 	#copy over the binding config with the search coords
 	#drugBindConfig is the location of the bidning config
+	parameters.vinaOutDir = "%s/variantSimulations/%s/results/%s/drugBinding/" % \
+							(parameters.runDIR,
+							 parameters.protein,
+							 parameters.variant)
+	if not os.path.exists(parameters.vinaOutDir):
+		os.makedirs(parameters.vinaOutDir)
 
 	if hasattr(parameters, "searchResidues") and parameters.searchResidues:
 		calcSearchSpace(parameters)
@@ -1758,10 +1765,7 @@ def runDrugSearch(parameters):
 		print("%s does not exist" % parameters.drugBindConfig)
 		sys.exit(1)
 
-	parameters.vinaOutDir = "%s/variantSimulations/%s/results/%s/drugBinding/" % \
-							(parameters.runDIR,
-							 parameters.protein,
-							 parameters.variant)
+	
 	if not os.path.isdir(parameters.vinaOutDir):
 		os.makedirs(parameters.vinaOutDir)
 
@@ -1783,8 +1787,8 @@ def runDrugSearch(parameters):
 		for pdbFile in os.listdir(parameters.inputScaff):
 #            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
 #            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
-			inputID = "input%s" % str(inputCount)
-			pdbNewLoc = "%s/%s.%s.%s.scaffold.pdb" % (variantDIR, parameters.protein,
+			inputID = "cl%s" % str(inputCount)
+			pdbNewLoc = "%s/%s.%s.input.%s.scaffold.pdb" % (variantDIR, parameters.protein,
 													  parameters.variant, inputID)
 			inputCount += 1
 #            print pdbNewLoc
@@ -1903,7 +1907,7 @@ def runDrugSearch(parameters):
 									os.makedirs(parameters.vinaConfigFolder)
 								genVinaConfig(parameters)
 								for config in os.listdir(parameters.vinaConfigFolder):
-									vinaCommand = "%s --config %s" % (parameters.VINApath, config)
+									vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfigFolder + "/" + config)
 									os.system(vinaCommand)
 							else:		
 								parameters.vinaConfig = "%s/variantSimulations/%s/config/%s.vina" % \
