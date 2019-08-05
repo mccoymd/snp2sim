@@ -1452,7 +1452,7 @@ def parseADconfig(parameters):
 def getFlexRes(pdbFile,flexResIn):	
 	currScaff = open(pdbFile,"r").readlines()
 	currScaff.pop(0)
-	flexRes = flexResIn.copy()
+	flexRes = flexResIn[:]
 	flexRes.sort()
 	flexResNum = flexRes.pop(0)
 	flexResID = ""
