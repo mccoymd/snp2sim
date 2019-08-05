@@ -1525,6 +1525,8 @@ def genVinaConfig(parameters):
 		vinaConfig.write("out = %s/%s.pdbqt\n" % (parameters.vinaOutDir, parameters.vinaBase))
 		vinaConfig.write("log = %s/%s.log\n" % (parameters.vinaOutDir, parameters.vinaBase))
 		vinaConfig.write("exhaustiveness = %s\n" % parameters.vinaExh)
+		if hasattr(parameters, "vinaCPU") and isinstance(parameters.vinaCPU, int):
+			vinaConfig.write("cpu = %d\n" % parameters.vinaCPU)
 		for searchParam in parameters.ADsearchSpace:
 			vinaConfig.write("%s\n" % searchParam)
 
