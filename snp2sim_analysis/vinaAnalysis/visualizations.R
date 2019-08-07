@@ -304,10 +304,10 @@ for(lib in unique(fulldata$library)) {
          width = 15, height = 10)
   }
 
-  minval <- min(fulldata$perChange)
-  maxval <- max(fulldata$perChange)
+  minval <- min(plotdata$perChange)
+  maxval <- max(plotdata$perChange)
   maxthresh <- max(c(abs(minval),  abs(maxval)))
-  h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
+  h <- hchart(plotdata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
     hc_colorAxis(stops = color_stops(4, inferno(4)), min = -1*maxthresh, max = maxthresh) %>% 
     hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
   
