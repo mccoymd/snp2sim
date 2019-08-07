@@ -1,3 +1,5 @@
+options(warn=-1)
+
 library(data.table)
 library(ggplot2)
 library(plotly)
