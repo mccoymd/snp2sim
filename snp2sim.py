@@ -13,6 +13,7 @@ import csv
 import time
 import logging
 import glob
+import re
 
 #Class that parses the command line and Yaml Config arguments
 class argParse():
@@ -843,7 +844,7 @@ def calcPairwiseRMSD(parameters):
 	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
-	for tFile in os.listdir(variantDIR):
+	for tFile in sorted(os.listdir(variantDIR)):
 		if tFile.endswith(".dcd"):
 			dcdFile = variantDIR + tFile
 			clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
@@ -1009,7 +1010,7 @@ def extractFeatureTable(parameters):
 	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
-	for tFile in os.listdir(variantDIR):
+	for tFile in sorted(os.listdir(variantDIR)):
 		if tFile.endswith(".dcd"):
 			dcdFile = variantDIR + tFile
 			clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
@@ -1361,7 +1362,7 @@ def sortPDBclusters(parameters):
 	for indCluster in clusterMembership:
 		repStructIndex = int(indCluster[0])
 		clustTCL.write("set cur [atomselect top all frame " + str(repStructIndex) + "]\n")
-		clustTCL.write("$cur writepdb " + parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb\n" )
+		clustTCL.write("$cur writepdb " + parameters.scaffBASE + "_cl" + str(scaffNum) + ".scaffold.pdb\n" )
 		scaffNum += 1
 
 	if parameters.colorTrajectory:
@@ -1894,7 +1895,7 @@ def runDrugSearch(parameters):
 #            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
 #            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
 			inputID = "cl%s" % str(inputCount)
-			pdbNewLoc = "%s/%s.%s.input.%s.scaffold.pdb" % (variantDIR, parameters.protein,
+			pdbNewLoc = "%s/%s.%s.input_%s.scaffold.pdb" % (variantDIR, parameters.protein,
 													  parameters.variant, inputID)
 			inputCount += 1
 			shutil.copyfile(pdbFile, pdbNewLoc)
@@ -2175,7 +2176,7 @@ def runAnalysis(parameters):
 
 				for row in summary[1:]:
 					if row[4] == v:
-						clust = int(row[5][5:]) - 1
+						clust = int(re.search('(\d+)$', row[5]).group(0)) - 1
 						row.append(propMem[clust])
 			elif len(glob.glob("%s/%s/scaffold/%s.%s.*.log" % (parameters.resultsDIR, v, parameters.protein, v))) > 1:
 				parameters.logger.error("More than one scaffold log in scaffold directory")

@@ -5,7 +5,7 @@ library(ggplot2)
 library(plotly)
 library(htmlwidgets)
 library(fpc)
-library(markovchain)
+#library(markovchain)
 
 #Arguments: 
 #1) input feature table 
@@ -65,23 +65,23 @@ if (nrow(pca_vals) < 3) {
 
 
 x <- pca_vals$pamk
-trans <- markovchainFit(x)
+# trans <- markovchainFit(x)
 #num <- max(x)
 # trans <- matrix(nrow = num, ncol = num, 0)
 # for (t in 1:(length(x) - 1)) trans[x[t], x[t + 1]] <- trans[x[t], x[t + 1]] + 1
 # for (i in 1:num) trans[i, ] <- trans[i, ] / sum(trans[i, ])
 
-mc <- new("markovchain", states = trans$estimate@states, transitionMatrix = trans$estimate@transitionMatrix, name = "traj")
-mcss <- as.data.frame(cbind(trans$estimate@states,t(steadyStates(mc))))
-mcss[,1] <- as.factor(mcss[,1])
-colnames(mcss) <- c("Cluster", "Steady State Probabilities")
+# mc <- new("markovchain", states = trans$estimate@states, transitionMatrix = trans$estimate@transitionMatrix, name = "traj")
+# mcss <- as.data.frame(cbind(trans$estimate@states,t(steadyStates(mc))))
+# mcss[,1] <- as.factor(mcss[,1])
+# colnames(mcss) <- c("Cluster", "Steady State Probabilities")
 #ggplot(mcss, aes(x=V1, y=V2)) + geom_bar(stat = "identity")
 
 
 ##Output all figures
-pdf(paste(outputDir,"markov_model.pdf", sep = ""))
-plot(mc)
-dev.off()
+# pdf(paste(outputDir,"markov_model.pdf", sep = ""))
+# plot(mc)
+# dev.off()
 
 ggsave(filename = paste(outputDir,"cluster_pca.jpg",sep = ""), ggplot(pca_vals, aes(x=PC1, y=PC2, color=pamk)) + geom_point())
 
@@ -105,14 +105,14 @@ if (pamk$nc >= 2) {
   }
 }
 
-write.csv(mcss, paste(outputDir,"state_probabilities.txt", sep = ""), row.names = FALSE, quote = FALSE)
+# write.csv(mcss, paste(outputDir,"state_probabilities.txt", sep = ""), row.names = FALSE, quote = FALSE)
 
 #clusters with SE > .1 outputted for further sampling
 
-weakcluster <- which(unname(apply(trans$standardError, 1, function(x){sum(x>.1)})) > 0)
-sink(paste(outputDir,"weak_clusters.txt", sep = ""))
-cat(paste(weakcluster,collapse=","))
-sink()
+# weakcluster <- which(unname(apply(trans$standardError, 1, function(x){sum(x>.1)})) > 0)
+# sink(paste(outputDir,"weak_clusters.txt", sep = ""))
+# cat(paste(weakcluster,collapse=","))
+# sink()
 
 clusters <- data.frame(frame = c(1:length(pamk$pamobject$clustering)), cluster = pamk$pamobject$clustering)
 write.csv(clusters, paste(outputDir,"../cluster_by_frame.csv", sep = ""), row.names = FALSE, quote = FALSE, eol = "\n")
