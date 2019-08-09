@@ -23,7 +23,12 @@ class samplingTree():
 	def addChild(self, node):
 		self.child.append(node)
 	def mark(self):
-		self.extend = True
+		self.extend = False
+	def __str__(self):
+		if not self.child:
+			return "[%d]" % self.num
+		else:
+			return "[%d: %s]" % (self.num, ", ".join([str(x) for x in self.child]))
 
 class argParse():
 	def __init__(self):
@@ -46,6 +51,10 @@ class argParse():
 							help="initial structure",
 							action="store",
 							)
+		parser.add_argument("--initialTraj",
+							help="initial trajectory (optional)",
+							action="store",
+							)
 		parameters, unknownparams = parser.parse_known_args()
 
 		if (parameters.config):
@@ -57,6 +66,7 @@ class argParse():
 		self.__dict__.update(parameters.__dict__)
 
 	def setDefaults(self):
+		self.programDir = os.path.dirname(os.path.realpath(__file__))
 		if "." in self.protein:
 			self.protein.replace(".", "_")
 		if isinstance(self.varAA,list) and isinstance(self.varResID,list):
@@ -87,7 +97,11 @@ def runInstance(parameters, node):
 	if os.path.isdir(scaffDir):
 		os.rename(scaffDir, scaffDir + "_" + str(node.num - 1))
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
+<<<<<<< HEAD
 		trajCommand = "python ../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.config, node.scaff, node.num)
+=======
+		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
+>>>>>>> 40e89b39539def61e75be1164f5f3ab1da9eb5b0
 		try:
 			run_out = subprocess.check_output(trajCommand, shell = True)
 			for line in run_out.decode().split("\n"):
@@ -100,7 +114,11 @@ def runInstance(parameters, node):
 	else:
 		os.rename(trajDir + "_" + str(node.num), trajDir)
 	if not os.path.isdir(scaffDir + "_" + str(node.num)):
+<<<<<<< HEAD
 		scaffCommand = "python ../../snp2sim.py --config %s --mode varScaffold --scaffID %d" %(parameters.config, node.num)
+=======
+		scaffCommand = "python %s/../../snp2sim.py --config %s --mode varScaffold --scaffID %d" %(parameters.programDir, parameters.config, node.num)
+>>>>>>> 40e89b39539def61e75be1164f5f3ab1da9eb5b0
 		try:
 			run_out = subprocess.check_output(scaffCommand, shell = True)
 			for line in run_out.decode().split("\n"):
@@ -114,6 +132,38 @@ def runInstance(parameters, node):
 		os.rename(scaffDir + "_" + str(node.num), scaffDir)
 	os.rename(trajDir, trajDir + "_" + str(node.num))
 	os.rename(scaffDir, scaffDir + "_" + str(node.num))
+
+def initialScaff(parameters):
+	trajDir = "%s/variantSimulations/%s/results/%s/trajectory" % (parameters.runDIR, parameters.protein, parameters.variant)
+	scaffDir = "%s/variantSimulations/%s/results/%s/scaffold" % (parameters.runDIR, parameters.protein, parameters.variant)
+	if os.path.isdir(trajDir):
+		shutil.rmtree(trajDir)
+	if os.path.isdir(scaffDir):
+		shutil.rmtree(scaffDir)
+	os.makedirs(trajDir)
+	shutil.copy(parameters.initialTraj, trajDir)
+	parameters.initialTraj = trajDir + "/" + parameters.initialTraj
+	
+	scaffCommand = "python %s/../../snp2sim.py --config %s --mode varScaffold --scaffID 0" %(parameters.programDir, parameters.config)
+	try:
+		run_out = subprocess.check_output(scaffCommand, shell = True)
+		print(run_out.decode('ascii'))
+	except subprocess.CalledProcessError as e:
+		print("Error in varScaffold run %d: \n" %parameters.num)
+		print(run_out.decode('ascii'))
+		sys.exit(1)
+
+	os.rename(trajDir, trajDir + "_0")
+	os.rename(scaffDir, scaffDir + "_0")
+	curscaff = samplingTree(parameters, 0, parameters.initialTraj, None)
+	curscaff.mark()
+	scaffDir = "%s/variantSimulations/%s/results/%s/scaffold_0" % (parameters.runDIR, parameters.protein, parameters.variant)
+	for file in os.listdir(scaffDir):
+		if file.endswith("scaffold.pdb"):
+			parameters.num += 1
+			scaff = scaffDir + "/" + file
+			curscaff.addChild(samplingTree(parameters, parameters.num, scaff, curscaff))
+	return curscaff
 
 def checkStopCondition(parameters):
 	#true if stop growing leaves
@@ -187,17 +237,19 @@ def calcPairwiseRMSD(parameters, pdbs):
 def samplingNodes(parameters, tree):
 	if not tree.child:
 		if tree.extend:
-			return [tree]
+			return tree
 		else:
-			return []
+			return None
 	bigList = []
 	cur = [samplingNodes(parameters, x) for x in tree.child]
 	for l in cur:
-		bigList += l
+		if l:
+			bigList.append(l)
 	if tree.extend:
-		bigList = (bigList + [tree]).sort(key=lambda x: x.num)
+		bigList.append(tree)
+		bigList.sort(key=lambda x: x.num)
 	else:
-		bigList = bigList.sort(key=lambda x: x.num)
+		bigList.sort(key=lambda x: x.num)
 	return bigList
 
 def main():
@@ -205,22 +257,27 @@ def main():
 	parameters.setDefaults()
 
 	parameters.num = 0
-	top = samplingTree(parameters, parameters.num, parameters.newStruct, None)
+	if parameters.newStruct:
+		top = samplingTree(parameters, parameters.num, parameters.newStruct, None)
+	elif parameters.initialTraj:
+		top = initialScaff(parameters)
+	else:
+		print("newStruct or initialTraj required")
+		sys.exit(1)
 
 	curList = samplingNodes(parameters, top)
-	if curList:
-		while curList:
-			curscaff = curList.pop(0)
-			runInstance(parameters, curscaff)
-			curscaff.mark()
-			if not checkStopCondition():
-				scaffDir = "%s/variantSimulations/%s/results/%s/scaffold_%d" % (parameters.runDIR, parameters.protein, parameters.variant, curscaff.num)
-				for file in os.listdir(scaffDir):
-					if file.endswith("scaffold.pdb"):
-						parameters.num += 1
-						scaff = curRun + "/" + file
-						curscaff.addChild(samplingTree(parameters, parameters.num, scaff, curscaff))
-			curList = samplingNodes(parameters, top)
+	while curList:
+		curscaff = curList.pop(0)
+		runInstance(parameters, curscaff)
+		curscaff.mark()
+		if not checkStopCondition():
+			scaffDir = "%s/variantSimulations/%s/results/%s/scaffold_%d" % (parameters.runDIR, parameters.protein, parameters.variant, curscaff.num)
+			for file in os.listdir(scaffDir):
+				if file.endswith("scaffold.pdb"):
+					parameters.num += 1
+					scaff = scaffDir + "/" + file
+					curscaff.addChild(samplingTree(parameters, parameters.num, scaff, curscaff))
+		curList = samplingNodes(parameters, top)
 
 	print("Finished with sampling!")
 
