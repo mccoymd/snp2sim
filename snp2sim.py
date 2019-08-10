@@ -1006,7 +1006,6 @@ def extractFeatureTable(parameters):
 		
 	parameters.logger.debug("Writing feature table TCL: %s", parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
-	clustTCL.write("package require csv\n")
 	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
@@ -1032,33 +1031,33 @@ def extractFeatureTable(parameters):
 	clustTCL.write("set refclustRes [atomselect top \""+clusterRes+"\" frame 0]\n")
 	clustTCL.write("set backalpha [atomselect top \""+clusterRes+" and name CA"+"\"]\n")
 	#header
-	clustTCL.write("set head {}\n")
-	clustTCL.write("lappend head \"frame\"\n")
-	clustTCL.write("lappend head \"rmsd\"\n")
+	clustTCL.write("puts -nonewline $output \"frame\"\n")
+	clustTCL.write("puts -nonewline $output \",rmsd\"\n")
 
 	clustTCL.write("foreach resid [$backalpha get resid] resname [$backalpha get resname] {\n")
-	clustTCL.write("lappend head \"$resname-$resid-psi\"\n")
-	clustTCL.write("lappend head \"$resname-$resid-phi\"}\n")
+	clustTCL.write("puts -nonewline $output \",$resname-$resid-psi\"\n")
+	clustTCL.write("puts -nonewline $output \",$resname-$resid-phi\"}\n")
 
 	clustTCL.write("foreach atom [$back get name] resid [$back get resid] resname [$back get resname] {\n")
-	clustTCL.write("lappend head \"$atom-$resname-$resid-x\"\n")
-	clustTCL.write("lappend head \"$atom-$resname-$resid-y\"\n")
-	clustTCL.write("lappend head \"$atom-$resname-$resid-z\"}\n")
-
-
-
-	clustTCL.write("puts $output [::csv::join $head]\n")
-
+	clustTCL.write("puts -nonewline $output \",$atom-$resname-$resid-x\"\n")
+	clustTCL.write("puts -nonewline $output \",$atom-$resname-$resid-y\"\n")
+	clustTCL.write("puts -nonewline $output \",$atom-$resname-$resid-z\"}\n")
+	clustTCL.write("puts $output \"\"\n")
 
 	clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
 	clustTCL.write("$back frame $i \n")
 	clustTCL.write("$backalpha frame $i \n")
-	clustTCL.write("puts -nonewline $output \"$i,\" \n")
+	clustTCL.write("puts -nonewline $output \"$i\" \n")
 	clustTCL.write("set M [measure rmsd $back $refclustRes] \n")
-	clustTCL.write("puts -nonewline $output \"$M,\" \n")
-	clustTCL.write("puts -nonewline $output [::csv::join [join [$backalpha get {psi phi}]]]\n")
-	clustTCL.write("puts -nonewline $output \",\" \n")
-	clustTCL.write("puts $output [::csv::join [join [$back get {x y z}]]]}\n")
+	clustTCL.write("puts -nonewline $output \",$M\" \n")
+	clustTCL.write("set row [join [$backalpha get {psi phi}]]\n")
+	clustTCL.write("foreach item $row {\n")
+	clustTCL.write("puts -nonewline $output \",$item\"}\n")
+
+	clustTCL.write("set row [join [$back get {x y z}]]\n")
+	clustTCL.write("foreach item $row {\n")
+	clustTCL.write("puts -nonewline $output \",$item\"}\n")
+	clustTCL.write("puts $output \"\"}\n")
 
 	clustTCL.write("close $output\n")
 
@@ -1168,7 +1167,6 @@ def extractFeatureTable_PDB(parameters):
 		os.makedirs(binPath)
 
 	clustTCL = open(parameters.scaffoldTCL,"w+")
-	clustTCL.write("package require csv\n")
 	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	parameters.logger.debug("Using PDB files in %s", variantDIR)
 	for trajFile in sorted(os.listdir(variantDIR)):
@@ -1176,7 +1174,8 @@ def extractFeatureTable_PDB(parameters):
 			pdbFile = variantDIR + trajFile
 			clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 
-	clustTCL.write("set nf [molinfo top get numframes]\n")
+	clustTCL.write("set nf [molinfo top get numframes]\n")	
+
 	clustTCL.write("set refRes [atomselect top \""+alignmentRes+"\" frame 0]\n")
 	clustTCL.write("set refStruct [atomselect top all frame 0]\n")
 	clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
@@ -1191,34 +1190,33 @@ def extractFeatureTable_PDB(parameters):
 	clustTCL.write("set refclustRes [atomselect top \""+clusterRes+"\" frame 0]\n")
 	clustTCL.write("set backalpha [atomselect top \""+clusterRes+" and name CA"+"\"]\n")
 	#header
-	clustTCL.write("set head {}\n")
-	clustTCL.write("lappend head \"frame\"\n")
-	clustTCL.write("lappend head \"rmsd\"\n")
+	clustTCL.write("puts -nonewline $output \"frame\"\n")
+	clustTCL.write("puts -nonewline $output \",rmsd\"\n")
 
 	clustTCL.write("foreach resid [$backalpha get resid] resname [$backalpha get resname] {\n")
-	clustTCL.write("lappend head \"$resname-$resid-psi\"\n")
-	clustTCL.write("lappend head \"$resname-$resid-phi\"}\n")
+	clustTCL.write("puts -nonewline $output \",$resname-$resid-psi\"\n")
+	clustTCL.write("puts -nonewline $output \",$resname-$resid-phi\"}\n")
 
 	clustTCL.write("foreach atom [$back get name] resid [$back get resid] resname [$back get resname] {\n")
-	clustTCL.write("lappend head \"$atom-$resname-$resid-x\"\n")
-	clustTCL.write("lappend head \"$atom-$resname-$resid-y\"\n")
-	clustTCL.write("lappend head \"$atom-$resname-$resid-z\"}\n")
-
-
-
-	clustTCL.write("puts $output [::csv::join $head]\n")
-
+	clustTCL.write("puts -nonewline $output \",$atom-$resname-$resid-x\"\n")
+	clustTCL.write("puts -nonewline $output \",$atom-$resname-$resid-y\"\n")
+	clustTCL.write("puts -nonewline $output \",$atom-$resname-$resid-z\"}\n")
+	clustTCL.write("puts $output \"\"\n")
 
 	clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
 	clustTCL.write("$back frame $i \n")
 	clustTCL.write("$backalpha frame $i \n")
-	clustTCL.write("puts -nonewline $output \"$i,\" \n")
+	clustTCL.write("puts -nonewline $output \"$i\" \n")
 	clustTCL.write("set M [measure rmsd $back $refclustRes] \n")
-	clustTCL.write("puts -nonewline $output \"$M,\" \n")
-	clustTCL.write("puts -nonewline $output [::csv::join [join [$backalpha get {psi phi}]]]\n")
-	clustTCL.write("puts -nonewline $output \",\" \n")
-	clustTCL.write("puts $output [::csv::join [join [$back get {x y z}]]]}\n")
+	clustTCL.write("puts -nonewline $output \",$M\" \n")
+	clustTCL.write("set row [join [$backalpha get {psi phi}]]\n")
+	clustTCL.write("foreach item $row {\n")
+	clustTCL.write("puts -nonewline $output \",$item\"}\n")
 
+	clustTCL.write("set row [join [$back get {x y z}]]\n")
+	clustTCL.write("foreach item $row {\n")
+	clustTCL.write("puts -nonewline $output \",$item\"}\n")
+	clustTCL.write("puts $output \"\"}\n")
 
 	clustTCL.write("close $output\n")
 
