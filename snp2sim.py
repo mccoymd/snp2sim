@@ -139,64 +139,56 @@ class argParse():
 			self.simProc = multiprocessing.cpu_count()    
 		self.logger.debug("Using %d cores", self.simProc)
 
+		self.inputDIR = self.runDIR
+		self.varsDIR = os.path.join(self.runDIR, "variantSimulations", self.protein) + "/"
+		self.analysisDIR = os.path.join(self.runDIR, "variantSimulations", self.protein, "analysis/")
+		self.runDIR = os.path.join(self.runDIR, "variantSimulations", self.protein, self.variant) + "/"
+		self.structDIR = os.path.join(self.runDIR, "structures/")
+		self.binDIR = os.path.join(self.runDIR, "bin/")
+		self.configDIR = os.path.join(self.runDIR, "config/")
+		self.resultsDIR = os.path.join(self.runDIR, "results/")
+		self.drugBindingDIR = os.path.join(self.resultsDIR, "drugBinding/")
+		self.trajDIR = os.path.join(self.resultsDIR, "trajectory/")
+		self.scaffoldDIR = os.path.join(self.resultsDIR, "scaffold/")
+
 		#creates paths to all the structures used in the prep for MD sim
-		self.simPDB = "%s/variantSimulations/%s/structures/%s.%s.pdb" \
-							% (self.runDIR,self.protein,
-							   self.protein,self.variant)
-		self.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
-							% (self.runDIR,self.protein,
-							   self.protein,self.variant)
-		self.templatePDB = "%s/variantSimulations/%s/structures/%s.template.pdb" \
-								 % (self.runDIR,self.protein,
-									self.protein)
-		self.wtPDB = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.pdb" \
-						   % (self.runDIR,self.protein,
-							  self.protein)
-		self.wtPSF = "%s/variantSimulations/%s/structures/%s.wt.UNSOLVATED.psf" \
-						   % (self.runDIR,self.protein,
-							  self.protein)
-		self.varPrefix = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED" \
-							   % (self.runDIR,self.protein,
-								  self.protein, self.variant)
-		self.varPDB = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.pdb" \
-							% (self.runDIR, self.protein,
-							   self.protein, self.variant)
-		self.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
-							% (self.runDIR,self.protein,
-							   self.protein, self.variant)
+		self.simPDB = self.structDIR + "%s.%s.pdb" \
+							% (self.protein,self.variant)
+		self.simPSF = self.structDIR + "%s.%s.psf" \
+							% (self.protein,self.variant)
+		self.templatePDB = self.structDIR + "%s.template.pdb" \
+								 % (self.protein)
+		self.wtPDB = self.structDIR + "%s.wt.UNSOLVATED.pdb" \
+						   % (self.protein)
+		self.wtPSF = self.structDIR + "%s.wt.UNSOLVATED.psf" \
+						   % (self.protein)
+							  
+		self.varPrefix = self.structDIR + "%s.%s.UNSOLVATED" \
+							   % (self.protein,self.variant)
+		self.varPDB = self.structDIR + "%s.%s.UNSOLVATED.pdb" \
+							% (self.protein,self.variant)
+		self.varPSF = self.structDIR + "%s.%s.UNSOLVATED.psf" \
+							% (self.protein,self.variant)
 
 		#paths to the TCL scripts used to generate the starter structures
-		self.wtStructTCL = "%s/variantSimulations/%s/bin/%s.wt.genStructFiles.tcl" \
-								 % (self.runDIR,self.protein, self.protein)
-		self.varStructTCL = "%s/variantSimulations/%s/bin/%s.%s.genStructFiles.tcl" \
-								  % (self.runDIR,self.protein,
-									 self.protein, self.variant)
-		self.singleRunTCL = "%s/variantSimulations/%s/bin/%s.%s.genSingleRunPDB.tcl" \
-								  % (self.runDIR,self.protein,
-									 self.protein, self.variant)
-		self.solvTCL = "%s/variantSimulations/%s/bin/%s.%s.genSolvStruct.tcl" \
-							 % (self.runDIR,self.protein,
-								self.protein, self.variant)
-		self.solvBoundary = "%s/variantSimulations/%s/config/%s.%s.solvBoundary.txt" \
-								  % (self.runDIR,self.protein,
-									 self.protein, self.variant)
-		self.structPrefix = "%s/variantSimulations/%s/structures/%s.%s" \
-								  % (self.runDIR,self.protein,
-									 self.protein, self.variant)
+		self.wtStructTCL = self.binDIR + "%s.wt.genStructFiles.tcl" \
+								 % (self.protein)
+		self.varStructTCL = self.binDIR + "%s.%s.genStructFiles.tcl" \
+								  % (self.protein,self.variant)
+		self.singleRunTCL = self.binDIR + "%s.%s.genSingleRunPDB.tcl" \
+								  % (self.protein,self.variant)
+		self.solvTCL = self.binDIR + "%s.%s.genSolvStruct.tcl" \
+							 % (self.protein,self.variant)
+		self.solvBoundary = self.configDIR + "%s.%s.solvBoundary.txt" \
+								  % (self.protein,self.variant)
+		self.structPrefix = self.structDIR + "%s.%s" \
+								  % (self.protein,self.variant)
 
 		#path to NAMD parameters
-		self.NAMDconfig = "%s/variantSimulations/%s/config/%s.%s.%s.NAMD" \
-								% (self.runDIR, self.protein, self.protein,
-								   self.variant, self.simID)
-		self.NAMDout = "%s/variantSimulations/%s/results/%s/trajectory/%s.%s.%s" \
-							 % (self.runDIR, self.protein, self.variant,
-								self.protein, self.variant, self.simID)
-
-		#path to results dir, where all module results are stored and read.
-		self.resultsDIR =  "%s/variantSimulations/%s/results" % \
-								 (self.runDIR, self.protein)
-		self.trajDIR = "%s/variantSimulations/%s/results/%s/trajectory/" \
-							 % (self.runDIR, self.protein, self.variant)
+		self.NAMDconfig = self.configDIR + "%s.%s.%s.NAMD" \
+								% (self.protein, self.variant, self.simID)
+		self.NAMDout = self.trajDIR + "%s.%s.%s" \
+							 % (self.protein, self.variant, self.simID)
 
 		#path to the drug libraries in the program directory
 		self.drugLibPath = "%s/drugLibraries/%s/" % \
@@ -212,13 +204,13 @@ class argParse():
 		
 		#Autodock config
 		if self.bindingID:
-			self.drugBindConfig = "%s/variantSimulations/%s/config/%s.autodock" \
-										% (self.runDIR, self.protein, self.bindingID)
+			self.drugBindConfig = self.configDIR + "%s.autodock" \
+										% (self.bindingID)
 		
 
 		#allows user to input trajectories in PDB format from external source
 		if self.loadPDBtraj:
-			variantDIR = self.resultsDIR + "/" + self.variant + "/trajectory/"
+			variantDIR = self.trajDIR
 			if not os.path.exists(variantDIR):
 				os.makedirs(variantDIR)
 
@@ -438,8 +430,8 @@ def _parseCommandLine():
 #creates unsolvated PDB and PSF files
 #solvates the struct files
 def genNAMDstructFiles(parameters):
-	if not os.path.exists("%s/variantSimulations/%s/bin/" % (parameters.runDIR,parameters.protein)):
-		os.makedirs("%s/variantSimulations/%s/bin/" % (parameters.runDIR,parameters.protein))
+	if not os.path.exists(parameters.binDIR):
+		os.makedirs(parameters.binDIR)
 
 	if os.path.isfile(parameters.templatePDB):
 		parameters.logger.debug("Generating solvated/ionized PDB and PSF from %s", parameters.templatePDB)
@@ -464,9 +456,8 @@ def genNAMDstructFiles(parameters):
 		#Solvates the structure files with a water box for simulation
 		genSolvTCL(parameters)
 		genSolvCommand = "%s -e %s" % (parameters.VMDpath, parameters.solvTCL)
-		if not os.path.exists("%s/variantSimulations/%s/config/" % \
-							  (parameters.runDIR,parameters.protein)):
-			os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
+		if not os.path.exists(parameters.configDIR):
+			os.makedirs(parameters.configDIR)
 		parameters.logger.debug("Running structure solvation/ionization TCL in VMD")
 		parameters.logger.debug("VMD Command: %s", genSolvCommand)
 		try:
@@ -539,8 +530,8 @@ def genSolvTCL(parameters):
 #Runs NAMD for MD simulation using structures and options
 def runNAMD(parameters):
 
-	if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
-		os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
+	if not os.path.exists(parameters.configDIR):
+		os.makedirs(parameters.configDIR)
 
 	#parses the dimensions of the solvated structure
 	if os.path.isfile(parameters.solvBoundary):
@@ -636,17 +627,15 @@ def runNAMD(parameters):
 	configFile.write("minimize            1000\n")
 	configFile.write("reinitvels          $temperature\n\n")
 	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
-	if not os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory/" \
-						 % (parameters.runDIR, parameters.protein, parameters.variant)):
-		os.makedirs("%s/variantSimulations/%s/results/%s/trajectory/" \
-						 % (parameters.runDIR, parameters.protein, parameters.variant))
+	if not os.path.isdir(parameters.trajDIR):
+		os.makedirs(parameters.trajDIR)
 
 
 
 #Runs NAMD for MD simulation using structures and options
 def runNAMD_replicaExchange(parameters):
-	if not os.path.exists("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein)):
-		os.makedirs("%s/variantSimulations/%s/config/" % (parameters.runDIR,parameters.protein))
+	if not os.path.exists(parameters.configDIR):
+		os.makedirs(parameters.configDIR)
 
 	#parses the dimensions of the solvated structure
 	if os.path.isfile(parameters.solvBoundary):
@@ -673,9 +662,8 @@ def runNAMD_replicaExchange(parameters):
 		parameters.logger.error("Remove solvated/ionized PDB and PSF and resubmit")
 		sys.exit(1)
 
-	parameters.repConfig = "%s/variantSimulations/%s/config/replica_s%s.%s.%s.conf" \
-								% (parameters.runDIR, parameters.protein, parameters.protein,
-								   parameters.variant, parameters.simID)
+	parameters.repConfig = parameters.configDIR + "replica_s%s.%s.%s.conf" \
+								% (parameters.protein, parameters.variant, parameters.simID)
 	repConfig = open(parameters.repConfig, "w+")
 	parameters.logger.debug("Writing replica exchange config: %s", parameters.repConfig)
 	repConfig.write("set num_replicas 8\n")
@@ -692,9 +680,8 @@ def runNAMD_replicaExchange(parameters):
 	repConfig.write("set initial_pdb_file \"%s\"\n" %parameters.simPDB)
 	repConfig.write("set fit_pdb_file \"%s\"\n" %parameters.templatePDB)
 
-	parameters.jobConfig = "%s/variantSimulations/%s/config/job_s%s.%s.%s.conf" \
-								% (parameters.runDIR, parameters.protein, parameters.protein,
-								   parameters.variant, parameters.simID)
+	parameters.jobConfig = parameters.configDIR + "job_s%s.%s.%s.conf" \
+								% (parameters.protein, parameters.variant, parameters.simID)
 	jobConfig = open(parameters.jobConfig, "w+")
 
 	jobConfig.write("source %s\n" %parameters.repConfig)
@@ -775,10 +762,8 @@ def runNAMD_replicaExchange(parameters):
 	#configFile.write("reinitvels          $temperature\n\n")
 	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
 					 
-	if not os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory/" \
-						 % (parameters.runDIR, parameters.protein, parameters.variant)):
-		os.makedirs("%s/variantSimulations/%s/results/%s/trajectory/" \
-						 % (parameters.runDIR, parameters.protein, parameters.variant))
+	if not os.path.isdir(parameters.trajDIR):
+		os.makedirs(parameters.trajDIR)
 
 
 
@@ -789,7 +774,7 @@ def genSingleRunTCL(parameters):
 	parameters.logger.debug("Writing PDB converter TCL: %s", parameters.singleRunTCL)
 	pdbTCL = open(parameters.singleRunTCL,"w+")
 	pdbTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
-	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+	variantDIR = parameters.trajDIR
 
 	#loads DCD files from the results into VMD
 	parameters.logger.debug("using DCD files in %s", variantDIR)
@@ -826,10 +811,8 @@ def calcPairwiseRMSD(parameters):
 	alignmentRes = parameters.alignmentResidues
 	clusterRes = parameters.clusterResidues
 
-	if not os.path.exists("%s/variantSimulations/%s/results/%s/scaffold" % \
-						  (parameters.runDIR,parameters.protein,parameters.variant)):
-		os.makedirs("%s/variantSimulations/%s/results/%s/scaffold" % \
-					(parameters.runDIR,parameters.protein,parameters.variant))
+	if not os.path.exists(parameters.scaffoldDIR):
+		os.makedirs(parameters.scaffoldDIR)
 
 	#will not generate new TCL if previous scaffID log exists
 	scaffLOG = parameters.scaffBASE + ".log"
@@ -842,7 +825,7 @@ def calcPairwiseRMSD(parameters):
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
 	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
-	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
 	for tFile in sorted(os.listdir(variantDIR)):
 		if tFile.endswith(".dcd"):
@@ -899,10 +882,8 @@ def calcPairwiseRMSD_PDB(parameters):
 	alignmentRes = parameters.alignmentResidues
 	clusterRes = parameters.clusterResidues
 
-	if not os.path.exists("%s/variantSimulations/%s/results/%s/scaffold" % \
-						  (parameters.runDIR,parameters.protein,parameters.variant)):
-		os.makedirs("%s/variantSimulations/%s/results/%s/scaffold" % \
-					(parameters.runDIR,parameters.protein,parameters.variant))
+	if not os.path.exists(parameters.scaffoldDIR):
+		os.makedirs(parameters.scaffoldDIR)
 
 	#will not generate new TCL if previous scaffID log exists
 	scaffLOG = parameters.scaffBASE + ".log"
@@ -913,7 +894,7 @@ def calcPairwiseRMSD_PDB(parameters):
 	parameters.logger.debug("Writing RMSD matrix TCL: %s", parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
-	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
 	for trajFile in sorted(os.listdir(variantDIR)):
 		if trajFile.endswith(".pdb"):
@@ -992,10 +973,8 @@ def extractFeatureTable(parameters):
 
 	#regenerate config even if one exists to ensure new trajecories are included
 	
-	if not os.path.exists("%s/variantSimulations/%s/results/%s/scaffold" % \
-						  (parameters.runDIR,parameters.protein,parameters.variant)):
-		os.makedirs("%s/variantSimulations/%s/results/%s/scaffold" % \
-					(parameters.runDIR,parameters.protein,parameters.variant))
+	if not os.path.exists(parameters.scaffoldDIR):
+		os.makedirs(parameters.scaffoldDIR)
 
 	#will not generate new TCL if previous scaffID log exists
 	scaffLOG = parameters.scaffBASE + ".log"
@@ -1007,7 +986,7 @@ def extractFeatureTable(parameters):
 	parameters.logger.debug("Writing feature table TCL: %s", parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
-	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
 	for tFile in sorted(os.listdir(variantDIR)):
 		if tFile.endswith(".dcd"):
@@ -1147,10 +1126,8 @@ def extractFeatureTable_PDB(parameters):
 	clusterRes = parameters.clusterResidues
 
 	#regenerate config even if one exists to ensure new trajecories are included
-	scaffPath = "%s/variantSimulations/%s/results/%s/scaffold" % \
-						  (parameters.runDIR,parameters.protein,parameters.variant)
-	if not os.path.exists(scaffPath):
-		os.makedirs(scaffPath)
+	if not os.path.exists(parameters.scaffoldDIR):
+		os.makedirs(parameters.scaffoldDIR)
 
 	#will not generate new TCL if previous scaffID log exists
 	scaffLOG = parameters.scaffBASE + ".log"
@@ -1161,13 +1138,11 @@ def extractFeatureTable_PDB(parameters):
 
 	parameters.logger.debug("Writing feature table TCL: %s", parameters.scaffoldTCL)
 
-	binPath = "%s/variantSimulations/%s/bin/" % \
-						  (parameters.runDIR,parameters.protein)
-	if not os.path.exists(binPath):
-		os.makedirs(binPath)
+	if not os.path.exists(parameters.binDIR):
+		os.makedirs(parameters.binDIR)
 
 	clustTCL = open(parameters.scaffoldTCL,"w+")
-	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using PDB files in %s", variantDIR)
 	for trajFile in sorted(os.listdir(variantDIR)):
 		if trajFile.endswith(".pdb"):
@@ -1285,8 +1260,7 @@ def extractFeatureTable_PDB(parameters):
 
 def clusterTrajectory(parameters):
 	scaffLOG = parameters.scaffBASE + ".log"
-	clusterFigures = "%s/variantSimulations/%s/results/%s/scaffold/cluster_figures" % \
-											(parameters.runDIR, parameters.protein, parameters.variant)
+	clusterFigures = parameters.scaffoldDIR + "cluster_figures"
 	if not os.path.isdir(clusterFigures):
 		os.makedirs(clusterFigures)
 	if parameters.featureTableMethod:
@@ -1312,14 +1286,12 @@ def clusterTrajectory(parameters):
 def sortPDBclusters(parameters):
 
 	def colorTrajectory():
-		parameters.colorTraj = "%s/variantSimulations/%s/results/%s/scaffold/colorTraj.tcl" % \
-								   (parameters.runDIR, parameters.protein,parameters.variant)
+		parameters.colorTraj = parameters.scaffoldDIR + "colorTraj.tcl"
 		clustTCL = open(parameters.colorTraj, "w")
 		allPDBoutput = parameters.scaffBASE + ".all.pdb"
 		clustTCL.write("mol new %s waitfor all\n" %allPDBoutput)
 		clustTCL.write("set cur [atomselect top \"%s\"]\n" %parameters.clusterResidues)
-		clustTCL.write("set colorinput [open %s/variantSimulations/%s/results/%s/scaffold/cluster_by_frame.csv r]\n" % \
-											(parameters.runDIR, parameters.protein, parameters.variant))
+		clustTCL.write("set colorinput [open %s/cluster_by_frame.csv r]\n" % parameters.scaffoldDIR)
 		clustTCL.write("gets $colorinput line\n")
 		clustTCL.write("set clustMax 0\n")
 		clustTCL.write("while {[gets $colorinput line]>=0} {\n\
@@ -1338,7 +1310,7 @@ def sortPDBclusters(parameters):
 	clustTCL = open(parameters.createClustPDB,"w+")
 	parameters.logger.debug("Writing scaffold extraction TCL: %s", parameters.createClustPDB)
 	scaffLOG = parameters.scaffBASE + ".log"
-	variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
+	variantDIR = parameters.trajDIR
 	if parameters.clustPDBtraj:
 		parameters.logger.debug("Loading PDB files in %s", variantDIR)
 		for trajFile in sorted(os.listdir(variantDIR)):
@@ -1500,8 +1472,8 @@ def sortPDBclusters(parameters):
 def calcSearchSpace(parameters):
 	out = parameters.drugBindConfig
 	scaffRes = parameters.searchResidues
-	parameters.boxTCL = "%s/variantSimulations/%s/bin/%s_%s_%s_generateSearchSpace.tcl" % \
-								   (parameters.runDIR, parameters.protein, parameters.protein, parameters.variant, parameters.bindingID)
+	parameters.boxTCL = parameters.binDIR + "%s_%s_%s_generateSearchSpace.tcl" % \
+								   (parameters.protein, parameters.variant, parameters.bindingID)
 	parameters.logger.debug("Writing TCL script to calculate search space bounds: %s", parameters.boxTCL)
 	templatePDB = parameters.templatePDB
 	clustTCL = open(parameters.boxTCL,"w+")
@@ -1541,8 +1513,7 @@ def calcSearchSpace(parameters):
 		sys.exit(1)
 
 def parseADconfig(parameters):
-	paramFile = "%s/variantSimulations/%s/config/%s.autodock" % \
-						(parameters.runDIR,parameters.protein,parameters.bindingID)
+	paramFile = parameters.configDIR + "%s.autodock" %(parameters.bindingID)
 	autodockParams = open(paramFile, "r")
 	paramData = autodockParams.readlines()
 	parameters.ADsearchSpace = [paramData.pop(0).rstrip(),
@@ -1578,15 +1549,12 @@ def alignScaff(parameters, currScaff):
 	
 	clusterRes = parameters.clusterResidues
 
-	if not os.path.isdir("%s/variantSimulations/%s/bin/" \
-						 % (parameters.runDIR, parameters.protein)):
-		os.makedirs("%s/variantSimulations/%s/bin/" \
-					 % (parameters.runDIR, parameters.protein))
+	if not os.path.isdir(parameters.binDIR):
+		os.makedirs(parameters.binDIR)
 
 	
-	alignmentConfig = "%s/variantSimulations/%s/bin/%s.%s.alignStruct.TCL" \
-							% (parameters.runDIR, parameters.protein,
-							   parameters.protein, parameters.variant)
+	alignmentConfig = parameters.binDIR + "%s.%s.alignStruct.TCL" \
+							% (parameters.protein, parameters.variant)
 	parameters.logger.debug("Writing scaffold alignment TCL: %s", alignmentConfig)
 
 	alignmentTCL = open(alignmentConfig, "w+")
@@ -1654,20 +1622,18 @@ def genVinaConfig(parameters):
 #### start of program move to main()
 def runVarMDsim(parameters):
 	if parameters.newStruct:
-		if os.path.isdir("%s/variantSimulations/%s/results/%s/trajectory" % (parameters.runDIR,parameters.protein, parameters.variant)) and not parameters.clean and not parameters.genStructures:
+		if os.path.isdir(parameters.trajDIR) and not parameters.clean and not parameters.genStructures:
 			parameters.logger.error("ERROR - %s-%s is already created... resubmit with new protein/variant combination", parameters.protein, parameters.variant)
 			sys.exit(1)
 		if hasattr(parameters, "clean") and parameters.clean:
-			if os.path.isdir('%s/variantSimulations/%s/results/%s/trajectory' %(parameters.runDIR,parameters.protein, parameters.variant)):
-				shutil.rmtree('%s/variantSimulations/%s/results/%s/trajectory' %(parameters.runDIR,parameters.protein, parameters.variant))
-			os.makedirs('%s/variantSimulations/%s/results/%s/trajectory' %(parameters.runDIR,parameters.protein, parameters.variant))
-		if not os.path.isdir("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein)):
-			os.makedirs("%s/variantSimulations/%s/structures" % (parameters.runDIR,parameters.protein))
-		os.system("cp %s %s/variantSimulations/%s/structures/%s.template.pdb" \
-				  % (parameters.newStruct,parameters.runDIR,
-					 parameters.protein, parameters.protein)) 
-	if not os.path.isdir('%s/variantSimulations/%s/results/%s/trajectory' %(parameters.runDIR,parameters.protein, parameters.variant)):
-		os.makedirs('%s/variantSimulations/%s/results/%s/trajectory' %(parameters.runDIR,parameters.protein, parameters.variant))
+			if os.path.isdir(parameters.trajDIR):
+				shutil.rmtree(parameters.trajDIR)
+			os.makedirs(parameters.trajDIR)
+		if not os.path.isdir(parameters.structDIR):
+			os.makedirs(parameters.structDIR)
+		os.system("cp " + parameters.newStruct + " " + parameters.structDIR + "%s.template.pdb" %parameters.protein)
+	if not os.path.isdir(parameters.trajDIR):
+		os.makedirs(parameters.trajDIR)
 	if os.path.isfile(parameters.simPDB):
 		if os.path.isfile(parameters.simPSF):
 			parameters.logger.debug("Using %s as simulation PDB", parameters.simPDB)
@@ -1761,26 +1727,19 @@ def runVarScaffold(parameters):
 ## TODO include option to analyze trajectory clusters to determine rmsd threshold
 		for varSimResult in variantList:
 			if hasattr(parameters, "clean") and parameters.clean:
-				shutil.rmtree("%s/variantSimulations/%s/results/%s/scaffold" % \
-								   (parameters.runDIR, parameters.protein, varSimResult))
-				os.makedirs("%s/variantSimulations/%s/results/%s/scaffold" % \
-								   (parameters.runDIR, parameters.protein, varSimResult))
+				shutil.rmtree(parameters.scaffoldDIR)
+				os.makedirs(parameters.scaffoldDIR)
 			parameters.variant = varSimResult
-			parameters.simPSF = "%s/variantSimulations/%s/structures/%s.%s.psf" \
-								% (parameters.runDIR,parameters.protein,
-								   parameters.protein,parameters.variant)
-			parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genFeatureTable.tcl" % \
-									  (parameters.runDIR, parameters.protein,
-									   parameters.protein, parameters.variant, parameters.scaffID)
-			parameters.scaffBASE = "%s/variantSimulations/%s/results/%s/scaffold/%s.%s.%s" % \
-								   (parameters.runDIR, parameters.protein,parameters.variant,
-									parameters.protein, parameters.variant, parameters.scaffID)
-			parameters.featureTable = "%s/variantSimulations/%s/config/%s.%s.%s.featureTable.csv" % \
-								   (parameters.runDIR, parameters.protein,
-									parameters.protein, parameters.variant, parameters.scaffID)
-			parameters.createClustPDB = "%s/variantSimulations/%s/config/%s.%s.%s.createClustPDB.tcl" % \
-								   (parameters.runDIR, parameters.protein,
-									parameters.protein, parameters.variant, parameters.scaffID)
+			parameters.simPSF = parameters.structDIR + "%s.%s.psf" \
+								% (parameters.protein,parameters.variant)
+			parameters.scaffoldTCL =  parameters.binDIR + "%s.%s.%s.genFeatureTable.tcl" % \
+									  (parameters.protein, parameters.variant, parameters.scaffID)
+			parameters.scaffBASE = parameters.scaffoldDIR + "%s.%s.%s" % \
+								   (parameters.protein, parameters.variant, parameters.scaffID)
+			parameters.featureTable = parameters.configDIR + "%s.%s.%s.featureTable.csv" % \
+								   (parameters.protein, parameters.variant, parameters.scaffID)
+			parameters.createClustPDB = parameters.configDIR + "%s.%s.%s.createClustPDB.tcl" % \
+								   (parameters.protein, parameters.variant, parameters.scaffID)
 
 			parameters.logger.info("Generating scaffolds for %s", parameters.variant)
 			#will not generate new TCL if previous scaffID log exists
@@ -1813,9 +1772,8 @@ def runVarScaffold(parameters):
 						if not parameters.clustPDBtraj:
 							calcPairwiseRMSD(parameters)
 						else:
-							parameters.scaffoldTCL =  "%s/variantSimulations/%s/bin/%s.%s.%s.genFeatureTable.tcl" % \
-													  (parameters.runDIR, parameters.protein,
-													   parameters.protein, parameters.variant, parameters.scaffID)
+							parameters.scaffoldTCL =  parameters.binDIR + "%s.%s.%s.genFeatureTable.tcl" % \
+													  (parameters.protein, parameters.variant, parameters.scaffID)
 							calcPairwiseRMSD_PDB(parameters)	
 					else:
 						parameters.featureTable = parameters.PairwiseRMSD
@@ -1847,10 +1805,7 @@ def runDrugSearch(parameters):
 
 	#copy over the binding config with the search coords
 	#drugBindConfig is the location of the bidning config
-	parameters.vinaOutDir = "%s/variantSimulations/%s/results/%s/drugBinding/" % \
-							(parameters.runDIR,
-							 parameters.protein,
-							 parameters.variant)
+	parameters.vinaOutDir = parameters.drugBindingDIR
 	if not os.path.isdir(parameters.vinaOutDir):
 		os.makedirs(parameters.vinaOutDir)
 
@@ -1860,8 +1815,7 @@ def runDrugSearch(parameters):
 		calcSearchSpace(parameters)
 	else:
 		if parameters.newBindingConfig:
-			configDIR = "%s/variantSimulations/%s/config" % \
-						(parameters.runDIR,parameters.protein)
+			configDIR = parameters.configDIR
 			if not os.path.isdir(configDIR):
 				os.makedirs(configDIR)
 				
@@ -1884,7 +1838,7 @@ def runDrugSearch(parameters):
 	#copies input scaffolds into a scaffold folder to be read in later
 	if parameters.inputScaff:
 		parameters.logger.debug("Using input scaffolds")
-		variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
+		variantDIR = parameters.scaffoldDIR
 		#if not os.path.exists(variantDIR):
 		#    os.makedirs(variantDIR)
 		os.makedirs(variantDIR)
@@ -1930,13 +1884,10 @@ def runDrugSearch(parameters):
 	if parameters.bindingID:
 		if not os.path.isfile(parameters.templatePDB):
 			if parameters.bindingTemplate:
-				if not os.path.isdir("%s/variantSimulations/%s/structures/" %\
-								 (parameters.runDIR,parameters.protein)):
-					os.makedirs("%s/variantSimulations/%s/structures" % \
-								(parameters.runDIR,parameters.protein))
-				shutil.copyfile(parameters.bindingTemplate, "%s/variantSimulations/%s/structures/%s.template.pdb" \
-						  % (parameters.runDIR,
-							 parameters.protein, parameters.protein))
+				if not os.path.isdir(parameters.structDIR):
+					os.makedirs(parameters.structDIR)
+				shutil.copyfile(parameters.bindingTemplate, parameters.structDIR + "%s.template.pdb" \
+						  % (parameters.protein))
 			else:
 				parameters.logger.error("No binding template specified or template PDB available")
 				sys.exit(1)
@@ -1945,15 +1896,15 @@ def runDrugSearch(parameters):
 		if parameters.bindSingleVar:
 			bindingVar = [parameters.variant,]
 		else:
-			bindingVar = os.listdir(parameters.resultsDIR)
-			if "analysis" in variantList:
-				variantList.remove("analysis")
+			bindingVar = os.listdir(parameters.varsDIR)
+			if "analysis" in bindingVar:
+				bindingVar.remove("analysis")
 			
 		for var in bindingVar:
 			#regenerate pdbqt for all scaffold.pdb files
 			parameters.logger.info("Binding to variant %s", var)
 			#todo check if pdbqt exist already
-			scaffDIR = "%s/%s/scaffold/" % (parameters.resultsDIR, var)
+			scaffDIR = parameters.varsDIR + var
 			for scaffPDB in os.listdir(scaffDIR):
 				if scaffPDB.endswith("scaffold.pdb"):
 					parameters.logger.debug("Binding to scaffold: %s", scaffPDB)
@@ -2007,10 +1958,7 @@ def runDrugSearch(parameters):
 																	parameters.drugBase))
 
 							if hasattr(parameters, "numTrials") and parameters.numTrials > 1:
-								parameters.vinaConfigFolder = "%s/variantSimulations/%s/config/%s" % \
-													(parameters.runDIR,
-													 parameters.protein,
-													 parameters.vinaBase)
+								parameters.vinaConfigFolder = parameters.configDIR + parameters.vinaBase
 								if not os.path.exists(parameters.vinaConfigFolder):
 									os.makedirs(parameters.vinaConfigFolder)
 								genVinaConfig(parameters)
@@ -2020,10 +1968,7 @@ def runDrugSearch(parameters):
 									parameters.logger.debug("Vina command: %s", vinaCommand)
 									os.system(vinaCommand)
 							else:		
-								parameters.vinaConfig = "%s/variantSimulations/%s/config/%s.vina" % \
-														(parameters.runDIR,
-														 parameters.protein,
-														 parameters.vinaBase)
+								parameters.vinaConfig = parameters.configDIR + "%s.vina"
 
 								genVinaConfig(parameters)
 								vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
@@ -2088,7 +2033,7 @@ def runAnalysis(parameters):
 	parameters.logger.info("Running analysis on variants: %s", ", ".join(variantList))
 
 	for v in variantList:
-		if v not in os.listdir(parameters.resultsDIR):
+		if v not in os.listdir(parameters.varsDIR):
 			parameters.logger.error("Variant " + v + " not in results directory!")
 			sys.exit(1)
 
@@ -2099,8 +2044,8 @@ def runAnalysis(parameters):
 		analysisVars = parameters.analysisDrugLibrary + "_" + analysisVars
 	elif hasattr(parameters, "analysisDrug"):
 		analysisVars = parameters.analysisDrug + "_" + analysisVars
-	curAnalysisDir = "%s/analysis/%s/binding_structures" % \
-											(parameters.resultsDIR, analysisVars)
+	curAnalysisDir = "%s/%s/binding_structures" % \
+											(parameters.analysisDIR, analysisVars)
 	if not os.path.isdir(curAnalysisDir):
 		os.makedirs(curAnalysisDir)
 
@@ -2108,26 +2053,26 @@ def runAnalysis(parameters):
 		if not isinstance(parameters.analysisDrugLibrary, list):
 			parameters.analysisDrugLibrary = [parameters.analysisDrugLibrary]
 		for v in variantList:
-			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
+			for scaff in os.listdir(os.path.join(parameters.varsDIR, v, "results", "drugBinding")):
 				if scaff.endswith(".pdbqt"):
 					if scaff.split(".")[3] in parameters.analysisDrugLibrary:
-						path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
-						os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))	
+						path = os.path.join(parameters.varsDIR, v, "results", "drugBinding", scaff)
+						shutil.copy(path, curAnalysisDir)
 	elif hasattr(parameters, "analysisDrug"):
 		if not isinstance(parameters.analysisDrug, list):
 			parameters.analysisDrug = [parameters.analysisDrug]
 		for v in variantList:
-			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
+			for scaff in os.listdir(os.path.join(parameters.varsDIR, v, "results", "drugBinding")):
 				if scaff.endswith(".pdbqt"):
 					if scaff.split(".")[4] in parameters.analysisDrug:
-						path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
-						os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))
+						path = os.path.join(parameters.varsDIR, v, "results", "drugBinding", scaff)
+						shutil.copy(path, curAnalysisDir)
 	else:	
 		for v in variantList:
-			for scaff in os.listdir(parameters.resultsDIR + "/" + v + "/drugBinding"):
+			for scaff in os.listdir(os.path.join(parameters.varsDIR, v, "results", "drugBinding")):
 				if scaff.endswith(".pdbqt"):
-					path = parameters.resultsDIR + "/" + v + "/" + "/drugBinding/" + scaff
-					os.system("cp %s %s/%s" %(path, curAnalysisDir, scaff))	
+					path = os.path.join(parameters.varsDIR, v, "results", "drugBinding", scaff)
+					shutil.copy(path, curAnalysisDir)
 
 	files = [len(file.split(".")) for file in os.listdir(curAnalysisDir)]
 	if not len(set(files)) <= 1:
@@ -2137,13 +2082,13 @@ def runAnalysis(parameters):
 	if files[0] == 7:
 		parameters.mulTrials = True
 		parameters.logger.debug("Creating summary file")
-		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults_mulTrials.sh %s %s/analysis/%s" \
-				%(parameters.programDIR, curAnalysisDir, parameters.resultsDIR, analysisVars))
+		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults_mulTrials.sh %s %s" \
+				%(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars))
 	else:
 		parameters.mulTrials = False
 		parameters.logger.debug("Creating summary file")
-		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults.sh %s %s/analysis/%s" \
-				%(parameters.programDIR, curAnalysisDir, parameters.resultsDIR, analysisVars))
+		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults.sh %s %s" \
+				%(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars))
 
 
 	#r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations.R %s/analysis/%s/vinaSummary_%s.txt" % (parameters.programDIR, 
@@ -2151,18 +2096,18 @@ def runAnalysis(parameters):
 	#print(r_out)
 
 	if not hasattr(parameters, "customScaff") or not parameters.customScaff:
-		summary = "%s/analysis/%s/vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein)
+		summary = "%s/vinaSummary_%s.txt" % (parameters.analysisDIR + analysisVars, parameters.protein)
 		summary = open(summary, "r")
 		summary = [x.split() for x in summary.readlines()]
 
 
 		for v in variantList:
-			if len(glob.glob("%s/%s/old_scaffold/%s.%s.*.log" % (parameters.resultsDIR, v, parameters.protein, v))) == 1:
-				scaffLOG = glob.glob("%s/%s/old_scaffold/%s.%s.*.log" % (parameters.resultsDIR, v, parameters.protein, v))[0]
-				shutil.copyfile(scaffLOG, "%s/analysis/%s/%s" %(parameters.resultsDIR, analysisVars, os.path.basename(scaffLOG)))
+			if len(glob.glob("%s/%s/results/old_scaffold/%s.%s.*.log" % (parameters.varsDIR, v, parameters.protein, v))) == 1:
+				scaffLOG = glob.glob("%s/%s/results/old_scaffold/%s.%s.*.log" % (parameters.varsDIR, v, parameters.protein, v))[0]
+				shutil.copy(scaffLOG, parameters.analysisDIR + analysisVars)
 
-				if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
-					os.system("%s/snp2sim_analysis/scaffoldAnalysis/legacy_scaffold.sh %s" %(parameters.programDIR, scaffLOG))
+				#if hasattr(parameters, "legacyScaff") and parameters.legacyScaff:
+				#	os.system("%s/snp2sim_analysis/scaffoldAnalysis/legacy_scaffold.sh %s" %(parameters.programDIR, scaffLOG))
 				clustLogfile = open(scaffLOG, "r")
 				clusterMembership = [x.split(",") for x in clustLogfile.read().splitlines()]
 				total_frames = sum(len(x) for x in clusterMembership)
@@ -2176,25 +2121,25 @@ def runAnalysis(parameters):
 					if row[4] == v:
 						clust = int(re.search('(\d+)$', row[5]).group(0)) - 1
 						row.append(propMem[clust])
-			elif len(glob.glob("%s/%s/scaffold/%s.%s.*.log" % (parameters.resultsDIR, v, parameters.protein, v))) > 1:
+			elif len(glob.glob("%s/%s/results/scaffold/%s.%s.*.log" % (parameters.varsDIR, v, parameters.protein, v))) > 1:
 				parameters.logger.error("More than one scaffold log in scaffold directory")
 				sys.exit(1)
 			else:
-				parameters.logger.error("Scaffold log does not exist in %s/%s/scaffold/ does not exist" % (parameters.resultsDIR, v))
+				parameters.logger.error("Scaffold log does not exist in %s/%s/results/scaffold/ does not exist" % (parameters.varsDIR, v))
 				sys.exit(1)
 		summary[0].append("weight")
 
-		with open("%s/analysis/%s/weighted_vinaSummary_%s.txt" % (parameters.resultsDIR, analysisVars, parameters.protein),"w") as tsv:
+		with open("%s/weighted_vinaSummary_%s.txt" % (parameters.analysisDIR + analysisVars, parameters.protein),"w") as tsv:
 			csvWriter = csv.writer(tsv, delimiter='\t')
 			csvWriter.writerows(summary)
 
-		curAnalysisDir = "%s/analysis/%s/figures" % \
-												(parameters.resultsDIR, analysisVars)
+		curAnalysisDir = "%s/figures" % \
+												(parameters.analysisDIR + analysisVars)
 		if not os.path.isdir(curAnalysisDir):
 			os.makedirs(curAnalysisDir)
 
-		analysisCommand = "Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations_weighted.R %s/analysis/%s/weighted_vinaSummary_%s.txt %s" % (parameters.programDIR, 
-													parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials)
+		analysisCommand = "Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations_weighted.R %s/weighted_vinaSummary_%s.txt %s" % (parameters.programDIR, 
+													parameters.analysisDIR + analysisVars, parameters.protein, parameters.mulTrials)
 		parameters.logger.info("Running analysis script")
 		parameters.logger.debug("Executing command: %s", analysisCommand)
 		try:
@@ -2204,17 +2149,17 @@ def runAnalysis(parameters):
 			parameters.logger.error("Clustering output: \n%s", e.output.decode('utf-8'))
 			sys.exit(1)
 
-		with open("%s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars), 'w') as shiny:
-			shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/weighted_app.R %s/analysis/%s/weighted_vinaSummary_%s.txt %s" %(parameters.programDIR, parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials))
-		os.system("chmod +x %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
-		parameters.logger.info("Interactive vizualization tool: %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
+		with open("%s/interactive_visualize.sh" %(parameters.analysisDIR + analysisVars), 'w') as shiny:
+			shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/weighted_app.R %s/weighted_vinaSummary_%s.txt %s" %(parameters.programDIR, parameters.analysisDIR + analysisVars, parameters.protein, parameters.mulTrials))
+		os.system("chmod +x %s/interactive_visualize.sh" %(parameters.analysisDIR + analysisVars))
+		parameters.logger.info("Interactive vizualization tool: %s/interactive_visualize.sh" %(parameters.analysisDIR, analysisVars))
 	else:
-		curAnalysisDir = "%s/analysis/%s/figures" % \
-												(parameters.resultsDIR, analysisVars)
+		curAnalysisDir = "%s/figures" % \
+												(parameters.analysisDIR + analysisVars)
 		if not os.path.isdir(curAnalysisDir):
 			os.makedirs(curAnalysisDir)
-		analysisCommand = "Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations.R %s/analysis/%s/vinaSummary_%s.txt %s" % (parameters.programDIR, 
-													parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials)
+		analysisCommand = "Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations.R %s/vinaSummary_%s.txt %s" % (parameters.programDIR, 
+													parameters.analysisDIR + analysisVars, parameters.protein, parameters.mulTrials)
 		parameters.logger.info("Running analysis script")
 		parameters.logger.debug("Executing command: %s", analysisCommand)
 		try:
@@ -2224,10 +2169,10 @@ def runAnalysis(parameters):
 			parameters.logger.error("Clustering output: \n%s", e.output.decode('utf-8'))
 			sys.exit(1)
 
-		with open("%s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars), 'w') as shiny:
-			shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/unweighted_app.R %s/analysis/%s/vinaSummary_%s.txt %s" %(parameters.programDIR, parameters.resultsDIR, analysisVars, parameters.protein, parameters.mulTrials))
-		os.system("chmod +x %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
-		parameters.logger.info("Interactive vizualization tool: %s/analysis/%s/interactive_visualize.sh" %(parameters.resultsDIR, analysisVars))
+		with open("%s/interactive_visualize.sh" %(parameters.analysisDIR + analysisVars), 'w') as shiny:
+			shiny.write(" Rscript %s/snp2sim_analysis/vinaAnalysis/unweighted_app.R %s/vinaSummary_%s.txt %s" %(parameters.programDIR, parameters.analysisDIR + analysisVars, parameters.protein, parameters.mulTrials))
+		os.system("chmod +x %s/interactive_visualize.sh" %(parameters.analysisDIR + analysisVars))
+		parameters.logger.info("Interactive vizualization tool: %s/interactive_visualize.sh" %(parameters.analysisDIR + analysisVars))
 
 def main():
 
