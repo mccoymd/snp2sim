@@ -151,6 +151,8 @@ class argParse():
 		self.trajDIR = os.path.join(self.resultsDIR, "trajectory/")
 		self.scaffoldDIR = os.path.join(self.resultsDIR, "scaffold/")
 
+		if not os.path.isdir(self.configDIR):
+			os.makedirs(self.configDIR)
 		shutil.copy(self.config, self.configDIR)
 
 		#creates paths to all the structures used in the prep for MD sim
