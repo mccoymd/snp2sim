@@ -170,11 +170,11 @@ def initialScaff(parameters):
 def stashStruct(parameters, node):
 	structdir = parameters.structDIR
 	shutil.move(structdir, structdir[:-1] + "_%d" % (node.num - 1))
-	if not os.path.isdir(os.path.join(structdir, "structs_%d" % (node.num - 1))):
-		os.mkdir(os.path.join(structdir, "structs_%d" % (node.num - 1)))
-	for file in sorted(os.listdir(structdir)):
-		if os.path.isfile(file):
-			os.system("mv %s %s" %(os.path.join(structdir, file), os.path.join(structdir, "structs_%d" % (node.num - 1), file)))
+	#if not os.path.isdir(os.path.join(structdir, "structs_%d" % (node.num - 1))):
+		#os.mkdir(os.path.join(structdir, "structs_%d" % (node.num - 1)))
+	#for file in sorted(os.listdir(structdir)):
+		#if os.path.isfile(file):
+			#os.system("mv %s %s" %(os.path.join(structdir, file), os.path.join(structdir, "structs_%d" % (node.num - 1), file)))
 def checkStopCondition(parameters):
 	#true if stop growing leaves
 	if hasattr(parameters, "rmsdThresh"):
