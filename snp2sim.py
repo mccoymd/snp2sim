@@ -153,6 +153,9 @@ class argParse():
 
 		if not os.path.isdir(self.configDIR):
 			os.makedirs(self.configDIR)
+		if not os.path.isdir(self.binDIR):
+			os.makedirs(self.binDIR)
+		
 		shutil.copy(self.config, self.configDIR)
 
 		#creates paths to all the structures used in the prep for MD sim
