@@ -169,10 +169,10 @@ def initialScaff(parameters):
 	return curscaff
 def stashStruct(parameters, node):
 	structdir = parameters.structDIR
-	os.makedirs(os.path.join(structdir, "structs_%d" % node.num - 1))
+	os.makedirs(os.path.join(structdir, "structs_%d" % (node.num - 1)))
 	for file in sorted(os.listdir()):
 		if not os.path.isdir(file):
-			shutil.move(os.path.join(structdir, file), os.path.join(structdir, "structs_%d" % node.num - 1), file)
+			shutil.move(os.path.join(structdir, file), os.path.join(structdir, "structs_%d" % (node.num - 1)), file)
 def checkStopCondition(parameters):
 	#true if stop growing leaves
 	if hasattr(parameters, "rmsdThresh"):
