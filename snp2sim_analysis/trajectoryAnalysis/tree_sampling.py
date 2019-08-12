@@ -142,7 +142,7 @@ def initialScaff(parameters):
 		print(run_out.decode('ascii'))
 	except subprocess.CalledProcessError as e:
 		print("Error in varScaffold run %d: \n" %parameters.num)
-		print(run_out.decode('ascii'))
+		print(e.output.decode('utf-8'))
 		sys.exit(1)
 
 	os.rename(trajDir, trajDir + "_0")
