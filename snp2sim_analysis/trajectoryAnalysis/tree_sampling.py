@@ -155,8 +155,8 @@ def initialScaff(parameters):
 		print(e.output.decode('utf-8'))
 		sys.exit(1)
 
-	os.rename(trajDir, trajDir + "_0")
-	os.rename(scaffDir, scaffDir + "_0")
+	os.rename(trajDir[:-1], trajDir[:-1] + "_0")
+	os.rename(scaffDir[:-1], scaffDir[:-1] + "_0")
 	curscaff = samplingTree(parameters, 0, parameters.initialTraj, None)
 	curscaff.mark()
 	scaffDir = os.path.join(parameters.resultsDIR, "scaffold_0")
