@@ -83,11 +83,21 @@ class argParse():
 			print("varResID and varAA not specified")
 			print("Using WT structure for simulation")
 			self.variant = "wt"
-
+		self.inputDIR = self.runDIR
+		self.varsDIR = os.path.join(self.runDIR, "variantSimulations", self.protein) + "/"
+		self.analysisDIR = os.path.join(self.runDIR, "variantSimulations", self.protein, "analysis/")
+		self.runDIR = os.path.join(self.runDIR, "variantSimulations", self.protein, self.variant) + "/"
+		self.structDIR = os.path.join(self.runDIR, "structures/")
+		self.binDIR = os.path.join(self.runDIR, "bin/")
+		self.configDIR = os.path.join(self.runDIR, "config/")
+		self.resultsDIR = os.path.join(self.runDIR, "results/")
+		self.drugBindingDIR = os.path.join(self.resultsDIR, "drugBinding/")
+		self.trajDIR = os.path.join(self.resultsDIR, "trajectory/")
+		self.scaffoldDIR = os.path.join(self.resultsDIR, "scaffold/")
 
 def runInstance(parameters, node):
-	trajDir = "%s/variantSimulations/%s/results/%s/trajectory" % (parameters.runDIR, parameters.protein, parameters.variant)
-	scaffDir = "%s/variantSimulations/%s/results/%s/scaffold" % (parameters.runDIR, parameters.protein, parameters.variant)
+	trajDir = parameters.trajDIR
+	scaffDir = parameters.scaffoldDIR
 	if node.num == 0 and os.path.isdir(trajDir):
 		shutil.rmtree(trajDir)
 	if node.num == 0 and os.path.isdir(scaffDir):
@@ -126,15 +136,15 @@ def runInstance(parameters, node):
 	os.rename(scaffDir, scaffDir + "_" + str(node.num))
 
 def initialScaff(parameters):
-	trajDir = "%s/variantSimulations/%s/results/%s/trajectory" % (parameters.runDIR, parameters.protein, parameters.variant)
-	scaffDir = "%s/variantSimulations/%s/results/%s/scaffold" % (parameters.runDIR, parameters.protein, parameters.variant)
+	trajDir = parameters.trajDIR
+	scaffDir = parameters.scaffoldDIR
 	if os.path.isdir(trajDir):
 		shutil.rmtree(trajDir)
 	if os.path.isdir(scaffDir):
 		shutil.rmtree(scaffDir)
 	os.makedirs(trajDir)
 	shutil.copy(parameters.initialTraj, trajDir)
-	parameters.initialTraj = trajDir + "/" + parameters.initialTraj
+	parameters.initialTraj = trajDir + parameters.initialTraj
 	
 	scaffCommand = "python %s/../../snp2sim.py --config %s --mode varScaffold --scaffID 0" %(parameters.programDir, parameters.config)
 	try:
@@ -149,8 +159,8 @@ def initialScaff(parameters):
 	os.rename(scaffDir, scaffDir + "_0")
 	curscaff = samplingTree(parameters, 0, parameters.initialTraj, None)
 	curscaff.mark()
-	scaffDir = "%s/variantSimulations/%s/results/%s/scaffold_0" % (parameters.runDIR, parameters.protein, parameters.variant)
-	for file in os.listdir(scaffDir):
+	scaffDir = os.path.join(parameters.resultsDIR, "scaffold_0")
+	for file in sorted(os.listdir(scaffDir)):
 		if file.endswith("scaffold.pdb"):
 			parameters.num += 1
 			scaff = scaffDir + "/" + file
@@ -169,12 +179,12 @@ def checkStopCondition(parameters):
 	else:
 		return False
 def updateRMSDThresh(parameters):
-	scaffDir = "%s/variantSimulations/%s/results/%s/scaffold" % (parameters.runDIR, parameters.protein, parameters.variant)
+	scaffDir = parameters.scaffoldDIR
 	for x in range(parameters.num):
 		curRun = scaffDir + "_" + str(x)
-		for file in os.listdir(curRun):
+		for file in sorted(os.listdir(curRun)):
 			if file.endswith("scaffold.pdb"):
-				scaffList.append(curRun + "/" + file)
+				scaffList.append(os.path.join(curRun, file))
 
 	calcPairwiseRMSD(scaffList)
 	with open(parameters.matrix, "r") as f:
@@ -182,10 +192,9 @@ def updateRMSDThresh(parameters):
 		parameters.rmsdThresh = max([max(x) for x in parameters.rmsd])
 
 def calcPairwiseRMSD(parameters, pdbs):
-	parameters.matrix = "%s/variantSimulations/%s/config/%s.%s.scaffpairwiseRMSD.csv" % (parameters.runDIR, parameters.protein, parameters.protein, parameters.variant)
-	parameters.varPSF = "%s/variantSimulations/%s/structures/%s.%s.UNSOLVATED.psf" \
-							% (parameters.runDIR, parameters.protein,
-							   parameters.protein, parameters.variant)
+	parameters.matrix = parameters.configDIR + "%s.%s.scaffpairwiseRMSD.csv" % (parameters.protein, parameters.variant)
+	parameters.varPSF = parameters.structDIR + "%s.%s.UNSOLVATED.psf" \
+							% (parameters.protein, parameters.variant)
 	alignmentRes = parameters.alignmentResidues
 	clusterRes = parameters.clusterResidues
 	clustTCL = open(matrix ,"w")
@@ -263,8 +272,8 @@ def main():
 		runInstance(parameters, curscaff)
 		curscaff.mark()
 		if not checkStopCondition():
-			scaffDir = "%s/variantSimulations/%s/results/%s/scaffold_%d" % (parameters.runDIR, parameters.protein, parameters.variant, curscaff.num)
-			for file in os.listdir(scaffDir):
+			scaffDir = parameters.resultsDIR + "scaffold_%d" % curscaff.num
+			for file in sorted(os.listdir(scaffDir)):
 				if file.endswith("scaffold.pdb"):
 					parameters.num += 1
 					scaff = scaffDir + "/" + file
