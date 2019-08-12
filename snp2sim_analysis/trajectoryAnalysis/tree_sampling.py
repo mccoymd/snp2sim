@@ -103,9 +103,9 @@ def runInstance(parameters, node):
 	if node.num == 0 and os.path.isdir(scaffDir):
 		shutil.rmtree(scaffDir)
 	if os.path.isdir(trajDir):
-		shutil.move(trajDir, trajDir + "_" + str(node.num - 1))
+		os.rename(trajDir, trajDir + "_" + str(node.num - 1))
 	if os.path.isdir(scaffDir):
-		shutil.move(scaffDir, scaffDir + "_" + str(node.num - 1))
+		os.rename(scaffDir, scaffDir + "_" + str(node.num - 1))
 	stashStruct(parameters, node)
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
 		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
@@ -119,7 +119,7 @@ def runInstance(parameters, node):
 				print(line)
 			sys.exit(1)
 	else:
-		shutil.move(trajDir + "_" + str(node.num), trajDir)
+		os.rename(trajDir + "_" + str(node.num), trajDir)
 	if not os.path.isdir(scaffDir + "_" + str(node.num)):
 		scaffCommand = "python %s/../../snp2sim.py --config %s --mode varScaffold --scaffID %d" %(parameters.programDir, parameters.config, node.num)
 		try:
@@ -132,9 +132,9 @@ def runInstance(parameters, node):
 				print(line)
 			sys.exit(1)
 	else:
-		shutil.move(scaffDir + "_" + str(node.num), scaffDir)
-	shutil.move(trajDir, trajDir + "_" + str(node.num))
-	shutil.move(scaffDir, scaffDir + "_" + str(node.num))
+		os.rename(scaffDir + "_" + str(node.num), scaffDir)
+	os.rename(trajDir, trajDir + "_" + str(node.num))
+	os.rename(scaffDir, scaffDir + "_" + str(node.num))
 
 def initialScaff(parameters):
 	trajDir = parameters.trajDIR
@@ -169,10 +169,11 @@ def initialScaff(parameters):
 	return curscaff
 def stashStruct(parameters, node):
 	structdir = parameters.structDIR
-	os.makedirs(os.path.join(structdir, "structs_%d" % (node.num - 1)))
-	for file in sorted(os.listdir()):
-		if not os.path.isdir(file):
-			shutil.move(os.path.join(structdir, file), os.path.join(structdir, "structs_%d" % (node.num - 1)), file)
+	if not os.path.isdir(os.path.join(structdir, "structs_%d" % (node.num - 1))):
+		os.mkdir(os.path.join(structdir, "structs_%d" % (node.num - 1)))
+	for file in sorted(os.listdir(structdir)):
+		if os.path.isfile(file):
+			os.system("mv %s %s" %(os.path.join(structdir, file), os.path.join(structdir, "structs_%d" % (node.num - 1), file)))
 def checkStopCondition(parameters):
 	#true if stop growing leaves
 	if hasattr(parameters, "rmsdThresh"):
