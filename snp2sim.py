@@ -1333,7 +1333,7 @@ def sortPDBclusters(parameters):
 	scaffNum = 1
 	for indCluster in clusterMembership:
 		repStructIndex = int(indCluster[0])
-		clustTCL.write("set cur [atomselect top \"protein\" frame " + str(repStructIndex) + "]\n")
+		clustTCL.write("set cur [atomselect top \"protein not element H\" frame " + str(repStructIndex) + "]\n")
 		clustTCL.write("$cur writepdb " + parameters.scaffBASE + "_cl" + str(scaffNum) + ".scaffold.pdb\n" )
 		scaffNum += 1
 
