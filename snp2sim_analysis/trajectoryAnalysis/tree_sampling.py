@@ -170,6 +170,10 @@ def initialScaff(parameters):
 def stashStruct(parameters, node):
 	structdir = parameters.structDIR
 	shutil.move(structdir, structdir[:-1] + "_%d" % (node.num - 1))
+	bindir = parameters.binDIR
+	shutil.move(bindir, bindir[:-1] + "_%d" % (node.num - 1))
+	configdir = parameters.configDIR
+	shutil.move(configdir, configdir[:-1] + "_%d" % (node.num - 1))
 	#if not os.path.isdir(os.path.join(structdir, "structs_%d" % (node.num - 1))):
 		#os.mkdir(os.path.join(structdir, "structs_%d" % (node.num - 1)))
 	#for file in sorted(os.listdir(structdir)):
