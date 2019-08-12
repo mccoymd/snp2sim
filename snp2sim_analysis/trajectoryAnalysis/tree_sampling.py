@@ -103,9 +103,9 @@ def runInstance(parameters, node):
 	if node.num == 0 and os.path.isdir(scaffDir):
 		shutil.rmtree(scaffDir)
 	if os.path.isdir(trajDir):
-		os.rename(trajDir, trajDir + "_" + str(node.num - 1))
+		shutil.move(trajDir, trajDir + "_" + str(node.num - 1))
 	if os.path.isdir(scaffDir):
-		os.rename(scaffDir, scaffDir + "_" + str(node.num - 1))
+		shutil.move(scaffDir, scaffDir + "_" + str(node.num - 1))
 	stashStruct(parameters, node)
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
 		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
@@ -119,7 +119,7 @@ def runInstance(parameters, node):
 				print(line)
 			sys.exit(1)
 	else:
-		os.rename(trajDir + "_" + str(node.num), trajDir)
+		shutil.move(trajDir + "_" + str(node.num), trajDir)
 	if not os.path.isdir(scaffDir + "_" + str(node.num)):
 		scaffCommand = "python %s/../../snp2sim.py --config %s --mode varScaffold --scaffID %d" %(parameters.programDir, parameters.config, node.num)
 		try:
@@ -132,9 +132,9 @@ def runInstance(parameters, node):
 				print(line)
 			sys.exit(1)
 	else:
-		os.rename(scaffDir + "_" + str(node.num), scaffDir)
-	os.rename(trajDir, trajDir + "_" + str(node.num))
-	os.rename(scaffDir, scaffDir + "_" + str(node.num))
+		shutil.move(scaffDir + "_" + str(node.num), scaffDir)
+	shutil.move(trajDir, trajDir + "_" + str(node.num))
+	shutil.move(scaffDir, scaffDir + "_" + str(node.num))
 
 def initialScaff(parameters):
 	trajDir = parameters.trajDIR
@@ -156,8 +156,8 @@ def initialScaff(parameters):
 		print(e.output.decode('utf-8'))
 		sys.exit(1)
 
-	os.rename(trajDir[:-1], trajDir[:-1] + "_0")
-	os.rename(scaffDir[:-1], scaffDir[:-1] + "_0")
+	shutil.move(trajDir[:-1], trajDir[:-1] + "_0")
+	shutil.move(scaffDir[:-1], scaffDir[:-1] + "_0")
 	curscaff = samplingTree(parameters, 0, parameters.initialTraj, None)
 	curscaff.mark()
 	scaffDir = os.path.join(parameters.resultsDIR, "scaffold_0")
