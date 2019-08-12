@@ -106,6 +106,7 @@ def runInstance(parameters, node):
 		os.rename(trajDir, trajDir + "_" + str(node.num - 1))
 	if os.path.isdir(scaffDir):
 		os.rename(scaffDir, scaffDir + "_" + str(node.num - 1))
+	stashStruct(parameters, node)
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
 		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
 		try:
@@ -166,7 +167,12 @@ def initialScaff(parameters):
 			scaff = scaffDir + "/" + file
 			curscaff.addChild(samplingTree(parameters, parameters.num, scaff, curscaff))
 	return curscaff
-
+def stashStruct(parameters, node):
+	structdir = parameters.structDIR
+	os.makedirs(os.path.join(structdir, "structs_%d" % node.num - 1))
+	for file in sorted(os.listdir()):
+		if not os.path.isdir(file):
+			shutil.move(os.path.join(structdir, file), os.path.join(structdir, "structs_%d" % node.num - 1), file)
 def checkStopCondition(parameters):
 	#true if stop growing leaves
 	if hasattr(parameters, "rmsdThresh"):
