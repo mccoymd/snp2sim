@@ -324,6 +324,10 @@ def _parseCommandLine():
 						help="skip minimization",
 						action="store_true",
 						)
+	parser.add_argument("--implicitSolvent",
+						help="use implicit solvent instead of water",
+						action="store_true",
+						)
 
 	#varScaff options
 	parser.add_argument("--scaffID",
@@ -462,7 +466,9 @@ def genNAMDstructFiles(parameters):
 			except subprocess.CalledProcessError as e:
 				parameters.logger.error("VMD output: \n%s", e.output.decode('ascii'))
 				sys.exit(1)
-
+		if parameters.implicitSolvent:
+			parameters.logger.debug("Implicit Solvent selected, using unsolvated PDB and PSF")
+			return
 		#Solvates the structure files with a water box for simulation
 		genSolvTCL(parameters)
 		genSolvCommand = "%s -e %s" % (parameters.VMDpath, parameters.solvTCL)
@@ -564,7 +570,7 @@ def runNAMD(parameters):
 		parameters.dimY = minmax[4] - minmax[1] + 0.1
 		parameters.dimZ = minmax[5] - minmax[2] + 0.1
 
-	else:
+	elif not parameters.implicitSolvent:
 		parameters.logger.error("Boundary file does not exist")
 		parameters.logger.error("Remove solvated/ionized PDB and PSF and resubmit")
 		sys.exit(1)
@@ -572,8 +578,12 @@ def runNAMD(parameters):
 	#creates the NAMD config file and populates it with default options	
 	configFile = open(parameters.NAMDconfig,"w+")
 	parameters.logger.debug("Writing NAMD config: %s", parameters.NAMDconfig)
-	configFile.write("structure          %s\n" % parameters.simPSF)
-	configFile.write("coordinates        %s\n" % parameters.simPDB)
+	if parameters.implicitSolvent:
+		configFile.write("structure          %s\n" % parameters.varPSF)
+		configFile.write("coordinates        %s\n" % parameters.varPDB)
+	else:
+		configFile.write("structure          %s\n" % parameters.simPSF)
+		configFile.write("coordinates        %s\n" % parameters.simPDB)
 	configFile.write("set outputname     %s\n" % parameters.NAMDout)
 	configFile.write("paraTypeCharmm on\n")
 	for pFile in parameters.simParameters:
@@ -588,7 +598,10 @@ def runNAMD(parameters):
 	configFile.write("# Force-Field Parameters\n")
 	configFile.write("exclude             scaled1-4\n")
 	configFile.write("1-4scaling          1.0\n")
-	configFile.write("cutoff              12.0\n")
+	if parameters.implicitSolvent:
+		configFile.write("cutoff              12.0\n")
+	else:
+		configFile.write("cutoff              16.0\n")
 	configFile.write("switching           on\n")
 	configFile.write("switchdist          10.0\n")
 	configFile.write("pairlistdist        14.0\n")
@@ -605,17 +618,21 @@ def runNAMD(parameters):
 	configFile.write("langevinDamping     1     ;# damping coefficient (gamma) of 1/ps\n")
 	configFile.write("langevinTemp        $temperature\n")
 	configFile.write("langevinHydrogen    off    ;# don't couple langevin bath to hydrogens\n\n")
-	configFile.write("#Periodic Boundary Conditions\n")
-	configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
-	configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
-	configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
-	configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
-					 (center[0], center[1], center[2]))
-	configFile.write("margin 1.0\n\n")
-	configFile.write("wrapAll on\n\n")
-	configFile.write("# PME (for full-system periodic electrostatics)\n")
-	configFile.write("PME                 yes\n")
-	configFile.write("PMEGridSpacing      1.0\n")
+
+	if parameters.implicitSolvent:
+		configFile.write("GBIS       on\n")
+	else:
+		configFile.write("#Periodic Boundary Conditions\n")
+		configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
+		configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
+		configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
+		configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
+						 (center[0], center[1], center[2]))
+		configFile.write("margin 1.0\n\n")
+		configFile.write("wrapAll on\n\n")
+		configFile.write("# PME (for full-system periodic electrostatics)\n")
+		configFile.write("PME                 yes\n")
+		configFile.write("PMEGridSpacing      1.0\n")
 	configFile.write("# Constant Pressure Control (variable volume)\n")
 	configFile.write("useGroupPressure      yes ;# needed for rigidBonds\n")
 	configFile.write("useFlexibleCell       no\n")
