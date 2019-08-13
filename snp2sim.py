@@ -320,7 +320,10 @@ def _parseCommandLine():
 						help="only generate initial structures",
 						action="store_true",
 						)
-	
+	parser.add_argument("--noMinimize",
+						help="skip minimization",
+						action="store_true",
+						)
 
 	#varScaff options
 	parser.add_argument("--scaffID",
@@ -607,7 +610,7 @@ def runNAMD(parameters):
 	configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
 	configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
 	configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
-					 (center[0], center[1], center[0]))
+					 (center[0], center[1], center[2]))
 	configFile.write("margin 1.0\n\n")
 	configFile.write("wrapAll on\n\n")
 	configFile.write("# PME (for full-system periodic electrostatics)\n")
@@ -630,9 +633,10 @@ def runNAMD(parameters):
 	configFile.write("xstFreq             5000\n")
 	configFile.write("outputEnergies      5000\n")
 	configFile.write("outputPressure      5000\n")
-	configFile.write("# Minimization\n")
-	configFile.write("minimize            1000\n")
-	configFile.write("reinitvels          $temperature\n\n")
+	if not parameters.noMinimize:
+		configFile.write("# Minimization\n")
+		configFile.write("minimize            1000\n")
+		configFile.write("reinitvels          $temperature\n\n")
 	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
 	if not os.path.isdir(parameters.trajDIR):
 		os.makedirs(parameters.trajDIR)

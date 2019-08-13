@@ -109,6 +109,8 @@ def runInstance(parameters, node):
 	stashStruct(parameters, node)
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
 		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
+		if node.num != 0:
+			trajCommand += " --noMinimize"
 		try:
 			run_out = subprocess.check_output(trajCommand, shell = True)
 			for line in run_out.decode().split("\n"):
