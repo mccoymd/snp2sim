@@ -519,7 +519,11 @@ def genStructTCL(parameters):
 			structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
 							% (parameters.wtPSF, parameters.wtPDB, \
 								parameters.varPrefix, parameters.varResID, longAA.get(parameters.varAA)))
-	
+	structFile.write("set box [atomselect top all]\n")
+	structFile.write("set output [open %s w]\n" % parameters.solvBoundary)
+	structFile.write("puts $output [measure center $box]\n")
+	structFile.write("puts $output [measure minmax $box]\n")
+	structFile.write("close $output\n")
 	structFile.write("quit\n")
 
 #Solvates and ionizes the structure with water box
@@ -570,7 +574,7 @@ def runNAMD(parameters):
 		parameters.dimY = minmax[4] - minmax[1] + 0.1
 		parameters.dimZ = minmax[5] - minmax[2] + 0.1
 
-	elif not parameters.implicitSolvent:
+	else:
 		parameters.logger.error("Boundary file does not exist")
 		parameters.logger.error("Remove solvated/ionized PDB and PSF and resubmit")
 		sys.exit(1)
@@ -1354,10 +1358,22 @@ def sortPDBclusters(parameters):
 				dcdFile = variantDIR + trajFile
 				clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
 
+	clustTCL.write("set nf [molinfo top get numframes]\n")	
+
+	clustTCL.write("set refRes [atomselect top \""+alignmentRes+"\" frame 0]\n")
+	clustTCL.write("set refStruct [atomselect top all frame 0]\n")
+	clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
+	clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
+	clustTCL.write("  set curRes [atomselect top \""+alignmentRes+"\" frame $i]\n")
+	clustTCL.write("  set M [measure fit $curRes $refRes]\n")
+	clustTCL.write("  $curStruct move $M\n")
+	clustTCL.write("}\n")
+
 	clustLogfile = open(scaffLOG, "r")
 	clusterMembership = [x.split(",") for x in clustLogfile.readlines()]
 	clusterMembership = [x for x in clusterMembership if x]
 	scaffNum = 1
+
 	for indCluster in clusterMembership:
 		repStructIndex = int(indCluster[0])
 		clustTCL.write("set cur [atomselect top \"protein\" frame " + str(repStructIndex) + "]\n")
