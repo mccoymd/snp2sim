@@ -604,11 +604,12 @@ def runNAMD(parameters):
 	configFile.write("1-4scaling          1.0\n")
 	if parameters.implicitSolvent:
 		configFile.write("cutoff              16.0\n")
+		configFile.write("pairlistdist        16.0\n")
 	else:
 		configFile.write("cutoff              12.0\n")
+		configFile.write("pairlistdist        14.0\n")
 	configFile.write("switching           on\n")
 	configFile.write("switchdist          10.0\n")
-	configFile.write("pairlistdist        14.0\n")
 	configFile.write("\n")
 	configFile.write("# Integrator Parameters\n")
 	configFile.write("timestep            2.0  ;# 2fs/step\n")
@@ -1360,11 +1361,11 @@ def sortPDBclusters(parameters):
 
 	clustTCL.write("set nf [molinfo top get numframes]\n")	
 
-	clustTCL.write("set refRes [atomselect top \""+alignmentRes+"\" frame 0]\n")
+	clustTCL.write("set refRes [atomselect top all frame 0]\n")
 	clustTCL.write("set refStruct [atomselect top all frame 0]\n")
 	clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
 	clustTCL.write("  set curStruct [atomselect top all frame $i]\n")
-	clustTCL.write("  set curRes [atomselect top \""+alignmentRes+"\" frame $i]\n")
+	clustTCL.write("  set curRes [atomselect top all frame $i]\n")
 	clustTCL.write("  set M [measure fit $curRes $refRes]\n")
 	clustTCL.write("  $curStruct move $M\n")
 	clustTCL.write("}\n")
