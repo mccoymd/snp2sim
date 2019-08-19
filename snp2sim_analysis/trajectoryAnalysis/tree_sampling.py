@@ -97,11 +97,8 @@ def runInstance(parameters, node):
 	if os.path.isdir(scaffDir):
 		os.rename(scaffDir, scaffDir + "_" + str(node.num - 1))
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
-<<<<<<< HEAD
-		trajCommand = "python ../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.config, node.scaff, node.num)
-=======
+                trajCommand = "python ../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.config, node.scaff, node.num)
 		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
->>>>>>> 40e89b39539def61e75be1164f5f3ab1da9eb5b0
 		try:
 			run_out = subprocess.check_output(trajCommand, shell = True)
 			for line in run_out.decode().split("\n"):
@@ -114,11 +111,8 @@ def runInstance(parameters, node):
 	else:
 		os.rename(trajDir + "_" + str(node.num), trajDir)
 	if not os.path.isdir(scaffDir + "_" + str(node.num)):
-<<<<<<< HEAD
-		scaffCommand = "python ../../snp2sim.py --config %s --mode varScaffold --scaffID %d" %(parameters.config, node.num)
-=======
+                scaffCommand = "python ../../snp2sim.py --config %s --mode varScaffold --scaffID %d" %(parameters.config, node.num)
 		scaffCommand = "python %s/../../snp2sim.py --config %s --mode varScaffold --scaffID %d" %(parameters.programDir, parameters.config, node.num)
->>>>>>> 40e89b39539def61e75be1164f5f3ab1da9eb5b0
 		try:
 			run_out = subprocess.check_output(scaffCommand, shell = True)
 			for line in run_out.decode().split("\n"):
