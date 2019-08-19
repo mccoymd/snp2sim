@@ -53,7 +53,7 @@ can be specified with the `--ADTpath "path to Utilities24 directory` command lin
 The varScaffold module and varAnalysis modules use R scripts to generate visualizations and cluster MD trajectories.
 Along with the base installation of R, the following packages are necessary dependencies for the modules:
 
-varScaffold dependencies: data.table, ggplot2, plotly, htmlwidgets, fpc, markovchain
+varScaffold dependencies: data.table, ggplot2, plotly, htmlwidgets, fpc
 
 varAnalysis dependencies: shiny, ggplot2, highcharter, viridis, plotly, webshot
 
@@ -68,6 +68,70 @@ they must be specified through the command line.
 The files used to run a case study using PD-L1 are provided
 in the "example" directory.
 
+### Example File Structure
+
+```
+.
+└── variantSimulations
+    ├── Protein1
+    │   ├── Variant1
+    │   │   ├── bin
+    │   │   │   └── scripts.tcl
+    │   │   ├── config
+    │   │   │   ├── config.yaml
+    │   │   │   └── data.csv
+    │   │   ├── results
+    │   │   │   ├── drugBinding
+    │   │   │   │   ├── Protein1.Variant1.scaffoldNumber.library.drug.trial.log
+    │   │   │   │   └── Protein1.Variant1.scaffoldNumber.library.drug.trial.pdbqt
+    │   │   │   ├── scaffold
+    │   │   │   │   ├── Protein1.Variant1.scaffoldID.log
+    │   │   │   │   ├── Protein1.Variant1.scaffoldID_cl1.scaffold.pdb
+    │   │   │   │   ├── Protein1.Variant1.scaffoldID_cl2.scaffold.pdb
+    │   │   │   │   ├── Protein1.Variant1.scaffoldID_cl3.scaffold.pdb
+    │   │   │   │   ├── cluster_by_frame.csv
+    │   │   │   │   └── cluster_figures
+    │   │   │   │       ├── cluster_pca.jpg
+    │   │   │   │       ├── cluster_pca_centroids.jpg
+    │   │   │   │       └── clustering_3d.html
+    │   │   │   └── trajectory
+    │   │   │       ├── Protein1.Variant1.0.coor
+    │   │   │       ├── Protein1.Variant1.0.dcd
+    │   │   │       ├── Protein1.Variant1.0.log
+    │   │   │       ├── Protein1.Variant1.0.restart.coor
+    │   │   │       ├── Protein1.Variant1.0.restart.coor.old
+    │   │   │       ├── Protein1.Variant1.0.restart.vel
+    │   │   │       ├── Protein1.Variant1.0.restart.vel.old
+    │   │   │       ├── Protein1.Variant1.0.restart.xsc
+    │   │   │       ├── Protein1.Variant1.0.restart.xsc.old
+    │   │   │       ├── Protein1.Variant1.0.vel
+    │   │   │       ├── Protein1.Variant1.0.xsc
+    │   │   │       └── Protein1.Variant1.0.xst
+    │   │   └── structures
+    │   │       ├── Protein1.Variant1.UNSOLVATED.pdb
+    │   │       ├── Protein1.Variant1.UNSOLVATED.psf
+    │   │       ├── Protein1.Variant1.pdb
+    │   │       ├── Protein1.Variant1.psf
+    │   │       ├── Protein1.Variant1.wb.log
+    │   │       ├── Protein1.Variant1.wb.pdb
+    │   │       ├── Protein1.Variant1.wb.psf
+    │   │       └── Protein1.template.pdb
+    │   ├── Variant2
+    │   ├── Variant3
+    │   └── analysis
+    │       ├── DrugLibrary_Variant1_Variant2
+    │       └── Variant1_Variant2_Variant3
+    │           ├── binding_structures
+    │           ├── figures
+    │           │   └── drugLibrary
+    │           │       ├── default_figures.png
+    │           │       ├── heatmap.html
+    │           │       └── heatmap.png
+    │           ├── interactive_visualize.sh
+    │           └── vinaSummary_Protein1.txt
+    ├── Protein2
+    └── Protein3
+```
 ### Generating Structural Trajectories using varMDsim
 
 #### Input Files

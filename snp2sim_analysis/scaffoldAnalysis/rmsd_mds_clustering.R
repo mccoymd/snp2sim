@@ -3,7 +3,7 @@ library(ggplot2)
 library(fpc)
 library(plotly)
 library(htmlwidgets)
-library(markovchain)
+3library(markovchain)
 #Arguments: 
 #1) input feature table 
 #2) output directory for figures and data
@@ -30,14 +30,14 @@ fit <- cmdscale(as.dist(table), 25, eig = TRUE)
 pamk <- pamk(fit$points, krange = 1:10, usepam = FALSE)
 
 x <- pamk$pamobject$clustering
-trans <- markovchainFit(x)
-mc <- new("markovchain", states = trans$estimate@states, transitionMatrix = trans$estimate@transitionMatrix, name = "traj")
-mcss <- as.data.frame(cbind(trans$estimate@states,t(steadyStates(mc))))
-mcss[,1] <- as.factor(mcss[,1])
-colnames(mcss) <- c("Cluster", "Steady State Probabilities")
-pdf(paste(outputDir,"markov_model.pdf", sep = ""))
-plot(mc)
-dev.off()
+# trans <- markovchainFit(x)
+# mc <- new("markovchain", states = trans$estimate@states, transitionMatrix = trans$estimate@transitionMatrix, name = "traj")
+# mcss <- as.data.frame(cbind(trans$estimate@states,t(steadyStates(mc))))
+# mcss[,1] <- as.factor(mcss[,1])
+# colnames(mcss) <- c("Cluster", "Steady State Probabilities")
+# pdf(paste(outputDir,"markov_model.pdf", sep = ""))
+# plot(mc)
+# dev.off()
 
 plot1 <- ggplot(as.data.frame(fit$points), aes(x = V1, y = V2, color = as.factor(pamk$pamobject$clustering))) + geom_point()
 plot2 <- ggplot(as.data.frame(fit$points), aes(x=V1, y=V2, color= as.factor(pamk$pamobject$clustering))) + geom_point() + 
@@ -59,12 +59,12 @@ if (pamk$nc > 2) {
   }
 }
 
-write.csv(mcss, paste(outputDir,"state_probabilities.txt", sep = ""), row.names = FALSE, quote = FALSE)
-
-weakcluster <- which(unname(apply(trans$standardError, 1, function(x){sum(x>.1)})) > 0)
-sink(paste(outputDir,"weak_clusters.txt", sep = ""))
-cat(paste(weakcluster,collapse=","))
-sink()
+# write.csv(mcss, paste(outputDir,"state_probabilities.txt", sep = ""), row.names = FALSE, quote = FALSE)
+# 
+# weakcluster <- which(unname(apply(trans$standardError, 1, function(x){sum(x>.1)})) > 0)
+# sink(paste(outputDir,"weak_clusters.txt", sep = ""))
+# cat(paste(weakcluster,collapse=","))
+# sink()
 
 clusters <- data.frame(frame = c(1:length(pamk$pamobject$clustering)), cluster = pamk$pamobject$clustering)
 write.csv(clusters, paste(outputDir,"../cluster_by_frame.csv", sep = ""), row.names = FALSE, quote = FALSE)

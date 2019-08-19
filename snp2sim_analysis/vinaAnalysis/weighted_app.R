@@ -16,52 +16,69 @@ fulldata <- data[data$rank == 1, ]
 
 if(args[2] == "True"){
   
-  meanval <- aggregate(absAffinity ~ ligand + variant + scaffold, fulldata, mean)
+  fulldata$part_weighted_affinity <- fulldata$affinity * fulldata$weight
+  affinities <- aggregate(part_weighted_affinity ~ ligand + trial + variant, fulldata, sum)
+  colnames(affinities)[colnames(affinities) == "part_weighted_affinity"] <-
+    "weighted_affinity"
+  fulldata <- merge(fulldata, affinities, by = c("ligand", "trial", "variant"))
+  wtdata.mean <- aggregate(weighted_affinity ~ ligand, wtdata, mean)
+  wtdata <- aggregate(weighted_affinity ~ ligand, wtdata, sd)
+  
+  wtdata <- merge(wtdata, wtdata.mean, by="ligand")
+  colnames(wtdata)[colnames(wtdata) == "affinity.x"] <-
+    "wtstd"
+  colnames(wtdata)[colnames(wtdata) == "affinity.y"] <-
+    "wtmeanAffinity"
+  
+  fulldata <- merge(fulldata, wtdata, by = "ligand")
+  
+  colnames(fulldata)[colnames(fulldata) == "weighted_affinity"] <-
+    "absAffinity"
+  colnames(fulldata)[colnames(fulldata) == "wtmeanAffinity"] <-
+    "wtAffinity"
+  
+  #for distribution plots
+  fulldata$trialRelEnergy <- fulldata$absAffinity-fulldata$wtAffinity
+  distdata <- fulldata
+  error <- aggregate(absAffinity ~ ligand + variant, fulldata, sd)
+  colnames(error)[colnames(error) == "absAffinity"] <- "std"
+  fulldata <- merge(fulldata, error, by = c("ligand", "variant"))
+  meanval <- aggregate(absAffinity ~ ligand + variant, fulldata, mean)
   colnames(meanval)[colnames(meanval) == "absAffinity"] <- "meanAffinity"
   fulldata <- merge(fulldata, meanval,  by = c("ligand", "variant"))
-  fulldata <- fulldata[!duplicated(fulldata[,c("ligand", "variant", "scaffold", "meanAffinity")]),]
-  fulldata$weighted_affinity <- fulldata$meanAffinity * fulldata$weight
   
-  
-  
-  error <- aggregate(absAffinity ~ ligand + variant + scaffold, fulldata, var)
-  colnames(error)[colnames(error) == "absAffinity"] <- "var_scaff"
-  fulldata <- merge(fulldata, error, by = c("ligand", "variant", "scaffold"))
-  fulldata <- fulldata[!duplicated(fulldata[,c("ligand", "variant", "scaffold", "var_scaff")]),]
-  fulldata$var_scaff <- fulldata$var_scaff * fulldata$weight^2
-  
-  std <- aggregate(var_scaff ~ ligand + variant, fulldata, sum)
-  colnames(std)[colnames(std) == "var_scaff"] <- "std_dev"
-  std$std_dev <- sqrt(std$std_dev)
-  fulldata <- merge(fulldata, std, by = c("ligand", "variant"))
-  fulldata <- fulldata[!duplicated(fulldata[,c("ligand", "variant", "std_dev")]),]
+  fulldata <- fulldata[!duplicated(fulldata[,c("ligand", "variant", "meanAffinity")]),]
+  fulldata$relEnergy <- fulldata$meanAffinity-fulldata$wtAffinity
+  fulldata$varStd <- fulldata$std
+  fulldata$std <- fulldata$wtstd +fulldata$std
+  fulldata$perChange <- (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
+  fulldata$perSD <- (fulldata$std / abs(fulldata$wtAffinity)) * 100
+  fulldata <- subset(fulldata, select = -c(rank, rmsd_ub, rmsd_lb, absAffinity, scaffold, trial))
   
 } else {
   fulldata$weighted_affinity <- fulldata$affinity * fulldata$weight
+  wtdata <- subset(fulldata, fulldata$variant == "wt")
+  fulldata <- fulldata[fulldata$variant != "wt",]
+  
+  #wtdata <- aggregate(affinity ~ ligand, wtdata, min)
+  wtdata <- aggregate(weighted_affinity ~ ligand, wtdata, sum)
+  colnames(wtdata)[colnames(wtdata) == "weighted_affinity"] <-
+    "wtAffinity"
+  weighted_avgs <- aggregate(weighted_affinity ~ ligand + variant, fulldata, sum)
+  
+  fulldata <- subset(fulldata, select = -c(rank, rmsd_ub, rmsd_lb, weighted_affinity, scaffold, affinity))
+  
+  fulldata <- merge(fulldata, wtdata, by = "ligand")
+  fulldata <- merge(fulldata, weighted_avgs, by = c("ligand","variant"))
+  
+  fulldata <- unique(fulldata)
+  
+  fulldata$relEnergy <- fulldata$weighted_affinity - fulldata$wtAffinity
+  
+  fulldata$perChange <-
+    (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
 }
 
-wtdata <- subset(fulldata, fulldata$variant == "wt")
-fulldata <- fulldata[fulldata$variant != "wt",]
-
-#wtdata <- aggregate(affinity ~ ligand, wtdata, min)
-wtdata <- aggregate(weighted_affinity ~ ligand, wtdata, sum)
-colnames(wtdata)[colnames(wtdata) == "weighted_affinity"] <-
-  "wtAffinity"
-weighted_avgs <- aggregate(weighted_affinity ~ ligand + variant, fulldata, sum)
-
-fulldata <- subset(fulldata, select = -c(rank, rmsd_ub, rmsd_lb, weighted_affinity, scaffold, affinity))
-
-fulldata <- merge(fulldata, wtdata, by = "ligand")
-fulldata <- merge(fulldata, weighted_avgs, by = c("ligand","variant"))
-
-fulldata <- unique(fulldata)
-
-fulldata$relEnergy <- fulldata$weighted_affinity - fulldata$wtAffinity
-
-fulldata$perChange <-
-  (fulldata$relEnergy / abs(fulldata$wtAffinity)) * 100
-
-fulltable <- fulldata
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   
@@ -145,12 +162,16 @@ server <- function(input, output) {
   
   
   output$heat <- renderHighchart({
-    h <- hchart(fulldata, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
-      hc_colorAxis(stops = color_stops(40, inferno(40))) %>% 
+    part <- subset(fulldata, fulldata$variant %in% input$bargene & fulldata$ligand %in% input$barlig)
+    minval <- min(part$perChange)
+    maxval <- max(part$perChange)
+    maxthresh <- max(c(abs(minval),  abs(maxval)))
+    hchart(part, "heatmap", hcaes(x = variant, y = ligand, value = perChange)) %>%
+      hc_colorAxis(stops = color_stops(4, inferno(4)), min = -1*maxthresh, max = maxthresh) %>% 
       hc_title(text = paste0("Binding energy of small molecules in ",unique(fulldata$protein)[1]," variants"))
   })
   output$plot <- renderPlotly({
-    part <- fulldata[fulldata$variant %in% input$bargene & fulldata$ligand %in% input$barlig,]
+    part <- subset(fulldata, fulldata$variant %in% input$bargene & fulldata$ligand %in% input$barlig)
     if (input$fill != "None"){
       plot <- ggplot(part, aes_string(input$x, input$y, fill = input$fill)) +
         theme_light() +
