@@ -462,9 +462,6 @@ def genNAMDstructFiles(parameters):
 			except subprocess.CalledProcessError as e:
 				parameters.logger.error("VMD output: \n%s", e.output.decode('ascii'))
 				sys.exit(1)
-		if parameters.implicitSolvent:
-			parameters.logger.debug("Implicit Solvent selected, using unsolvated PDB and PSF")
-			return
 		#Solvates the structure files with a water box for simulation
 		genSolvTCL(parameters)
 		genSolvCommand = "%s -e %s" % (parameters.VMDpath, parameters.solvTCL)
@@ -1316,9 +1313,9 @@ def sortPDBclusters(parameters):
 						}\n")
 		
 
-		clustTCL.write("mol modcolor 0 0 User\n")
-		clustTCL.write("mol colupdate 0 0 1\n")
-		clustTCL.write("mol scaleminmax 0 0 0.0 $clustMax\n")
+		clustTCL.write("mol modcolor 0 top User\n")
+		clustTCL.write("mol colupdate 0 top 1\n")
+		clustTCL.write("mol scaleminmax top 0 0.0 $clustMax\n")
 
 	clustTCL = open(parameters.createClustPDB,"w+")
 	parameters.logger.debug("Writing scaffold extraction TCL: %s", parameters.createClustPDB)
@@ -1332,7 +1329,7 @@ def sortPDBclusters(parameters):
 				clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 	else:
 		parameters.logger.debug("Loading DCD files in %s" % variantDIR)
-		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
 		for trajFile in sorted(os.listdir(variantDIR)):
 			if trajFile.endswith(".dcd"):
 				dcdFile = variantDIR + trajFile
