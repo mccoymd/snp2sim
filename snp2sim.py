@@ -1329,7 +1329,7 @@ def sortPDBclusters(parameters):
 				clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 	else:
 		parameters.logger.debug("Loading DCD files in %s" % variantDIR)
-		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 		for trajFile in sorted(os.listdir(variantDIR)):
 			if trajFile.endswith(".dcd"):
 				dcdFile = variantDIR + trajFile
