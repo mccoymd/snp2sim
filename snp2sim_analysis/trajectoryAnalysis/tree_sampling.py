@@ -87,13 +87,13 @@ class argParse():
 		self.varsDIR = os.path.join(self.runDIR, "variantSimulations", self.protein) + "/"
 		self.analysisDIR = os.path.join(self.runDIR, "variantSimulations", self.protein, "analysis/")
 		self.runDIR = os.path.join(self.runDIR, "variantSimulations", self.protein, self.variant) + "/"
-		self.structDIR = os.path.join(self.runDIR, "structures/")
-		self.binDIR = os.path.join(self.runDIR, "bin/")
-		self.configDIR = os.path.join(self.runDIR, "config/")
+		self.structDIR = os.path.join(self.runDIR, "structures")
+		self.binDIR = os.path.join(self.runDIR, "bin")
+		self.configDIR = os.path.join(self.runDIR, "config")
 		self.resultsDIR = os.path.join(self.runDIR, "results/")
-		self.drugBindingDIR = os.path.join(self.resultsDIR, "drugBinding/")
-		self.trajDIR = os.path.join(self.resultsDIR, "trajectory/")
-		self.scaffoldDIR = os.path.join(self.resultsDIR, "scaffold/")
+		self.drugBindingDIR = os.path.join(self.resultsDIR, "drugBinding")
+		self.trajDIR = os.path.join(self.resultsDIR, "trajectory")
+		self.scaffoldDIR = os.path.join(self.resultsDIR, "scaffold")
 
 def runInstance(parameters, node):
 	trajDir = parameters.trajDIR
@@ -156,8 +156,8 @@ def initialScaff(parameters):
 		print(e.output.decode('utf-8'))
 		sys.exit(1)
 
-	shutil.move(trajDir[:-1], trajDir[:-1] + "_0")
-	shutil.move(scaffDir[:-1], scaffDir[:-1] + "_0")
+	shutil.move(trajDir, trajDir + "_0")
+	shutil.move(scaffDir, scaffDir + "_0")
 	curscaff = samplingTree(parameters, 0, parameters.initialTraj, None)
 	curscaff.mark()
 	scaffDir = os.path.join(parameters.resultsDIR, "scaffold_0")
