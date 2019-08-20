@@ -130,8 +130,12 @@ class argParse():
 
 		#Points to the supplemental files needed to create the starter files for the MD sim.
 		self.simTopology = ("%s/simParameters/top_all36_prot.rtf" % self.programDIR,
+							"%s/simParameters/top_all36_na.rtf" % self.programDIR,
+							"%s/simParameters/toppar_all36_prot_na_combined.str" % self.programDIR,
 								  "%s/simParameters/toppar_water_ions_namd.str" % self.programDIR)
 		self.simParameters = ("%s/simParameters/par_all36_prot.prm" % self.programDIR,
+							"%s/simParameters/par_all36_na.prm" % self.programDIR,
+							"%s/simParameters/toppar_all36_prot_na_combined.str" % self.programDIR,
 									"%s/simParameters/toppar_water_ions_namd.str" %self.programDIR)
 
 		#by default uses all cores
@@ -492,6 +496,7 @@ def genStructTCL(parameters):
 	for tFile in parameters.simTopology:
 		structFile.write("topology %s\n" % tFile)
 	structFile.write("pdbalias residue HIS HSE\n")
+	structFile.write("pdbalias residue PTR TYR\n")
 	structFile.write("segment PROT {pdb %s}\n" % parameters.templatePDB)
 	structFile.write("coordpdb %s PROT\n" % parameters.templatePDB)
 	structFile.write("guesscoord\n")
