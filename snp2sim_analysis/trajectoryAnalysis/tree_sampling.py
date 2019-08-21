@@ -186,12 +186,13 @@ def checkStopCondition(parameters):
 	else:
 		oldthresh = 0
 	updateRMSDThresh(parameters)
-	if parameters.rmsdThresh == oldthresh:
+	if not parameters.rmsdThresh > oldthresh:
 		return True
 	else:
 		return False
 def updateRMSDThresh(parameters):
 	scaffDir = parameters.scaffoldDIR
+	scaffList = []
 	for x in range(parameters.num):
 		curRun = scaffDir + "_" + str(x)
 		for file in sorted(os.listdir(curRun)):
@@ -200,7 +201,7 @@ def updateRMSDThresh(parameters):
 
 	calcPairwiseRMSD(scaffList)
 	with open(parameters.matrix, "r") as f:
-		parameters.rmsd = [list(map(int, x.split(','))) for x in f.readlines()]
+		parameters.rmsd = [list(map(float, x.split(','))) for x in f.readlines()]
 		parameters.rmsdThresh = max([max(x) for x in parameters.rmsd])
 
 def calcPairwiseRMSD(parameters, pdbs):
@@ -209,10 +210,18 @@ def calcPairwiseRMSD(parameters, pdbs):
 							% (parameters.protein, parameters.variant)
 	alignmentRes = parameters.alignmentResidues
 	clusterRes = parameters.clusterResidues
+
+	parameters.scaffolds = parameters.configDIR + "%s.%s.all_scaffolds.csv" % (parameters.protein, parameters.variant)
+	with open(parameters.scaffolds, 'w') as out:
+		for file in pdbs:
+			with open(file) as infile:
+				for line in infile:
+					out.write(line)
+
 	clustTCL = open(matrix ,"w")
-	clustTCL.write("package require csv\n")
-	for scaff in pdbs:
-		clustTCL.write("mol addfile %s waitfor all\n" % scaff)
+	#clustTCL.write("package require csv\n")
+	
+	clustTCL.write("mol addfile %s waitfor all\n" % parameters.scaffolds)
 
 	#aligns the frames to the first frame
 	clustTCL.write("set nf [molinfo top get numframes]\n")
@@ -231,13 +240,14 @@ def calcPairwiseRMSD(parameters, pdbs):
 
 	#calculates RMSD and writes to a file
 	clustTCL.write("for {set i 0} {$i < $nf} {incr i} {\n")
-	clustTCL.write("set row {}\n")
-	clustTCL.write("for {set j 0} {$j < $nf} {incr j} {\n")
+	clustTCL.write("set M 0\n")
+	clustTCL.write("puts -nonewline $output \"$M\" \n")
 	clustTCL.write("$refclustRes frame $i \n")
+	clustTCL.write("for {set j [expr $i + 1]} {$j < $nf} {incr j} {\n")
 	clustTCL.write("$back frame $j \n")
 	clustTCL.write("set M [measure rmsd $back $refclustRes] \n")
-	clustTCL.write("lappend row $M}\n")
-	clustTCL.write("puts $output [::csv::join $row]}\n")
+	clustTCL.write("puts -nonewline $output \",$M\"}\n")
+	clustTCL.write("puts $output \"\"}\n")
 
 	clustTCL.write("close $output\n")
 	clustTCL.write("quit")
@@ -291,7 +301,7 @@ def main():
 					scaff = scaffDir + "/" + file
 					curscaff.addChild(samplingTree(parameters, parameters.num, scaff, curscaff))
 		curList = samplingNodes(parameters, top)
-
+	print(top)
 	print("Finished with sampling!")
 
 
