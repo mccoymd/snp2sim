@@ -259,20 +259,16 @@ def calcPairwiseRMSD(parameters, pdbs):
 
 def samplingNodes(parameters, tree):
 	if not tree.child:
-		if tree.extend:
-			return tree
-		else:
-			return None
+		return [tree]
 	bigList = []
-	cur = [samplingNodes(parameters, x) for x in tree.child]
-	for l in cur:
-		if l:
-			bigList.append(l)
-	if tree.extend:
-		bigList.append(tree)
-		bigList.sort(key=lambda x: x.num)
-	else:
-		bigList.sort(key=lambda x: x.num)
+	for x in tree.child:
+		for node in samplingNodes(parameters, x):
+			if node:
+				bigList.append(node)
+	bigList.append(tree)
+	bigList = list(set(bigList))
+	bigList.sort(key=lambda x: x.num)
+	bigList = list(filter(lambda x: x.extend, bigList))
 	return bigList
 
 def main():
