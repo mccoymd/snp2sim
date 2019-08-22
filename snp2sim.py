@@ -328,6 +328,10 @@ def _parseCommandLine():
 						help="skip minimization",
 						action="store_true",
 						)
+	parser.add_argument("--implicitSolvent",
+						help="use implicit solvent instead of water",
+						action="store_true",
+						)
 
 	#varScaff options
 	parser.add_argument("--scaffID",
@@ -466,6 +470,9 @@ def genNAMDstructFiles(parameters):
 			except subprocess.CalledProcessError as e:
 				parameters.logger.error("VMD output: \n%s", e.output.decode('ascii'))
 				sys.exit(1)
+		if parameters.implicitSolvent:
+			parameters.logger.debug("Implicit Solvent selected, using unsolvated PDB and PSF")
+			return
 		#Solvates the structure files with a water box for simulation
 		genSolvTCL(parameters)
 		genSolvCommand = "%s -e %s" % (parameters.VMDpath, parameters.solvTCL)
@@ -517,6 +524,12 @@ def genStructTCL(parameters):
 			structFile.write("mutator -psf %s -pdb %s -o %s -ressegname PROT -resid %s -mut %s\n" \
 							% (parameters.wtPSF, parameters.wtPDB, \
 								parameters.varPrefix, parameters.varResID, longAA.get(parameters.varAA)))
+	structFile.write("mol new %s\n" %parameters.varPDB)
+	structFile.write("set box [atomselect top all]\n")
+	structFile.write("set output [open %s w]\n" % parameters.solvBoundary)
+	structFile.write("puts $output [measure center $box]\n")
+	structFile.write("puts $output [measure minmax $box]\n")
+	structFile.write("close $output\n")
 	structFile.write("quit\n")
 
 #Solvates and ionizes the structure with water box
@@ -575,8 +588,12 @@ def runNAMD(parameters):
 	#creates the NAMD config file and populates it with default options	
 	configFile = open(parameters.NAMDconfig,"w+")
 	parameters.logger.debug("Writing NAMD config: %s", parameters.NAMDconfig)
-	configFile.write("structure          %s\n" % parameters.simPSF)
-	configFile.write("coordinates        %s\n" % parameters.simPDB)
+	if parameters.implicitSolvent:
+		configFile.write("structure          %s\n" % parameters.varPSF)
+		configFile.write("coordinates        %s\n" % parameters.varPDB)
+	else:
+		configFile.write("structure          %s\n" % parameters.simPSF)
+		configFile.write("coordinates        %s\n" % parameters.simPDB)
 	configFile.write("set outputname     %s\n" % parameters.NAMDout)
 	configFile.write("paraTypeCharmm on\n")
 	for pFile in parameters.simParameters:
@@ -591,8 +608,12 @@ def runNAMD(parameters):
 	configFile.write("# Force-Field Parameters\n")
 	configFile.write("exclude             scaled1-4\n")
 	configFile.write("1-4scaling          1.0\n")
-	configFile.write("cutoff              12.0\n")
-	configFile.write("pairlistdist        14.0\n")
+	if parameters.implicitSolvent:
+		configFile.write("cutoff              16.0\n")
+		configFile.write("pairlistdist        16.0\n")
+	else:
+		configFile.write("cutoff              12.0\n")
+		configFile.write("pairlistdist        14.0\n")
 	configFile.write("switching           on\n")
 	configFile.write("switchdist          10.0\n")
 	configFile.write("\n")
@@ -616,9 +637,12 @@ def runNAMD(parameters):
 	configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
 						(center[0], center[1], center[2]))
 	configFile.write("margin 1.0\n\n")
-	configFile.write("# PME (for full-system periodic electrostatics)\n")
-	configFile.write("PME                 yes\n")
-	configFile.write("PMEGridSpacing      1.0\n")
+	if parameters.implicitSolvent:
+		configFile.write("GBIS       on\n")
+	else:
+		configFile.write("# PME (for full-system periodic electrostatics)\n")
+		configFile.write("PME                 yes\n")
+		configFile.write("PMEGridSpacing      1.0\n")
 	configFile.write("wrapAll on\n\n")
 	configFile.write("# Constant Pressure Control (variable volume)\n")
 	configFile.write("useGroupPressure      yes ;# needed for rigidBonds\n")
