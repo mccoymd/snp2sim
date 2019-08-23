@@ -613,7 +613,7 @@ def runNAMD(parameters):
 	configFile.write("\n")
 	if parameters.implicitSolvent:
 		configFile.write("# Implicit Solvant Parameters\n")
-		configFile.write("gbis                scaled1-4\n")
+		configFile.write("gbis                on\n")
 		configFile.write("alphaCutoff         12.0\n")
 		configFile.write("ionConcentration    0.3\n")
 		configFile.write("\n")
