@@ -106,7 +106,8 @@ def runInstance(parameters, node):
 		os.rename(trajDir, trajDir + "_" + str(node.num - 1))
 	if os.path.isdir(scaffDir):
 		os.rename(scaffDir, scaffDir + "_" + str(node.num - 1))
-	stashStruct(parameters, node)
+	if node.num != 0:
+		stashStruct(parameters, node)
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
 		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
 		try:
@@ -169,11 +170,14 @@ def initialScaff(parameters):
 	return curscaff
 def stashStruct(parameters, node):
 	structdir = parameters.structDIR
-	shutil.move(structdir, structdir + "_%d" % (node.num - 1))
+	if os.path.isdir(structdir):
+		shutil.move(structdir, structdir + "_%d" % (node.num - 1))
 	bindir = parameters.binDIR
-	shutil.move(bindir, bindir + "_%d" % (node.num - 1))
+	if os.path.isdir(bindir):
+		shutil.move(bindir, bindir + "_%d" % (node.num - 1))
 	configdir = parameters.configDIR
-	shutil.move(configdir, configdir + "_%d" % (node.num - 1))
+	if os.path.isdir(configdir):
+		shutil.move(configdir, configdir + "_%d" % (node.num - 1))
 	#if not os.path.isdir(os.path.join(structdir, "structs_%d" % (node.num - 1))):
 		#os.mkdir(os.path.join(structdir, "structs_%d" % (node.num - 1)))
 	#for file in sorted(os.listdir(structdir)):
