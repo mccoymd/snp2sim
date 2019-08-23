@@ -169,11 +169,11 @@ def initialScaff(parameters):
 	return curscaff
 def stashStruct(parameters, node):
 	structdir = parameters.structDIR
-	shutil.move(structdir, structdir[:-1] + "_%d" % (node.num - 1))
+	shutil.move(structdir, structdir + "_%d" % (node.num - 1))
 	bindir = parameters.binDIR
-	shutil.move(bindir, bindir[:-1] + "_%d" % (node.num - 1))
+	shutil.move(bindir, bindir + "_%d" % (node.num - 1))
 	configdir = parameters.configDIR
-	shutil.move(configdir, configdir[:-1] + "_%d" % (node.num - 1))
+	shutil.move(configdir, configdir + "_%d" % (node.num - 1))
 	#if not os.path.isdir(os.path.join(structdir, "structs_%d" % (node.num - 1))):
 		#os.mkdir(os.path.join(structdir, "structs_%d" % (node.num - 1)))
 	#for file in sorted(os.listdir(structdir)):
@@ -259,20 +259,16 @@ def calcPairwiseRMSD(parameters, pdbs):
 
 def samplingNodes(parameters, tree):
 	if not tree.child:
-		if tree.extend:
-			return tree
-		else:
-			return None
+		return [tree]
 	bigList = []
-	cur = [samplingNodes(parameters, x) for x in tree.child]
-	for l in cur:
-		if l:
-			bigList.append(l)
-	if tree.extend:
-		bigList.append(tree)
-		bigList.sort(key=lambda x: x.num)
-	else:
-		bigList.sort(key=lambda x: x.num)
+	for x in tree.child:
+		for node in samplingNodes(parameters, x):
+			if node:
+				bigList.append(node)
+	bigList.append(tree)
+	bigList = list(set(bigList))
+	bigList.sort(key=lambda x: x.num)
+	bigList = list(filter(lambda x: x.extend, bigList))
 	return bigList
 
 def main():
