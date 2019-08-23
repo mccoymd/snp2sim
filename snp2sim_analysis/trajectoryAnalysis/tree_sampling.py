@@ -106,7 +106,8 @@ def runInstance(parameters, node):
 		os.rename(trajDir, trajDir + "_" + str(node.num - 1))
 	if os.path.isdir(scaffDir):
 		os.rename(scaffDir, scaffDir + "_" + str(node.num - 1))
-	stashStruct(parameters, node)
+	if node.num != 0:
+		stashStruct(parameters, node)
 	if not os.path.isdir(trajDir + "_" + str(node.num)):
 		trajCommand = "python %s/../../snp2sim.py --config %s --mode varMDsim --newStruct %s --simID %d" %(parameters.programDir, parameters.config, node.scaff, node.num)
 		try:
