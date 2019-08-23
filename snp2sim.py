@@ -649,7 +649,7 @@ def runNAMD(parameters):
 		configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
 		configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
 							(center[0], center[1], center[2]))
-	configFile.write("margin                %s\n\n" % parameters.margin)
+	configFile.write("margin              %s\n\n" % parameters.margin)
 	if not parameters.implicitSolvent:
 		configFile.write("# PME (for full-system periodic electrostatics)\n")
 		configFile.write("PME                 yes\n")
