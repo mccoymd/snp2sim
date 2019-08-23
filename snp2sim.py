@@ -642,7 +642,7 @@ def runNAMD(parameters):
 	configFile.write("langevinDamping     1     ;# damping coefficient (gamma) of 1/ps\n")
 	configFile.write("langevinTemp        $temperature\n")
 	configFile.write("langevinHydrogen    off    ;# don't couple langevin bath to hydrogens\n\n")
-    if not parameters.implicitSolvent:
+	if not parameters.implicitSolvent:
 		configFile.write("#Periodic Boundary Conditions\n")
 		configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
 		configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
