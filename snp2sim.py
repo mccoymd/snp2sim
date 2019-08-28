@@ -874,7 +874,10 @@ def calcPairwiseRMSD(parameters):
 	parameters.logger.debug("Writing RMSD matrix TCL: %s", parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+	if parameters.implicitSolvent:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+	else:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
 	for tFile in sorted(os.listdir(variantDIR)):
