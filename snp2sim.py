@@ -1038,7 +1038,10 @@ def extractFeatureTable(parameters):
 		
 	parameters.logger.debug("Writing feature table TCL: %s", parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+	if parameters.implicitSolvent:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+	else:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
 	for tFile in sorted(os.listdir(variantDIR)):
@@ -1372,7 +1375,10 @@ def sortPDBclusters(parameters):
 				clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 	else:
 		parameters.logger.debug("Loading DCD files in %s" % variantDIR)
-		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+		if parameters.implicitSolvent:
+			clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+		else:
+			clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 		for trajFile in sorted(os.listdir(variantDIR)):
 			if trajFile.endswith(".dcd"):
 				dcdFile = variantDIR + trajFile
