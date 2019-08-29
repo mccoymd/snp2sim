@@ -130,8 +130,12 @@ class argParse():
 
 		#Points to the supplemental files needed to create the starter files for the MD sim.
 		self.simTopology = ("%s/simParameters/top_all36_prot.rtf" % self.programDIR,
+							"%s/simParameters/top_all36_na.rtf" % self.programDIR,
+							"%s/simParameters/toppar_all36_prot_na_combined.str" % self.programDIR,
 								  "%s/simParameters/toppar_water_ions_namd.str" % self.programDIR)
 		self.simParameters = ("%s/simParameters/par_all36_prot.prm" % self.programDIR,
+							"%s/simParameters/par_all36_na.prm" % self.programDIR,
+							"%s/simParameters/toppar_all36_prot_na_combined.str" % self.programDIR,
 									"%s/simParameters/toppar_water_ions_namd.str" %self.programDIR)
 
 		#by default uses all cores
@@ -328,6 +332,12 @@ def _parseCommandLine():
 						help="use implicit solvent instead of water",
 						action="store_true",
 						)
+	parser.add_argument("--margin",
+						help="value of margin to use in NAMD simulation ",
+						action="store",
+						default="1.0",
+						type=str,
+						)
 
 	#varScaff options
 	parser.add_argument("--scaffID",
@@ -499,6 +509,7 @@ def genStructTCL(parameters):
 	for tFile in parameters.simTopology:
 		structFile.write("topology %s\n" % tFile)
 	structFile.write("pdbalias residue HIS HSE\n")
+	structFile.write("pdbalias residue PTR TYR\n")
 	structFile.write("segment PROT {pdb %s}\n" % parameters.templatePDB)
 	structFile.write("coordpdb %s PROT\n" % parameters.templatePDB)
 	structFile.write("guesscoord\n")
@@ -600,6 +611,13 @@ def runNAMD(parameters):
 	configFile.write("temperature         $temperature\n")
 	configFile.write("\n")
 	configFile.write("\n")
+	if parameters.implicitSolvent:
+		configFile.write("# Implicit Solvant Parameters\n")
+		configFile.write("gbis                on\n")
+		configFile.write("alphaCutoff         12.0\n")
+		configFile.write("ionConcentration    0.3\n")
+		configFile.write("\n")
+		configFile.write("\n")
 	configFile.write("# Force-Field Parameters\n")
 	configFile.write("exclude             scaled1-4\n")
 	configFile.write("1-4scaling          1.0\n")
@@ -624,30 +642,28 @@ def runNAMD(parameters):
 	configFile.write("langevinDamping     1     ;# damping coefficient (gamma) of 1/ps\n")
 	configFile.write("langevinTemp        $temperature\n")
 	configFile.write("langevinHydrogen    off    ;# don't couple langevin bath to hydrogens\n\n")
-    
-	configFile.write("#Periodic Boundary Conditions\n")
-	configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
-	configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
-	configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
-	configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
-						(center[0], center[1], center[2]))
-	configFile.write("margin 1.0\n\n")
-	if parameters.implicitSolvent:
-		configFile.write("GBIS       on\n")
-	else:
+	if not parameters.implicitSolvent:
+		configFile.write("#Periodic Boundary Conditions\n")
+		configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
+		configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
+		configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
+		configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
+							(center[0], center[1], center[2]))
+	configFile.write("margin              %s\n\n" % parameters.margin)
+	if not parameters.implicitSolvent:
 		configFile.write("# PME (for full-system periodic electrostatics)\n")
 		configFile.write("PME                 yes\n")
 		configFile.write("PMEGridSpacing      1.0\n")
-	configFile.write("wrapAll on\n\n")
-	configFile.write("# Constant Pressure Control (variable volume)\n")
-	configFile.write("useGroupPressure      yes ;# needed for rigidBonds\n")
-	configFile.write("useFlexibleCell       no\n")
-	configFile.write("useConstantArea       no\n")
-	configFile.write("langevinPiston        on\n")
-	configFile.write("langevinPistonTarget  1.01325 ;#  in bar -> 1 atm\n")
-	configFile.write("langevinPistonPeriod  100.0\n")
-	configFile.write("langevinPistonDecay   50.0\n")
-	configFile.write("langevinPistonTemp    $temperature\n")
+		configFile.write("wrapAll on\n\n")
+		configFile.write("# Constant Pressure Control (variable volume)\n")
+		configFile.write("useGroupPressure      yes ;# needed for rigidBonds\n")
+		configFile.write("useFlexibleCell       no\n")
+		configFile.write("useConstantArea       no\n")
+		configFile.write("langevinPiston        on\n")
+		configFile.write("langevinPistonTarget  1.01325 ;#  in bar -> 1 atm\n")
+		configFile.write("langevinPistonPeriod  100.0\n")
+		configFile.write("langevinPistonDecay   50.0\n")
+		configFile.write("langevinPistonTemp    $temperature\n")
 	configFile.write("# Output\n")
 	configFile.write("outputName          $outputname\n")
 	#todo - configure output options i.e. freq of output)
@@ -858,7 +874,10 @@ def calcPairwiseRMSD(parameters):
 	parameters.logger.debug("Writing RMSD matrix TCL: %s", parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
 	clustTCL.write("package require csv\n")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+	if parameters.implicitSolvent:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+	else:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
 	for tFile in sorted(os.listdir(variantDIR)):
@@ -1019,7 +1038,10 @@ def extractFeatureTable(parameters):
 		
 	parameters.logger.debug("Writing feature table TCL: %s", parameters.scaffoldTCL)
 	clustTCL = open(parameters.scaffoldTCL,"w+")
-	clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+	if parameters.implicitSolvent:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+	else:
+		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 	variantDIR = parameters.trajDIR
 	parameters.logger.debug("Using DCD files in %s", variantDIR)
 	for tFile in sorted(os.listdir(variantDIR)):
@@ -1353,7 +1375,10 @@ def sortPDBclusters(parameters):
 				clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 	else:
 		parameters.logger.debug("Loading DCD files in %s" % variantDIR)
-		clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
+		if parameters.implicitSolvent:
+			clustTCL.write("mol new %s waitfor all\n" % parameters.varPSF)
+		else:
+			clustTCL.write("mol new %s waitfor all\n" % parameters.simPSF)
 		for trajFile in sorted(os.listdir(variantDIR)):
 			if trajFile.endswith(".dcd"):
 				dcdFile = variantDIR + trajFile

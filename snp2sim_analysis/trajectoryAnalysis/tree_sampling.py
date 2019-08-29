@@ -288,7 +288,9 @@ def main():
 		print("newStruct or initialTraj required")
 		sys.exit(1)
 
-	curList = samplingNodes(parameters, top)
+
+	curList = samplingNodes(parameters, top)        
+
 	while curList:
 		curscaff = curList.pop(0)
 		runInstance(parameters, curscaff)
