@@ -51,7 +51,7 @@ class argParse():
 				self.logger.debug("varMDsim ID: %s", self.simID)
 			if not self.newStruct:
 				self.logger.error("Template PDB not specified for simulation.")
-				sys.exit(1)
+#				sys.exit(1)
 			if not self.simLength:
 				self.logger.error("Simulation length not specified.")
 				sys.exit(1)
