@@ -295,7 +295,7 @@ def main():
 		curscaff = curList.pop(0)
 		runInstance(parameters, curscaff)
 		curscaff.mark()
-		if not checkStopCondition():
+		if not checkStopCondition(parameters):
 			scaffDir = parameters.resultsDIR + "scaffold_%d" % curscaff.num
 			for file in sorted(os.listdir(scaffDir)):
 				if file.endswith("scaffold.pdb"):
