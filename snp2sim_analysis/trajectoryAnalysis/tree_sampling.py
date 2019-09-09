@@ -203,7 +203,7 @@ def updateRMSDThresh(parameters):
 			if file.endswith("scaffold.pdb"):
 				scaffList.append(os.path.join(curRun, file))
 
-	calcPairwiseRMSD(scaffList)
+	calcPairwiseRMSD(parameters, scaffList)
 	with open(parameters.matrix, "r") as f:
 		parameters.rmsd = [list(map(float, x.split(','))) for x in f.readlines()]
 		parameters.rmsdThresh = max([max(x) for x in parameters.rmsd])
