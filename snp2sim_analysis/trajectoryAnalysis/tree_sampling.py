@@ -209,20 +209,20 @@ def updateRMSDThresh(parameters):
 		parameters.rmsdThresh = max([max(x) for x in parameters.rmsd])
 
 def calcPairwiseRMSD(parameters, pdbs):
-	parameters.matrix = parameters.configDIR + "%s.%s.scaffpairwiseRMSD.csv" % (parameters.protein, parameters.variant)
-	parameters.varPSF = parameters.structDIR + "%s.%s.UNSOLVATED.psf" \
-							% (parameters.protein, parameters.variant)
+	parameters.matrix = os.path.join(parameters.configDIR, "%s.%s.scaffpairwiseRMSD.csv" % (parameters.protein, parameters.variant))
+	parameters.varPSF = os.path.join(parameters.structDIR, "%s.%s.UNSOLVATED.psf" \
+							% (parameters.protein, parameters.variant))
 	alignmentRes = parameters.alignmentResidues
 	clusterRes = parameters.clusterResidues
 
-	parameters.scaffolds = parameters.configDIR + "%s.%s.all_scaffolds.csv" % (parameters.protein, parameters.variant)
+	parameters.scaffolds = os.path.join(parameters.configDIR, "%s.%s.all_scaffolds.csv" % (parameters.protein, parameters.variant))
 	with open(parameters.scaffolds, 'w') as out:
 		for file in pdbs:
 			with open(file) as infile:
 				for line in infile:
 					out.write(line)
-
-	clustTCL = open(matrix ,"w")
+	parameters.scaffoldTCL = os.path.join(parameters.binDIR, "writePairwise.tcl")
+	clustTCL = open(parameters.scaffoldTCL ,"w")
 	#clustTCL.write("package require csv\n")
 	
 	clustTCL.write("mol addfile %s waitfor all\n" % parameters.scaffolds)
