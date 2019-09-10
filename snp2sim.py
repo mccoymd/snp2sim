@@ -2042,7 +2042,7 @@ def runDrugSearch(parameters):
 									parameters.logger.debug("Vina command: %s", vinaCommand)
 									os.system(vinaCommand)
 							else:		
-								parameters.vinaConfig = parameters.configDIR + "%s.vina"
+								parameters.vinaConfig = parameters.configDIR + parameters.vinaBase + ".vina"
 
 								genVinaConfig(parameters)
 								vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
