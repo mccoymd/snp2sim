@@ -203,7 +203,7 @@ def updateRMSDThresh(parameters):
 			if file.endswith("scaffold.pdb"):
 				scaffList.append(os.path.join(curRun, file))
 
-	calcPairwiseRMSD(scaffList)
+	calcPairwiseRMSD(parameters, scaffList)
 	with open(parameters.matrix, "r") as f:
 		parameters.rmsd = [list(map(float, x.split(','))) for x in f.readlines()]
 		parameters.rmsdThresh = max([max(x) for x in parameters.rmsd])
@@ -295,7 +295,7 @@ def main():
 		curscaff = curList.pop(0)
 		runInstance(parameters, curscaff)
 		curscaff.mark()
-		if not checkStopCondition():
+		if not checkStopCondition(parameters):
 			scaffDir = parameters.resultsDIR + "scaffold_%d" % curscaff.num
 			for file in sorted(os.listdir(scaffDir)):
 				if file.endswith("scaffold.pdb"):
