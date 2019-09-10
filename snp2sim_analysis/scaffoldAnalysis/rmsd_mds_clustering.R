@@ -3,7 +3,7 @@ library(ggplot2)
 library(fpc)
 library(plotly)
 library(htmlwidgets)
-3library(markovchain)
+#library(markovchain)
 #Arguments: 
 #1) input feature table 
 #2) output directory for figures and data
