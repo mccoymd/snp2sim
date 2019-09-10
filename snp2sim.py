@@ -1878,6 +1878,7 @@ def runDrugSearch(parameters):
 	#copy over the binding config with the search coords
 	#drugBindConfig is the location of the bidning config
 	parameters.vinaOutDir = parameters.drugBindingDIR
+	parameters.templatePDB = parameters.varPDB
 	if not os.path.isdir(parameters.vinaOutDir):
 		os.makedirs(parameters.vinaOutDir)
 
