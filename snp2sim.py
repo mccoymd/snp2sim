@@ -1619,6 +1619,7 @@ def getFlexRes(pdbFile,flexResIn):
 def alignScaff(parameters, currScaff):
 	
 	clusterRes = parameters.clusterResidues
+	clusterRes = parameters.clusterResidues + "and not hydrogen"
 
 	if not os.path.isdir(parameters.binDIR):
 		os.makedirs(parameters.binDIR)
