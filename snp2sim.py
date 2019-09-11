@@ -1975,7 +1975,7 @@ def runDrugSearch(parameters):
 			
 		for var in bindingVar:
 			#regenerate pdbqt for all scaffold.pdb files
-			parameters.logger.info("Binding to variant %s", var)
+			parameters.logger.debug("Binding to variant %s", var)
 			#todo check if pdbqt exist already
 			scaffDIR = parameters.varsDIR + var + "/results/scaffold/"
 			parameters.logger.info("Using Scaffolds in %s", scaffDIR)
