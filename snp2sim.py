@@ -2043,7 +2043,7 @@ def runDrugSearch(parameters):
 									vinaConfigFile = parameters.vinaConfigFolder + "/" + config
 									vinaConfigCheck = open(vinaConfigFile, "r")
 									vinaConfigLines = vinaConfigCheck.readlines()
-									vinaConfigOut = vinaConfigLines[3].split(" = ")[1]
+									vinaConfigOut = vinaConfigLines[4].split(" = ")[1].rstrip()
 									parameters.logger.debug("%s" , vinaConfigOut)
 									if not os.path.isfile(vinaConfigOut):
 										parameters.logger.debug("Running MOCK Vina")
