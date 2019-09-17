@@ -2040,7 +2040,15 @@ def runDrugSearch(parameters):
 									vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfigFolder + "/" + config)
 									parameters.logger.debug("Running Vina")
 									parameters.logger.debug("Vina command: %s", vinaCommand)
-									os.system(vinaCommand)
+									vinaConfigCheck = open(parameters.VINApath, parameters.vinaConfigFolder + "/" + config, "r")
+									vinaConfigLines = vinaConfigCheck.readlines()
+									vinaConfigOut = vinaConfigLines[3].split(" = ")[1]
+									if not os.path.isfile(vinaConfigOut):
+									parameters.logger.debug("%s" , vinaConfigOut)
+										parameters.logger.debug("Running MOCK Vina")
+										#os.system(vinaCommand)
+									else:
+										parameters.logger.debug("Vina output exist, remove to regenerate output: %s", vinaCommand)
 							else:		
 								parameters.vinaConfig = parameters.configDIR + parameters.vinaBase + ".vina"
 
