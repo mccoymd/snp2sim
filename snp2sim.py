@@ -276,6 +276,11 @@ def _parseCommandLine():
 						action="store",
 						type=str,
 						)
+	parser.add_argument("--cofactorStruct",
+						help="path to PDB file of cofactor (ion or protein)",
+						action="store",
+						type=str,
+						)
 	parser.add_argument("--bindingTemplate",
 						help="path to PDB file used to create search space to align scaffold",
 						action="store",
@@ -512,6 +517,9 @@ def genStructTCL(parameters):
 	structFile.write("pdbalias residue PTR TYR\n")
 	structFile.write("segment PROT {pdb %s}\n" % parameters.templatePDB)
 	structFile.write("coordpdb %s PROT\n" % parameters.templatePDB)
+	if parameters.cofactorStruct:
+		structFile.write("segment COF {pdb %s}\n" % parameters.cofactorStruct)
+		structFile.write("coordpdb %s COF\n" % parameters.cofactorStruct)
 	structFile.write("guesscoord\n")
 	structFile.write("writepdb %s\n" % parameters.wtPDB)
 	structFile.write("writepsf %s\n" % parameters.wtPSF)
