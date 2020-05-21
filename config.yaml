@@ -8,10 +8,10 @@
 # General options
 #################
  # varMDsim, varScaffold, drugSearch, or varAnalysis
-mode: varScaffold
+mode: 
 
  #Name of protein system
-protein: PDL1
+protein: 
 
  #Variant as "wt" or "x###x" - (OPTIONAL for varAnalysis)
 variant: 
@@ -26,7 +26,8 @@ varAA:
  #if Run is on CGC platform, move pdb and log to snp2sim root for processing
 cgcRun:
 
-runDIR: /Users/vikram/Documents/georgetown/summer_2019/run_workflow/snp2simresults
+#must be full path!!!
+runDIR: 
 
 #Overwrite previous run with same protein name.
 clean: 
@@ -60,7 +61,7 @@ genStructures:
 #Paths to executables. Ignore if using Docker.
 
  #path to VMD executable
-VMDpath: /Applications/VMD_1.9.3.app/Contents/Resources/VMD.app/Contents/MacOS/VMD
+VMDpath: 
 
  #path to AutoDock Vina executable
 VINApath:
