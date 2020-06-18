@@ -2165,6 +2165,8 @@ def runAnalysis(parameters):
 					shutil.copy(path, curAnalysisDir)
 
 	files = [len(file.split(".")) for file in os.listdir(curAnalysisDir)]
+        #parameters.logger.error("got here")
+        #print(files)
 	if not len(set(files)) <= 1:
 		parameters.logger.error("Some files are from multiple trial runs and others from single trial runs.")
 		parameters.logger.error("Run varAnalysis on only a single type of run results")
@@ -2172,6 +2174,8 @@ def runAnalysis(parameters):
 	if files[0] == 7:
 		parameters.mulTrials = True
 		parameters.logger.debug("Creating summary file")
+                #parameters.logger.error("got here")
+                print(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars)
 		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults_mulTrials.sh %s %s" \
 				%(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars))
 	else:
@@ -2180,7 +2184,7 @@ def runAnalysis(parameters):
 		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults.sh %s %s" \
 				%(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars))
 
-
+        
 	#r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations.R %s/analysis/%s/vinaSummary_%s.txt" % (parameters.programDIR, 
 	#											parameters.resultsDIR, analysisVars, parameters.protein), shell = True)
 	#print(r_out)
@@ -2252,7 +2256,8 @@ def runAnalysis(parameters):
 													parameters.analysisDIR + analysisVars, parameters.protein, parameters.mulTrials)
 		parameters.logger.info("Running analysis script")
 		parameters.logger.debug("Executing command: %s", analysisCommand)
-		try:
+                print(analysisCommand)
+                try:
 			r_out = subprocess.check_output(analysisCommand, shell = True, stderr = subprocess.STDOUT)
 			parameters.logger.debug("Analysis output: \n%s", r_out.decode("utf-8"))
 		except subprocess.CalledProcessError as e:

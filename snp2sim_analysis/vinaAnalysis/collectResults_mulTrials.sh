@@ -27,5 +27,6 @@ do
     paste rank.txt tempResults.txt >> vinaSummary.txt
 done
 
-mv vinaSummary.txt "$2/vinaSummary_$protein.txt"
+#mv vinaSummary.txt "$2/vinaSummary_$protein.txt"
+awk -F'\t' 'NF==10 {print}' vinaSummary.txt > "$2/vinaSummary_$protein.txt"
 rm rank.txt tempResults.txt*
