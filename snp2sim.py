@@ -386,7 +386,7 @@ def _parseCommandLine():
 	parser.add_argument("--vinaExh",
 						help="exhaustiveness parameter of autodock vina",
 						action="store",
-						default="50",
+						default="8",
 						type=str,
 						)
 	parser.add_argument("--VINApath",
