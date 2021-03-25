@@ -515,6 +515,8 @@ def genStructTCL(parameters):
 		structFile.write("topology %s\n" % tFile)
 	structFile.write("pdbalias residue HIS HSE\n")
 	structFile.write("pdbalias residue PTR TYR\n")
+        structFile.write("pdbalias residue CA CAL\n")
+        structFile.write("pdbalias atom CAL CA CAL\n")
 	structFile.write("segment PROT {pdb %s}\n" % parameters.templatePDB)
 	structFile.write("coordpdb %s PROT\n" % parameters.templatePDB)
 	if parameters.cofactorStruct:
