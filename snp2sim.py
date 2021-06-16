@@ -515,8 +515,8 @@ def genStructTCL(parameters):
 		structFile.write("topology %s\n" % tFile)
 	structFile.write("pdbalias residue HIS HSE\n")
 	structFile.write("pdbalias residue PTR TYR\n")
-        structFile.write("pdbalias residue CA CAL\n")
-        structFile.write("pdbalias atom CAL CA CAL\n")
+	structFile.write("pdbalias residue CA CAL\n")
+	structFile.write("pdbalias atom CAL CA CAL\n")
 	structFile.write("segment PROT {pdb %s}\n" % parameters.templatePDB)
 	structFile.write("coordpdb %s PROT\n" % parameters.templatePDB)
 	if parameters.cofactorStruct:
@@ -577,7 +577,7 @@ def runNAMD(parameters):
 
 	#parses the dimensions of the solvated structure
 	if os.path.isfile(parameters.solvBoundary):
-		boundaryFile = open(parameters.solvBoundary,"r")        
+		boundaryFile = open(parameters.solvBoundary,"r")	
 		bLines = boundaryFile.readlines()
 
 		center = bLines[0]
@@ -605,52 +605,52 @@ def runNAMD(parameters):
 	configFile = open(parameters.NAMDconfig,"w+")
 	parameters.logger.debug("Writing NAMD config: %s", parameters.NAMDconfig)
 	if parameters.implicitSolvent:
-		configFile.write("structure          %s\n" % parameters.varPSF)
-		configFile.write("coordinates        %s\n" % parameters.varPDB)
+		configFile.write("structure	     %s\n" % parameters.varPSF)
+		configFile.write("coordinates	     %s\n" % parameters.varPDB)
 	else:
-		configFile.write("structure          %s\n" % parameters.simPSF)
-		configFile.write("coordinates        %s\n" % parameters.simPDB)
+		configFile.write("structure	     %s\n" % parameters.simPSF)
+		configFile.write("coordinates	     %s\n" % parameters.simPDB)
 	configFile.write("set outputname     %s\n" % parameters.NAMDout)
 	configFile.write("paraTypeCharmm on\n")
 	for pFile in parameters.simParameters:
 		configFile.write("parameters %s\n" % pFile)
 	configFile.write("mergeCrossterms yes\n")
 	configFile.write("set temperature    310\n")
-	configFile.write("firsttimestep      0\n")
+	configFile.write("firsttimestep	     0\n")
 	configFile.write("\n")
-	configFile.write("temperature         $temperature\n")
+	configFile.write("temperature	      $temperature\n")
 	configFile.write("\n")
 	configFile.write("\n")
 	if parameters.implicitSolvent:
 		configFile.write("# Implicit Solvant Parameters\n")
-		configFile.write("gbis                on\n")
-		configFile.write("alphaCutoff         12.0\n")
+		configFile.write("gbis		      on\n")
+		configFile.write("alphaCutoff	      12.0\n")
 		configFile.write("ionConcentration    0.3\n")
 		configFile.write("\n")
 		configFile.write("\n")
 	configFile.write("# Force-Field Parameters\n")
-	configFile.write("exclude             scaled1-4\n")
-	configFile.write("1-4scaling          1.0\n")
+	configFile.write("exclude	      scaled1-4\n")
+	configFile.write("1-4scaling	      1.0\n")
 	if parameters.implicitSolvent:
-		configFile.write("cutoff              16.0\n")
-		configFile.write("pairlistdist        16.0\n")
+		configFile.write("cutoff	      16.0\n")
+		configFile.write("pairlistdist	      16.0\n")
 	else:
-		configFile.write("cutoff              12.0\n")
-		configFile.write("pairlistdist        14.0\n")
-	configFile.write("switching           on\n")
-	configFile.write("switchdist          10.0\n")
+		configFile.write("cutoff	      12.0\n")
+		configFile.write("pairlistdist	      14.0\n")
+	configFile.write("switching	      on\n")
+	configFile.write("switchdist	      10.0\n")
 	configFile.write("\n")
 	configFile.write("# Integrator Parameters\n")
-	configFile.write("timestep            2.0  ;# 2fs/step\n")
-	configFile.write("rigidBonds          all  ;# needed for 2fs steps\n")
-	configFile.write("nonbondedFreq       1\n")
+	configFile.write("timestep	      2.0  ;# 2fs/step\n")
+	configFile.write("rigidBonds	      all  ;# needed for 2fs steps\n")
+	configFile.write("nonbondedFreq	      1\n")
 	configFile.write("fullElectFrequency  2\n")
-	configFile.write("stepspercycle       10\n")
+	configFile.write("stepspercycle	      10\n")
 	configFile.write("\n")
 	configFile.write("# Constant Temperature Control\n")
-	configFile.write("langevin            on    ;# do langevin dynamics\n")
-	configFile.write("langevinDamping     1     ;# damping coefficient (gamma) of 1/ps\n")
-	configFile.write("langevinTemp        $temperature\n")
+	configFile.write("langevin	      on    ;# do langevin dynamics\n")
+	configFile.write("langevinDamping     1	    ;# damping coefficient (gamma) of 1/ps\n")
+	configFile.write("langevinTemp	      $temperature\n")
 	configFile.write("langevinHydrogen    off    ;# don't couple langevin bath to hydrogens\n\n")
 	if not parameters.implicitSolvent:
 		configFile.write("#Periodic Boundary Conditions\n")
@@ -659,34 +659,34 @@ def runNAMD(parameters):
 		configFile.write("cellBasisVector3 0.0 0.0 %.1f\n" % parameters.dimZ)
 		configFile.write("cellOrigin %.1f %.1f %.1f\n" % \
 							(center[0], center[1], center[2]))
-	configFile.write("margin              %s\n\n" % parameters.margin)
+	configFile.write("margin	      %s\n\n" % parameters.margin)
 	if not parameters.implicitSolvent:
 		configFile.write("# PME (for full-system periodic electrostatics)\n")
-		configFile.write("PME                 yes\n")
+		configFile.write("PME		      yes\n")
 		configFile.write("PMEGridSpacing      1.0\n")
 		configFile.write("wrapAll on\n\n")
 		configFile.write("# Constant Pressure Control (variable volume)\n")
-		configFile.write("useGroupPressure      yes ;# needed for rigidBonds\n")
-		configFile.write("useFlexibleCell       no\n")
-		configFile.write("useConstantArea       no\n")
-		configFile.write("langevinPiston        on\n")
-		configFile.write("langevinPistonTarget  1.01325 ;#  in bar -> 1 atm\n")
-		configFile.write("langevinPistonPeriod  100.0\n")
-		configFile.write("langevinPistonDecay   50.0\n")
-		configFile.write("langevinPistonTemp    $temperature\n")
+		configFile.write("useGroupPressure	yes ;# needed for rigidBonds\n")
+		configFile.write("useFlexibleCell	no\n")
+		configFile.write("useConstantArea	no\n")
+		configFile.write("langevinPiston	on\n")
+		configFile.write("langevinPistonTarget	1.01325 ;#  in bar -> 1 atm\n")
+		configFile.write("langevinPistonPeriod	100.0\n")
+		configFile.write("langevinPistonDecay	50.0\n")
+		configFile.write("langevinPistonTemp	$temperature\n")
 	configFile.write("# Output\n")
-	configFile.write("outputName          $outputname\n")
+	configFile.write("outputName	      $outputname\n")
 	#todo - configure output options i.e. freq of output)
-	configFile.write("restartfreq         10000     ;# 500steps = every 1ps\n")
-	configFile.write("dcdfreq             5000\n")
-	configFile.write("xstFreq             5000\n")
+	configFile.write("restartfreq	      10000	;# 500steps = every 1ps\n")
+	configFile.write("dcdfreq	      5000\n")
+	configFile.write("xstFreq	      5000\n")
 	configFile.write("outputEnergies      5000\n")
 	configFile.write("outputPressure      5000\n")
 	if not parameters.noMinimize:
 		configFile.write("# Minimization\n")
-		configFile.write("minimize            1000\n")
-		configFile.write("reinitvels          $temperature\n\n")
-	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
+		configFile.write("minimize	      1000\n")
+		configFile.write("reinitvels	      $temperature\n\n")
+	configFile.write("run		      %i\n" % (parameters.simLength*500000)) # using 2 fs step size
 	if not os.path.isdir(parameters.trajDIR):
 		os.makedirs(parameters.trajDIR)
 
@@ -699,7 +699,7 @@ def runNAMD_replicaExchange(parameters):
 
 	#parses the dimensions of the solvated structure
 	if os.path.isfile(parameters.solvBoundary):
-		boundaryFile = open(parameters.solvBoundary,"r")        
+		boundaryFile = open(parameters.solvBoundary,"r")	
 		bLines = boundaryFile.readlines()
 
 		center = bLines[0]
@@ -756,39 +756,39 @@ def runNAMD_replicaExchange(parameters):
 	#creates the NAMD config file and populates it with default options	
 	configFile = open(parameters.NAMDconfig,"w+")
 	parameters.logger.debug("Writing NAMD config: %s", parameters.NAMDconfig)
-	configFile.write("structure          %s\n" % parameters.simPSF)
-	configFile.write("coordinates        %s\n" % parameters.simPDB)
+	configFile.write("structure	     %s\n" % parameters.simPSF)
+	configFile.write("coordinates	     %s\n" % parameters.simPDB)
 	#configFile.write("set outputname     %s\n" % parameters.NAMDout)
 	configFile.write("paraTypeCharmm on\n")
 	for pFile in parameters.simParameters:
 		configFile.write("parameters %s\n" % pFile)
 	configFile.write("mergeCrossterms yes\n")
 	#configFile.write("set temperature    310\n")
-	configFile.write("firsttimestep      0\n")
+	configFile.write("firsttimestep	     0\n")
 	configFile.write("\n")
-	#configFile.write("temperature         $temperature\n")
+	#configFile.write("temperature	       $temperature\n")
 	configFile.write("\n")
 	configFile.write("\n")
 	configFile.write("# Force-Field Parameters\n")
-	configFile.write("exclude             scaled1-4\n")
-	configFile.write("1-4scaling          1.0\n")
-	configFile.write("cutoff              12.0\n")
-	configFile.write("switching           on\n")
-	configFile.write("switchdist          10.0\n")
-	configFile.write("pairlistdist        14.0\n")
+	configFile.write("exclude	      scaled1-4\n")
+	configFile.write("1-4scaling	      1.0\n")
+	configFile.write("cutoff	      12.0\n")
+	configFile.write("switching	      on\n")
+	configFile.write("switchdist	      10.0\n")
+	configFile.write("pairlistdist	      14.0\n")
 	configFile.write("\n")
 	configFile.write("# Integrator Parameters\n")
-	configFile.write("timestep            2.0  ;# 2fs/step\n")
-	configFile.write("rigidBonds          all  ;# needed for 2fs steps\n")
-	configFile.write("nonbondedFreq       1\n")
+	configFile.write("timestep	      2.0  ;# 2fs/step\n")
+	configFile.write("rigidBonds	      all  ;# needed for 2fs steps\n")
+	configFile.write("nonbondedFreq	      1\n")
 	configFile.write("fullElectFrequency  2\n")
-	configFile.write("stepspercycle       10\n")
+	configFile.write("stepspercycle	      10\n")
 	configFile.write("\n")
 	configFile.write("# Constant Temperature Control\n")
-	#configFile.write("langevin            on    ;# do langevin dynamics\n")
-	# configFile.write("langevinDamping     1     ;# damping coefficient (gamma) of 1/ps\n")
-	#configFile.write("langevinTemp        $temperature\n")
-	# configFile.write("langevinHydrogen    off    ;# don't couple langevin bath to hydrogens\n\n")
+	#configFile.write("langevin	       on    ;# do langevin dynamics\n")
+	# configFile.write("langevinDamping	1     ;# damping coefficient (gamma) of 1/ps\n")
+	#configFile.write("langevinTemp	       $temperature\n")
+	# configFile.write("langevinHydrogen	off    ;# don't couple langevin bath to hydrogens\n\n")
 	configFile.write("#Periodic Boundary Conditions\n")
 	configFile.write("cellBasisVector1 %.1f 0.0 0.0\n" % parameters.dimX)
 	configFile.write("cellBasisVector2 0.0 %.1f 0.0\n" % parameters.dimY)
@@ -798,29 +798,29 @@ def runNAMD_replicaExchange(parameters):
 	configFile.write("margin 1.0\n\n")
 	configFile.write("wrapAll on\n\n")
 	configFile.write("# PME (for full-system periodic electrostatics)\n")
-	configFile.write("PME                 yes\n")
+	configFile.write("PME		      yes\n")
 	configFile.write("PMEGridSpacing      1.0\n")
 	configFile.write("# Constant Pressure Control (variable volume)\n")
-	configFile.write("useGroupPressure      yes ;# needed for rigidBonds\n")
-	configFile.write("useFlexibleCell       no\n")
-	configFile.write("useConstantArea       no\n")
-	# configFile.write("langevinPiston        on\n")
+	configFile.write("useGroupPressure	yes ;# needed for rigidBonds\n")
+	configFile.write("useFlexibleCell	no\n")
+	configFile.write("useConstantArea	no\n")
+	# configFile.write("langevinPiston	  on\n")
 	# configFile.write("langevinPistonTarget  1.01325 ;#  in bar -> 1 atm\n")
 	# configFile.write("langevinPistonPeriod  100.0\n")
-	# configFile.write("langevinPistonDecay   50.0\n")
-	# configFile.write("langevinPistonTemp    $temperature\n")
+	# configFile.write("langevinPistonDecay	  50.0\n")
+	# configFile.write("langevinPistonTemp	  $temperature\n")
 	configFile.write("# Output\n")
-	#configFile.write("outputName          $outputname\n")
+	#configFile.write("outputName	       $outputname\n")
 	#todo - configure output options i.e. freq of output)
-	configFile.write("restartfreq         10000     ;# 500steps = every 1ps\n")
-	#configFile.write("dcdfreq             5000\n")
-	configFile.write("xstFreq             5000\n")
+	configFile.write("restartfreq	      10000	;# 500steps = every 1ps\n")
+	#configFile.write("dcdfreq	       5000\n")
+	configFile.write("xstFreq	      5000\n")
 	#configFile.write("outputEnergies      5000\n")
 	configFile.write("outputPressure      5000\n")
 	configFile.write("# Minimization\n")
-	configFile.write("minimize            1000\n")
-	#configFile.write("reinitvels          $temperature\n\n")
-	configFile.write("run                 %i\n" % (parameters.simLength*500000)) # using 2 fs step size
+	configFile.write("minimize	      1000\n")
+	#configFile.write("reinitvels	       $temperature\n\n")
+	configFile.write("run		      %i\n" % (parameters.simLength*500000)) # using 2 fs step size
 					 
 	if not os.path.isdir(parameters.trajDIR):
 		os.makedirs(parameters.trajDIR)
@@ -1108,7 +1108,7 @@ def extractFeatureTable(parameters):
 
 	# allPDBoutput = parameters.scaffBASE + ".all.pdb"
 	# clustTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
-	# 			   % allPDBoutput)
+	#			   % allPDBoutput)
 
 	clustTCL.write("quit")
 	clustTCL.close()
@@ -1130,9 +1130,9 @@ def extractFeatureTable(parameters):
 	# variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory/"
 	# print("using DCD files in %s" % variantDIR)
 	# for tFile in os.listdir(variantDIR):
-	# 	if tFile.endswith(".dcd"):
-	# 		dcdFile = variantDIR + tFile
-	# 		clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
+	#	if tFile.endswith(".dcd"):
+	#		dcdFile = variantDIR + tFile
+	#		clustTCL.write("mol addfile %s waitfor all\n" % dcdFile)
 
 	# clustTCL.write("package require pbctools\n")
 	# clustTCL.write("pbc wrap -center com -centersel \"protein\" -compound residue -all\n")
@@ -1150,23 +1150,23 @@ def extractFeatureTable(parameters):
 	# clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
 	# clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
 	# clustTCL.write("puts $output [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
-	# 			   % rmsdThresh)
+	#			   % rmsdThresh)
 	# clustTCL.write("puts $output \"Only generated summary PDB file\"\n")
 	# clustTCL.write("close $output\n")
 	# allPDBoutput = parameters.scaffBASE + ".all.pdb"
 	# clustTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
-	# 			   % allPDBoutput)
+	#			   % allPDBoutput)
 	# clustTCL.write("quit")
 
 #legacy code for surveying the trajectoies
 #    for {set i 60} {$i < 80} {incr i} {
-#                set thr [expr $i / 100.0]
-#                puts $output [puts $thr]
-#                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
-#            }
+#		 set thr [expr $i / 100.0]
+#		 puts $output [puts $thr]
+#		 puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
+#	     }
 	
 #	vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
-#        print("got here %s" % vmdClustCommand)
+#	 print("got here %s" % vmdClustCommand)
 #	os.system(vmdClustCommand)
 
 def extractFeatureTable_PDB(parameters):
@@ -1263,7 +1263,7 @@ def extractFeatureTable_PDB(parameters):
 
 	# allPDBoutput = parameters.scaffBASE + ".all.pdb"
 	# clustTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
-	# 			   % allPDBoutput)
+	#			   % allPDBoutput)
 
 	clustTCL.write("quit")
 	clustTCL.close()
@@ -1282,12 +1282,12 @@ def extractFeatureTable_PDB(parameters):
 	# clustTCL = open(parameters.scaffoldTCL,"w+")
 	# variantDIR = parameters.resultsDIR + "/" + parameters.variant + "/trajectory"
 	# if not os.path.exists(variantDIR):
-	# 	os.makedirs(variantDIR)
+	#	os.makedirs(variantDIR)
 		
 	# for trajFile in os.listdir(variantDIR):
-	# 	if trajFile.endswith(".pdb"):
-	# 		pdbFile = variantDIR + "/" + trajFile
-	# 		clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
+	#	if trajFile.endswith(".pdb"):
+	#		pdbFile = variantDIR + "/" + trajFile
+	#		clustTCL.write("mol addfile %s waitfor all\n" % pdbFile)
 	# clustTCL.write("package require csv\n")
 	# clustTCL.write("set nf [molinfo top get numframes]\n")
 	# clustTCL.write("set refRes [atomselect top %s frame 0]\n" % alignmentRes)
@@ -1302,22 +1302,22 @@ def extractFeatureTable_PDB(parameters):
 	# clustTCL.write("set clustRes [atomselect top %s]\n" % clusterRes)
 	# #clustTCL.write("puts $output \"clusters for RMSD Threshold %s\"\n" % rmsdThresh)
 	# clustTCL.write("set clust [measure cluster $clustRes distfunc rmsd cutoff %s]\n" \
-	# 			   % rmsdThresh)
+	#			   % rmsdThresh)
 	# clustTCL.write("puts $output [::csv::joinlist $clust]\n")
 	# clustTCL.write("close $output\n")
 
 
 	# allPDBoutput = parameters.scaffBASE + ".all.pdb"
 	# clustTCL.write("animate write pdb %s beg 0 end -1 sel [atomselect top \"protein\"]\n" \
-	# 			   % allPDBoutput)
+	#			   % allPDBoutput)
 	# clustTCL.write("quit")
 
 #legacy code for surveying the trajectoies
 #    for {set i 60} {$i < 80} {incr i} {
-#                set thr [expr $i / 100.0]
-#                puts $output [puts $thr]
-#                puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
-#            }
+#		 set thr [expr $i / 100.0]
+#		 puts $output [puts $thr]
+#		 puts $output [measure cluster $clustRes distfunc rmsd cutoff $thr]
+#	     }
 
 # moving this to runVarScaffold
 #	vmdClustCommand = "%s -e %s" % (parameters.VMDpath, parameters.scaffoldTCL)
@@ -1446,10 +1446,10 @@ def sortPDBclusters(parameters):
 	# indPDB = []
 	# currPDB = ""
 	# for pdbLine in allPDBlines:
-	# 	currPDB = currPDB + pdbLine
-	# 	if "END" in pdbLine:
-	# 		indPDB.append(currPDB)
-	# 		currPDB = ""
+	#	currPDB = currPDB + pdbLine
+	#	if "END" in pdbLine:
+	#		indPDB.append(currPDB)
+	#		currPDB = ""
 	
 	# scaffLOG = parameters.scaffBASE + ".log"    
 	# clustLogfile = open(scaffLOG, "r")
@@ -1462,93 +1462,93 @@ def sortPDBclusters(parameters):
 	# #print(traj.n_frames)
 	# print(len(indPDB))
 	# for indCluster in clusterMembership:
-	# 	repStructIndex = int(indCluster[0])
-	# 	#if len(indCluster.split(" ")) > parameters.clustThresh*traj.n_frames:
-	# 	#    repStruct = traj[repStructIndex]
-	# 	#    scaffFileName = parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb"
-	# 	#    repStruct.save(scaffFileName)
-	# 	#    scaffNum += 1 
-	# 	#print str(len(indCluster)) + " cluster " + str(scaffNum)
-	# 	#if len(indCluster) > parameters.clustThresh*len(indPDB):
-	# 		#scaffFileName = parameters.scaffBASE + ".cluster" + str(scaffNum) + ".pdb"
+	#	repStructIndex = int(indCluster[0])
+	#	#if len(indCluster.split(" ")) > parameters.clustThresh*traj.n_frames:
+	#	#    repStruct = traj[repStructIndex]
+	#	#    scaffFileName = parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb"
+	#	#    repStruct.save(scaffFileName)
+	#	#    scaffNum += 1 
+	#	#print str(len(indCluster)) + " cluster " + str(scaffNum)
+	#	#if len(indCluster) > parameters.clustThresh*len(indPDB):
+	#		#scaffFileName = parameters.scaffBASE + ".cluster" + str(scaffNum) + ".pdb"
 
-	# 	#no longer checks for clusterthresh in new method - VS
-	# 	scaffFileName = parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb"
-	# 	scaffFile = open(scaffFileName,"w+")
-	# 	scaffFile.write(pdbHeader)
-	# 	scaffFile.write(indPDB[int(repStructIndex)])
-	# 	scaffFile.close()
-	# 	scaffNum += 1
-	# #        for structID in indCluster:
-	# #            print structID
-	# #            if structID:
-	# #                scaffFile.write(indPDB[int(structID)])
+	#	#no longer checks for clusterthresh in new method - VS
+	#	scaffFileName = parameters.scaffBASE + ".cl" + str(scaffNum) + ".scaffold.pdb"
+	#	scaffFile = open(scaffFileName,"w+")
+	#	scaffFile.write(pdbHeader)
+	#	scaffFile.write(indPDB[int(repStructIndex)])
+	#	scaffFile.close()
+	#	scaffNum += 1
+	# #	   for structID in indCluster:
+	# #	       print structID
+	# #	       if structID:
+	# #		   scaffFile.write(indPDB[int(structID)])
 	# #    scaffNum += 1 
 
 # def genScaffoldTCL(parameters):
 	
-# 	scaffParameters = open(parameters.scaffParams,"r")
-# 	scaffLines = scaffParameters.readlines()
+#	scaffParameters = open(parameters.scaffParams,"r")
+#	scaffLines = scaffParameters.readlines()
 
-# 	alignmentRes = scaffLines[0]
-# 	alignmentRes = alignmentRes.rstrip()
-# 	alignmentRes = alignmentRes.replace("alignmentRes ","")
+#	alignmentRes = scaffLines[0]
+#	alignmentRes = alignmentRes.rstrip()
+#	alignmentRes = alignmentRes.replace("alignmentRes ","")
 
-# 	scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
-# 	genScaff = open(parameters.clusterTCL, "w+")
-# 	for tFile in os.listdir(scaffDIR):
-# 		if tFile.endswith(".pdb"):
-# 			if "cluster" in tFile:
-# 				pdbClustFile = scaffDIR + tFile
-# 				pdbScaffFile = pdbClustFile
-# 				pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
-# 				genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
-# #                genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
-# 				genScaff.write("set domain [atomselect top all]\n")
-# 				genScaff.write("set avePos [measure avpos $domain]\n")
-# 				genScaff.write("$domain set {x y z} $avePos\n")
-# 				genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
+#	scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
+#	genScaff = open(parameters.clusterTCL, "w+")
+#	for tFile in os.listdir(scaffDIR):
+#		if tFile.endswith(".pdb"):
+#			if "cluster" in tFile:
+#				pdbClustFile = scaffDIR + tFile
+#				pdbScaffFile = pdbClustFile
+#				pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
+#				genScaff.write("mol new %s waitfor all\n" % pdbClustFile)
+# #		   genScaff.write("set domain [atomselect top %s]\n" % alignmentRes)
+#				genScaff.write("set domain [atomselect top all]\n")
+#				genScaff.write("set avePos [measure avpos $domain]\n")
+#				genScaff.write("$domain set {x y z} $avePos\n")
+#				genScaff.write("$domain writepdb %s\n" % pdbScaffFile)
 				
-# 	genScaff.write("quit\n")
+#	genScaff.write("quit\n")
 
 #now defunct because no longer using mdtraj
 
 # def genScaffoldMDTRAJ(parameters):
-# 	#TODO generate rep structure using cluster res
-# 	scaffParameters = open(parameters.scaffParams,"r")
-# 	scaffLines = scaffParameters.readlines()
+#	#TODO generate rep structure using cluster res
+#	scaffParameters = open(parameters.scaffParams,"r")
+#	scaffLines = scaffParameters.readlines()
 
-# 	clusterRes = scaffLines[1]
-# 	clusterRes = clusterRes.rstrip()
-# 	clusterRes = clusterRes.replace("clusterRes ","")
+#	clusterRes = scaffLines[1]
+#	clusterRes = clusterRes.rstrip()
+#	clusterRes = clusterRes.replace("clusterRes ","")
 
-# 	scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
-# 	genScaff = open(parameters.clusterTCL, "w+")
-# 	for tFile in os.listdir(scaffDIR):
-# 		if tFile.endswith(".pdb"):
-# 			if "cluster" in tFile:
-# 				pdbClustFile = scaffDIR + tFile
-# 				pdbScaffFile = pdbClustFile
-# 				pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
-# 				traj = md.load(pdbClustFile)
-# 				atom_indices = [a.index for a in traj.topology.atoms if a.element.symbol != 'H']
-# 				numStruct = traj.n_frames
-# 				structLimit = 1500
-# 				if numStruct > structLimit:
-# 					numStruct = structLimit
-# 					repSet = traj[random.sample(range(traj.n_frames),structLimit)]
-# 				else:
-# 					repSet = traj
+#	scaffDIR = parameters.resultsDIR + "/" + parameters.variant + "/scaffold/"
+#	genScaff = open(parameters.clusterTCL, "w+")
+#	for tFile in os.listdir(scaffDIR):
+#		if tFile.endswith(".pdb"):
+#			if "cluster" in tFile:
+#				pdbClustFile = scaffDIR + tFile
+#				pdbScaffFile = pdbClustFile
+#				pdbScaffFile = pdbScaffFile.replace(".pdb",".scaffold.pdb")
+#				traj = md.load(pdbClustFile)
+#				atom_indices = [a.index for a in traj.topology.atoms if a.element.symbol != 'H']
+#				numStruct = traj.n_frames
+#				structLimit = 1500
+#				if numStruct > structLimit:
+#					numStruct = structLimit
+#					repSet = traj[random.sample(range(traj.n_frames),structLimit)]
+#				else:
+#					repSet = traj
 
-# 				distances = np.empty((repSet.n_frames,repSet.n_frames))
-# 				for i in range(repSet.n_frames):
-# 					#print i
-# 					distances[i] = md.rmsd(repSet,repSet,i,atom_indices = atom_indices)
+#				distances = np.empty((repSet.n_frames,repSet.n_frames))
+#				for i in range(repSet.n_frames):
+#					#print i
+#					distances[i] = md.rmsd(repSet,repSet,i,atom_indices = atom_indices)
 
-# 				index = np.exp(-distances/distances.std()).sum(axis=1).argmax()
-# 				print(index)
-# 				#centroid = repSet[index]
-# 				#centroid.save(pdbScaffFile)
+#				index = np.exp(-distances/distances.std()).sum(axis=1).argmax()
+#				print(index)
+#				#centroid = repSet[index]
+#				#centroid.save(pdbScaffFile)
 		
 def calcSearchSpace(parameters):
 	out = parameters.drugBindConfig
@@ -1616,7 +1616,7 @@ def getFlexRes(pdbFile,flexResIn):
 		if len(resNum) > 1:
 			resNum = int(resNum)
 		if flexResNum == resNum:
-#            print resNum
+#	     print resNum
 			resName = line[17:20]
 			flexResID = "%s_%s%s" % (flexResID,resName,str(flexResNum))
 			if len(flexRes) > 0:
@@ -1693,7 +1693,7 @@ def genVinaConfig(parameters):
 		for searchParam in parameters.ADsearchSpace:
 			vinaConfig.write("%s\n" % searchParam)
 
-#moving to runDrugSearch                
+#moving to runDrugSearch		
 #	vinaCommand = "%s --config %s" % (parameters.VINApath, parameters.vinaConfig)
 #	os.system(vinaCommand)
 
@@ -1778,25 +1778,25 @@ def runVarMDsim(parameters):
 				os.system("mv %s %s" % (CGClog, cwd))
 
 	else:
-		parameters.logger.error("Simulation length not specified")        
+		parameters.logger.error("Simulation length not specified")	  
 		sys.exit(1)
 
 def runVarScaffold(parameters):
-	#moved to start    
+	#moved to start	   
 #    if parameters.newScaff:
-#        if not os.path.isdir("%s/variantSimulations/%s/config" % \
-#                             (parameters.runDIR,parameters.protein)):
-#            os.makedirs("%s/variantSimulations/%s/config" % \
-#                        (parameters.runDIR,parameters.protein))
-#        if not os.path.isfile(parameters.scaffParams):
-#            os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
-#                      % (parameters.newScaff,parameters.runDIR,
-#                         parameters.protein, parameters.scaffID))
+#	 if not os.path.isdir("%s/variantSimulations/%s/config" % \
+#			      (parameters.runDIR,parameters.protein)):
+#	     os.makedirs("%s/variantSimulations/%s/config" % \
+#			 (parameters.runDIR,parameters.protein))
+#	 if not os.path.isfile(parameters.scaffParams):
+#	     os.system("cp %s %s/variantSimulations/%s/config/%s.scaff" \
+#		       % (parameters.newScaff,parameters.runDIR,
+#			  parameters.protein, parameters.scaffID))
 #
-#        else:
-#            print "Scaff config for %s exists." % (parameters.scaffParams)
-#            print "Select new scaffID or remove existing scaff config"
-#            sys.exit()
+#	 else:
+#	     print "Scaff config for %s exists." % (parameters.scaffParams)
+#	     print "Select new scaffID or remove existing scaff config"
+#	     sys.exit()
 
 	if hasattr(parameters, "alignmentResidues") and hasattr(parameters, "clusterResidues"):
 		#check if variant specified, otherwise perform clustering for all variants
@@ -1927,8 +1927,8 @@ def runDrugSearch(parameters):
 		os.makedirs(variantDIR)
 		inputCount = 1
 		for pdbFile in os.listdir(parameters.inputScaff):
-#            pdbNewLoc = variantDIR + os.path.basename(pdbFile)
-#            pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
+#	     pdbNewLoc = variantDIR + os.path.basename(pdbFile)
+#	     pdbNewLoc = os.path.splitext(pdbNewLoc)[0] + ".scaffold.pdb"
 			inputID = "cl%s" % str(inputCount)
 			pdbNewLoc = "%s/%s.%s.input_%s.scaffold.pdb" % (variantDIR, parameters.protein,
 													  parameters.variant, inputID)
@@ -2000,7 +2000,7 @@ def runDrugSearch(parameters):
 
 					parameters.scaff1out = scaffBase + ".pdbqt"
 					#prepBaseScaff =  "%s %s/prepare_receptor4.py -U nphs -r %s -o %s" \
-					prepBaseScaff =  "%s %s/prepare_receptor4.py -r %s -o %s" \
+					prepBaseScaff =	 "%s %s/prepare_receptor4.py -r %s -o %s" \
 														 % (parameters.PYTHONSHpath,
 															parameters.ADTpath,
 															currScaffPath,
@@ -2110,15 +2110,15 @@ def runDrugSearch(parameters):
 def runAnalysis(parameters):
 
 	# if parameters.variant == "wt" and not hasattr(parameters, "varAA") and not hasattr(parameters, "varResID"):
-	# 	print("generating figures for all Variant Scaffolds")
-	# 	variantList = os.listdir(parameters.resultsDIR)
+	#	print("generating figures for all Variant Scaffolds")
+	#	variantList = os.listdir(parameters.resultsDIR)
 	# elif (isinstance(parameters.varAA, list) and isinstance(parameters.varResID, list)):
-	# 	print("generating figures for variants: %s" % (parameters.variant))
-	# 	variantList = [str(self.varResID[x]) + self.varAA[x] for x in range(len(self.varAA))]
-	# 	print("generating figures for variants: %s" % (", ".join(variantList)))
+	#	print("generating figures for variants: %s" % (parameters.variant))
+	#	variantList = [str(self.varResID[x]) + self.varAA[x] for x in range(len(self.varAA))]
+	#	print("generating figures for variants: %s" % (", ".join(variantList)))
 	# else:
-	# 	print("generating figures for %s ONLY" %parameters.variant)
-	# 	variantList = (parameters.variant, )
+	#	print("generating figures for %s ONLY" %parameters.variant)
+	#	variantList = (parameters.variant, )
 
 
 	variantList = parameters.analysisVariants
@@ -2167,8 +2167,8 @@ def runAnalysis(parameters):
 					shutil.copy(path, curAnalysisDir)
 
 	files = [len(file.split(".")) for file in os.listdir(curAnalysisDir)]
-        #parameters.logger.error("got here")
-        #print(files)
+	#parameters.logger.error("got here")
+	#print(files)
 	if not len(set(files)) <= 1:
 		parameters.logger.error("Some files are from multiple trial runs and others from single trial runs.")
 		parameters.logger.error("Run varAnalysis on only a single type of run results")
@@ -2176,8 +2176,8 @@ def runAnalysis(parameters):
 	if files[0] == 7:
 		parameters.mulTrials = True
 		parameters.logger.debug("Creating summary file")
-                #parameters.logger.error("got here")
-                print(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars)
+		#parameters.logger.error("got here")
+		print(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars)
 		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults_mulTrials.sh %s %s" \
 				%(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars))
 	else:
@@ -2186,7 +2186,7 @@ def runAnalysis(parameters):
 		os.system("%s/snp2sim_analysis/vinaAnalysis/collectResults.sh %s %s" \
 				%(parameters.programDIR, curAnalysisDir, parameters.analysisDIR + analysisVars))
 
-        
+	
 	#r_out = subprocess.check_output("Rscript %s/snp2sim_analysis/vinaAnalysis/visualizations.R %s/analysis/%s/vinaSummary_%s.txt" % (parameters.programDIR, 
 	#											parameters.resultsDIR, analysisVars, parameters.protein), shell = True)
 	#print(r_out)
@@ -2258,8 +2258,8 @@ def runAnalysis(parameters):
 													parameters.analysisDIR + analysisVars, parameters.protein, parameters.mulTrials)
 		parameters.logger.info("Running analysis script")
 		parameters.logger.debug("Executing command: %s", analysisCommand)
-                print(analysisCommand)
-                try:
+		print(analysisCommand)
+		try:
 			r_out = subprocess.check_output(analysisCommand, shell = True, stderr = subprocess.STDOUT)
 			parameters.logger.debug("Analysis output: \n%s", r_out.decode("utf-8"))
 		except subprocess.CalledProcessError as e:
